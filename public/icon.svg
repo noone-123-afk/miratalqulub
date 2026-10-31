@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1035"/>
+      <stop offset="50%" stop-color="#0f0c20"/>
+      <stop offset="100%" stop-color="#2a0826"/>
+    </linearGradient>
+    <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="50%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#8b5cf6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#f43f5e" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Outer subtle border ring -->
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="rgba(244,63,94,0.25)" stroke-width="4"/>
+
+  <!-- Radial Glow Behind Heart -->
+  <circle cx="256" cy="240" r="180" fill="url(#glowGrad)"/>
+
+  <!-- Romantic AI Crystal Heart -->
+  <path d="M256 420 C256 420 80 300 80 180 C80 115 132 64 198 64 C236 64 256 94 256 94 C256 94 276 64 314 64 C380 64 432 115 432 180 C432 300 256 420 256 420 Z"
+        fill="url(#heartGrad)" filter="url(#shadow)"/>
+
+  <!-- Inner Sparkle & Soulmate Silhouette Touch -->
+  <path d="M256 140 C280 200 320 220 370 230 C320 240 280 260 256 320 C232 260 192 240 142 230 C192 220 232 200 256 140 Z"
+        fill="#ffffff" opacity="0.85"/>
+  <circle cx="256" cy="230" r="14" fill="#fef08a"/>
+  
+  <!-- Little Stars -->
+  <polygon points="170,140 174,152 186,156 174,160 170,172 166,160 154,156 166,152" fill="#fef08a" opacity="0.9"/>
+  <polygon points="340,310 343,320 353,323 343,326 340,336 337,326 327,323 337,320" fill="#fef08a" opacity="0.9"/>
+</svg>

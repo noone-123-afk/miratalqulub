@@ -1,0 +1,216 @@
+{
+  "entities": {
+    "UserProfileDoc": {
+      "title": "UserProfileDoc",
+      "description": "User profile information tied to Firebase Auth UID",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "User UID from Firebase Auth"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when account was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when account was last updated"
+        }
+      },
+      "required": ["id", "createdAt"]
+    },
+    "SavedTestResult": {
+      "title": "SavedTestResult",
+      "description": "Historical compatibility test result saved by user",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Result document ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp when the test was saved"
+        },
+        "partnerName": {
+          "type": "string",
+          "description": "Predicted partner name"
+        },
+        "partnerGender": {
+          "type": "string",
+          "description": "Partner gender"
+        },
+        "userGender": {
+          "type": "string",
+          "description": "User gender"
+        },
+        "userAge": {
+          "type": "number",
+          "description": "User age at test time"
+        },
+        "country": {
+          "type": "string",
+          "description": "User country"
+        },
+        "compatibilityScore": {
+          "type": "number",
+          "description": "Overall compatibility score percentage"
+        },
+        "intellectualScore": {
+          "type": "number",
+          "description": "Intellectual compatibility score"
+        },
+        "sociologicalScore": {
+          "type": "number",
+          "description": "Sociological compatibility score"
+        },
+        "emotionalScore": {
+          "type": "number",
+          "description": "Emotional compatibility score"
+        },
+        "lifestyleScore": {
+          "type": "number",
+          "description": "Lifestyle compatibility score"
+        },
+        "partnerTraits": {
+          "type": "array",
+          "description": "Top traits of the partner"
+        },
+        "loveLanguage": {
+          "type": "string",
+          "description": "Primary love language"
+        },
+        "romanticAdvice": {
+          "type": "string",
+          "description": "Romantic advice for couple"
+        },
+        "partnerVibeQuote": {
+          "type": "string",
+          "description": "Partner quote or motto"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Portrait image URL"
+        },
+        "visualDescription": {
+          "type": "string",
+          "description": "Visual appearance description"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "createdAt",
+        "partnerName",
+        "partnerGender",
+        "compatibilityScore"
+      ]
+    },
+    "PublicProfileDoc": {
+      "title": "PublicProfileDoc",
+      "description": "Public discoverable user profile for compatibility matching and contact",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "userGender": { "type": "string" },
+        "userAge": { "type": "number" },
+        "country": { "type": "string" },
+        "archetype": { "type": "string" },
+        "contactWhatsapp": { "type": "string" },
+        "isDiscoverable": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "displayName", "createdAt"]
+    },
+    "FeedbackMessageDoc": {
+      "title": "FeedbackMessageDoc",
+      "description": "Visitor contact messages and feedback routed to one497303@gmail.com",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "category": { "type": "string" },
+        "rating": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "message", "createdAt"]
+    },
+    "SiteAnalyticsDoc": {
+      "title": "SiteAnalyticsDoc",
+      "description": "Aggregated daily, monthly, yearly analytics and test usage metrics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "period": { "type": "string" },
+        "visitorCount": { "type": "number" },
+        "pageViews": { "type": "number" },
+        "testCounts": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "type", "updatedAt"]
+    },
+    "VisitorSessionDoc": {
+      "title": "VisitorSessionDoc",
+      "description": "Persistent visitor session and saved test history across visits",
+      "type": "object",
+      "properties": {
+        "visitorId": { "type": "string" },
+        "profile": { "type": "object" },
+        "latestResult": { "type": "object" },
+        "results": { "type": "array" },
+        "testHistory": { "type": "array" },
+        "psychologyReport": { "type": "object" },
+        "intelligenceProfile": { "type": "object" },
+        "updatedAt": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["visitorId", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfileDoc",
+      "description": "Stores user account profile information"
+    },
+    "/users/{userId}/results/{resultId}": {
+      "schema": "SavedTestResult",
+      "description": "Stores saved historical partner compatibility test results for the user"
+    },
+    "/public_profiles/{profileId}": {
+      "schema": "PublicProfileDoc",
+      "description": "Stores public profiles of users open to compatibility matching and connection"
+    },
+    "/feedback_messages/{messageId}": {
+      "schema": "FeedbackMessageDoc",
+      "description": "Stores visitor feedback and inquiries for official email notification"
+    },
+    "/visitor_sessions/{visitorId}": {
+      "schema": "VisitorSessionDoc",
+      "description": "Stores persistent visitor profiles, test history, and results for returning visitors"
+    },
+    "/site_analytics/{docId}": {
+      "schema": "SiteAnalyticsDoc",
+      "description": "Stores analytics records (daily, monthly, yearly) and section usage metrics"
+    }
+  }
+}

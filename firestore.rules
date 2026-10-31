@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUser(data, userId) {
+      return data.keys().hasAll(['id', 'createdAt'])
+        && data.id == userId
+        && data.id == request.auth.uid
+        && data.createdAt is string
+        && data.createdAt.size() <= 64;
+    }
+
+    function isValidResult(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'createdAt', 'partnerName', 'partnerGender', 'compatibilityScore'])
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.partnerName is string && data.partnerName.size() <= 100
+        && data.partnerGender is string && data.partnerGender.size() <= 20
+        && data.compatibilityScore is number
+        && data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(request.resource.data, userId);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(request.resource.data, userId);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /results/{resultId} {
+        allow get, list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(resultId) && isValidResult(request.resource.data, userId);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(resultId) && isValidResult(request.resource.data, userId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(resultId);
+      }
+
+      match /test_history/{historyId} {
+        allow get, list: if isOwner(userId) && isValidId(userId);
+        allow create, update: if isOwner(userId) && isValidId(userId) && isValidId(historyId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(historyId);
+      }
+    }
+
+    match /public_profiles/{profileId} {
+      allow get, list: if true;
+      allow create, update: if isSignedIn() && request.auth.uid == profileId && isValidId(profileId);
+      allow delete: if isSignedIn() && request.auth.uid == profileId && isValidId(profileId);
+    }
+
+    match /custom_novels/{novelId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+    }
+
+    match /modified_novels/{novelId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+    }
+
+    match /hidden_novels/{novelId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+    }
+
+    match /novel_comments/{commentId} {
+      allow get, list: if true;
+      allow create, update: if true;
+      allow delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+    }
+
+    match /feedback_messages/{messageId} {
+      allow get, list, create: if true;
+      allow update, delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+    }
+
+    match /visitor_sessions/{visitorId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidId(visitorId);
+    }
+
+    match /site_analytics/{docId} {
+      allow get, list: if true;
+      allow create, update: if true;
+      allow delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+    }
+
+    match /site_config/{configId} {
+      allow get, list: if true;
+      allow create, update: if true;
+      allow delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+    }
+  }
+}

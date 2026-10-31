@@ -1,0 +1,6 @@
+{
+  "name": "مرآة القلوب | كاشف شريك الحياة بالذكاء الاصطناعي",
+  "description": "لعبة تفاعلية مدعومة بالذكاء الاصطناعي لتحليل الشخصية وكشف ملامح ومواصفات شريك الحياة الواقعية بحسب الأصل والبلد مع ميزة المشاركة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

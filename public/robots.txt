@@ -1,0 +1,16 @@
+# robots.txt for Googlebot, Google AdSense (Mediapartners-Google) & Web Crawlers
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://ais-pre-uhi2ujsliyan7cdnjqdgni-551936965486.europe-west2.run.app/sitemap.xml
+Sitemap: https://miratalqulub.com/sitemap.xml
