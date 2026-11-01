@@ -101,6 +101,20 @@ export const LegalModal: React.FC<Props> = ({
                 onClick={() => {
                   soundManager.playTap();
                   onClose();
+                  window.location.hash = activeTab === 'privacy' ? '#/privacy' : '#/terms';
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-[11px] font-bold text-slate-300 transition flex items-center gap-1 cursor-pointer"
+                title="عرض الصفحة الكاملة"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
+                <span className="hidden sm:inline">الصفحة الكاملة</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playTap();
+                  onClose();
                 }}
                 className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer"
               >

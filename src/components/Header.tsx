@@ -27,6 +27,7 @@ import {
   MessageCircle,
   BarChart3,
   Mail,
+  FileText,
 } from 'lucide-react';
 import { soundManager } from '../utils/sound';
 import { PWAInstallModal } from './PWAInstallModal';
@@ -54,6 +55,8 @@ interface Props {
   onOpenNovels?: () => void;
   onOpenContactFeedback?: () => void;
   onOpenAnalytics?: () => void;
+  onNavigatePage?: (page: string) => void;
+  currentPage?: string;
 }
 
 export const Header: React.FC<Props> = ({
@@ -75,6 +78,8 @@ export const Header: React.FC<Props> = ({
   onOpenNovels,
   onOpenContactFeedback,
   onOpenAnalytics,
+  onNavigatePage,
+  currentPage = 'home',
 }) => {
   const { user, isOwner } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
@@ -168,10 +173,56 @@ export const Header: React.FC<Props> = ({
             )}
 
             <button
-              onClick={() => handleNavClick(onReset)}
-              className="px-2.5 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition cursor-pointer"
+              onClick={() => {
+                if (onNavigatePage) {
+                  onNavigatePage('home');
+                } else if (onReset) {
+                  onReset();
+                }
+              }}
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${
+                currentPage === 'home'
+                  ? 'bg-rose-500/20 text-white font-bold'
+                  : 'hover:text-white hover:bg-white/5'
+              }`}
             >
               {t('nav_home')}
+            </button>
+
+            {/* About Us */}
+            <button
+              onClick={() => {
+                if (onNavigatePage) {
+                  onNavigatePage('about');
+                } else if (onOpenWebsiteSection) {
+                  onOpenWebsiteSection('about');
+                }
+              }}
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer font-semibold ${
+                currentPage === 'about'
+                  ? 'bg-purple-500/25 text-purple-200 font-bold'
+                  : 'text-purple-300 hover:text-white hover:bg-purple-500/10'
+              }`}
+            >
+              {language === 'ar' ? 'من نحن' : 'About Us'}
+            </button>
+
+            {/* How It Works */}
+            <button
+              onClick={() => {
+                if (onNavigatePage) {
+                  onNavigatePage('how-it-works');
+                } else if (onOpenWebsiteSection) {
+                  onOpenWebsiteSection('how-it-works');
+                }
+              }}
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer font-semibold ${
+                currentPage === 'how-it-works'
+                  ? 'bg-blue-500/25 text-blue-200 font-bold'
+                  : 'text-blue-300 hover:text-white hover:bg-blue-500/10'
+              }`}
+            >
+              {language === 'ar' ? 'كيف يعمل الموقع' : 'How It Works'}
             </button>
 
             {/* Articles Section Trigger (User Request) */}
@@ -194,7 +245,7 @@ export const Header: React.FC<Props> = ({
               </button>
             )}
 
-            {/* The Blind Date (Updated: No "Show", No TV wording) */}
+            {/* The Blind Date */}
             {onOpenBlindDate && (
               <button
                 onClick={() => handleNavClick(onOpenBlindDate)}
@@ -205,16 +256,24 @@ export const Header: React.FC<Props> = ({
               </button>
             )}
 
-            {/* Psychology Assessment Suite */}
-            {onOpenPsychologyTests && (
-              <button
-                onClick={() => handleNavClick(onOpenPsychologyTests)}
-                className="px-2.5 py-1.5 rounded-lg text-purple-300 hover:text-white hover:bg-purple-500/10 transition cursor-pointer flex items-center gap-1"
-              >
-                <span>🧠</span>
-                <span>{language === 'ar' ? 'مقاييس الشخصية' : 'Personality Tests'}</span>
-              </button>
-            )}
+            {/* Personality Assessment Suite */}
+            <button
+              onClick={() => {
+                if (onNavigatePage) {
+                  onNavigatePage('personality-tests');
+                } else if (onOpenPsychologyTests) {
+                  handleNavClick(onOpenPsychologyTests);
+                }
+              }}
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 font-semibold ${
+                currentPage === 'personality-tests'
+                  ? 'bg-purple-500/25 text-purple-200 font-bold'
+                  : 'text-purple-300 hover:text-white hover:bg-purple-500/10'
+              }`}
+            >
+              <span>🧠</span>
+              <span>{language === 'ar' ? 'مقاييس الشخصية (MBTI & Big Five)' : 'Personality (MBTI)'}</span>
+            </button>
 
             {/* Multiple Intelligences Assessment Trigger (User Request) */}
             {onOpenIntelligenceTests && (
@@ -238,26 +297,24 @@ export const Header: React.FC<Props> = ({
               </button>
             )}
 
-            {/* Contact & Feedback Trigger */}
-            {onOpenContactFeedback && (
-              <button
-                onClick={() => handleNavClick(onOpenContactFeedback)}
-                className="px-2.5 py-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-500/10 transition cursor-pointer flex items-center gap-1 font-semibold"
-              >
-                <Mail className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{language === 'ar' ? 'الملاحظات والتواصل' : 'Contact & Feedback'}</span>
-              </button>
-            )}
-
-            {/* Website About / Info */}
-            {onOpenWebsiteSection && (
-              <button
-                onClick={() => handleNavClick(() => onOpenWebsiteSection('about'))}
-                className="px-2 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition cursor-pointer text-gray-400 hover:text-gray-200"
-              >
-                {t('nav_about')}
-              </button>
-            )}
+            {/* Contact Us Page Trigger */}
+            <button
+              onClick={() => {
+                if (onNavigatePage) {
+                  onNavigatePage('contact');
+                } else if (onOpenContactFeedback) {
+                  onOpenContactFeedback();
+                }
+              }}
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 font-semibold ${
+                currentPage === 'contact'
+                  ? 'bg-sky-500/25 text-sky-200 font-bold'
+                  : 'text-sky-300 hover:text-white hover:bg-sky-500/10'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5 text-sky-400" />
+              <span>{language === 'ar' ? 'اتصل بنا' : 'Contact Us'}</span>
+            </button>
           </nav>
 
           {/* Action buttons (Right side) */}
@@ -328,6 +385,21 @@ export const Header: React.FC<Props> = ({
                       <span>مركز النشر والاستضافة وAdSense 👑</span>
                       <span className="text-[9px] text-emerald-400 font-mono">Live 200 OK</span>
                     </div>
+
+                    {onNavigatePage && (
+                      <button
+                        onClick={() => {
+                          handleNavClick(() => onNavigatePage('admin-cms'));
+                        }}
+                        className="w-full p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 flex items-center gap-2 text-xs font-bold transition text-right cursor-pointer border border-rose-500/30"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-rose-400 shrink-0" />
+                        <div>
+                          <div>مركز الإدارة ونظام CMS وتدقيق AdSense 🛡️</div>
+                          <div className="text-[10px] text-rose-300/80 font-normal">إدارة الروايات، تحرير النصوص، وتدقيق 14 معياراً</div>
+                        </div>
+                      </button>
+                    )}
 
                     {onOpenDomainHosting && (
                       <button
@@ -540,16 +612,20 @@ export const Header: React.FC<Props> = ({
                   </button>
                 )}
 
-                {/* Psychology Tests */}
-                {onOpenPsychologyTests && (
-                  <button
-                    onClick={() => handleNavClick(onOpenPsychologyTests)}
-                    className="p-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 font-bold text-purple-200 flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>🧠</span>
-                    <span>{language === 'ar' ? 'مقاييس الشخصية' : 'Personality Tests'}</span>
-                  </button>
-                )}
+                {/* Personality Assessment Suite */}
+                <button
+                  onClick={() => {
+                    if (onNavigatePage) {
+                      handleNavClick(() => onNavigatePage('personality-tests'));
+                    } else if (onOpenPsychologyTests) {
+                      handleNavClick(onOpenPsychologyTests);
+                    }
+                  }}
+                  className="p-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 font-bold text-purple-200 flex items-center gap-2 cursor-pointer"
+                >
+                  <span>🧠</span>
+                  <span>{language === 'ar' ? 'مقاييس الشخصية (MBTI & Big Five)' : 'Personality Tests (MBTI)'}</span>
+                </button>
 
                 {/* Intelligence Tests (User Request) */}
                 {onOpenIntelligenceTests && (
@@ -686,32 +762,63 @@ export const Header: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* Static informational section links */}
-                {onOpenWebsiteSection && (
-                  <>
+                {/* Core Legal & Informational Pages in Mobile Drawer (AdSense & UX requirement) */}
+                <div className="col-span-2 pt-2 border-t border-white/10 space-y-1.5">
+                  <div className="text-[11px] font-bold text-slate-400 px-1">
+                    {language === 'ar' ? 'الصفحات الأساسية والقانونية:' : 'Essential & Legal Pages:'}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-xs">
                     <button
-                      onClick={() => handleNavClick(() => onOpenWebsiteSection('about'))}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-right text-gray-300 flex items-center gap-2 cursor-pointer col-span-2"
+                      onClick={() => {
+                        handleNavClick(() => onNavigatePage && onNavigatePage('about'));
+                      }}
+                      className="p-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-200 font-bold flex items-center gap-1.5 cursor-pointer text-[11px]"
                     >
-                      <Info className="w-3.5 h-3.5 text-rose-400" />
-                      <span>عن المنصة ورؤيتها</span>
+                      <Info className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                      <span>{language === 'ar' ? 'من نحن (About)' : 'About Us'}</span>
                     </button>
+
                     <button
-                      onClick={() => handleNavClick(() => onOpenWebsiteSection('how-it-works'))}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-right text-gray-300 flex items-center gap-2 cursor-pointer"
+                      onClick={() => {
+                        handleNavClick(() => onNavigatePage && onNavigatePage('how-it-works'));
+                      }}
+                      className="p-2 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-200 font-bold flex items-center gap-1.5 cursor-pointer text-[11px]"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                      <span>كيف تعمل الخوارزمية؟</span>
+                      <Sparkles className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      <span>{language === 'ar' ? 'كيف يعمل؟' : 'How It Works'}</span>
                     </button>
+
                     <button
-                      onClick={() => handleNavClick(() => onOpenWebsiteSection('faq'))}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-right text-gray-300 flex items-center gap-2 cursor-pointer"
+                      onClick={() => {
+                        handleNavClick(() => onNavigatePage && onNavigatePage('privacy'));
+                      }}
+                      className="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-200 font-bold flex items-center gap-1.5 cursor-pointer text-[11px]"
                     >
-                      <HelpCircle className="w-3.5 h-3.5 text-blue-400" />
-                      <span>الأسئلة الشائعة (FAQ)</span>
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>{language === 'ar' ? 'الخصوصية' : 'Privacy Policy'}</span>
                     </button>
-                  </>
-                )}
+
+                    <button
+                      onClick={() => {
+                        handleNavClick(() => onNavigatePage && onNavigatePage('terms'));
+                      }}
+                      className="p-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-200 font-bold flex items-center gap-1.5 cursor-pointer text-[11px]"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      <span>{language === 'ar' ? 'الشروط' : 'Terms of Service'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleNavClick(() => onNavigatePage && onNavigatePage('contact'));
+                      }}
+                      className="p-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-200 font-bold flex items-center gap-1.5 cursor-pointer text-[11px] col-span-2"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span>{language === 'ar' ? 'اتصل بنا (Contact Us)' : 'Contact Us'}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}

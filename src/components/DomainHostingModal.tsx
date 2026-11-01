@@ -700,7 +700,7 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                   <span className="text-[11px] text-blue-300 font-semibold">فحص مباشر عبر Google DNS</span>
                 </div>
                 <p className="text-xs text-gray-300 mb-3">
-                  للحصول على قبول سريع ومضمون في <strong>Google AdSense</strong>، يُنصح بشراء دومين رسمي (<code>.com</code> أو <code>.net</code>) وربطه باستضافتك السحابية الحالية:
+                  لتعزيز فرص القبول والموثوقية لدى <strong>Google AdSense</strong>، يُنصح بشراء دومين رسمي (<code>.com</code> أو <code>.net</code>) وربطه باستضافتك السحابية الحالية:
                 </p>
 
                 <form onSubmit={handleCheckDomainAvailability} className="flex flex-col sm:flex-row gap-2 mb-4">

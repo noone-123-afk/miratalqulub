@@ -411,3 +411,47 @@ export async function deleteOwnerNovel(novelId: string): Promise<void> {
 export async function deleteOwnerCustomNovel(novelId: string): Promise<void> {
   return deleteOwnerNovel(novelId);
 }
+
+// Hide a novel from visitors (without deleting)
+export async function hideNovel(novelId: string): Promise<void> {
+  try {
+    const raw = localStorage.getItem(LOCAL_HIDDEN_NOVELS_KEY);
+    const list: string[] = raw ? JSON.parse(raw) : [];
+    if (!list.includes(novelId)) {
+      list.push(novelId);
+      localStorage.setItem(LOCAL_HIDDEN_NOVELS_KEY, JSON.stringify(list));
+    }
+  } catch {
+    // Ignore
+  }
+
+  try {
+    await setDoc(doc(db, 'hidden_novels', novelId), {
+      id: novelId,
+      hidden: true,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch {
+    // Ignore
+  }
+}
+
+// Unhide a novel so visitors can read it again
+export async function unhideNovel(novelId: string): Promise<void> {
+  try {
+    const raw = localStorage.getItem(LOCAL_HIDDEN_NOVELS_KEY);
+    if (raw) {
+      const list: string[] = JSON.parse(raw);
+      const filtered = list.filter((id) => id !== novelId);
+      localStorage.setItem(LOCAL_HIDDEN_NOVELS_KEY, JSON.stringify(filtered));
+    }
+  } catch {
+    // Ignore
+  }
+
+  try {
+    await deleteDoc(doc(db, 'hidden_novels', novelId));
+  } catch {
+    // Ignore
+  }
+}
