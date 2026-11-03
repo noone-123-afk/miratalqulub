@@ -4,6 +4,7 @@ export interface UserProfile {
   userGender: Gender;
   partnerGender: Gender;
   userAge: number;
+  birthYear?: number;
   country: string;
   ethnicity: string;
   educationLevel?: string;
@@ -11,6 +12,10 @@ export interface UserProfile {
   partnerFeaturesPreference?: string;
   userName?: string;
   userBirthDate?: string;
+  coreValuesPriority?: string;
+  communicationAndConflictStyle?: string;
+  financialAndFamilyVision?: string;
+  privacyConsentAccepted?: boolean;
 }
 
 export interface SocioculturalDimension {

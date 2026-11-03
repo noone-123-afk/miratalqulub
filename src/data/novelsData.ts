@@ -2,7 +2,20 @@
 // Written with professional forensic criminology, deductive investigation, high-octane action, speculative sci-fi, and clean secular fiction.
 // Zero theological / takfiri symbols. High-quality vector scene artworks.
 
-export type NovelGenre = 'crime_mystery' | 'tactical_action' | 'sci_fi_future' | 'sci_fantasy';
+import {
+  NOVEL_YASMIN_HOUSE,
+  NOVEL_ANDROID_CIPHER,
+  NOVEL_SHADOWS_NO_TRACE,
+} from './userNovelsData';
+
+export type NovelGenre = 'romance' | 'crime_mystery' | 'tactical_action' | 'sci_fi_future' | 'sci_fantasy';
+
+export interface NovelAppendixItem {
+  titleAr: string;
+  titleEn?: string;
+  contentAr: string;
+  contentEn?: string;
+}
 
 export interface CrimeClue {
   id: string;
@@ -28,12 +41,15 @@ export interface SuspectProfile {
 export interface NovelChapter {
   chapterNumber: number;
   titleAr: string;
+  titleEn?: string;
   estimatedMinutes: number;
   wordsCount: number;
   synopsisAr: string;
+  synopsisEn?: string;
   sceneIllustrationSvg: string;
   illustrationCaptionAr: string;
   contentAr: string;
+  contentEn?: string;
   detectiveNotesAr?: string[];
   investigationClues?: CrimeClue[];
 }
@@ -41,9 +57,12 @@ export interface NovelChapter {
 export interface Novel {
   id: string;
   titleAr: string;
+  titleEn?: string;
   subtitleAr: string;
+  subtitleEn?: string;
   genre: NovelGenre;
   genreLabelAr: string;
+  genreLabelEn?: string;
   genreBadgeColor: string;
   coverIllustrationSvg: string;
   rating: number;
@@ -53,9 +72,19 @@ export interface Novel {
   estimatedReadingTime: string;
   authorPersonaAr: string;
   authorTitleAr: string;
+  timeSettingAr?: string;
+  timeSettingEn?: string;
+  placeSettingAr?: string;
+  placeSettingEn?: string;
   synopsisAr: string;
+  synopsisEn?: string;
   forensicThemeAr: string;
   psychologicalFocusAr: string;
+  appendixTitleAr?: string;
+  appendixTitleEn?: string;
+  appendixItems?: NovelAppendixItem[];
+  authorWordAr?: string;
+  authorWordEn?: string;
   suspectsDossier?: SuspectProfile[];
   chapters: NovelChapter[];
 }
@@ -1093,6 +1122,9 @@ export const NOVEL_SCI_FANTASY: Novel = {
 
 // All Novels Catalog Array
 export const NOVELS_CATALOG: Novel[] = [
+  NOVEL_YASMIN_HOUSE,
+  NOVEL_ANDROID_CIPHER,
+  NOVEL_SHADOWS_NO_TRACE,
   NOVEL_CRIME_104,
   NOVEL_TACTICAL_ACTION,
   NOVEL_SCI_FI_FUTURE,

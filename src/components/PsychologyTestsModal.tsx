@@ -40,8 +40,15 @@ import {
 } from '../data/psychologySuiteData';
 import { soundManager } from '../utils/sound';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useAppTheme } from '../utils/theme';
 import { saveUserPsychologyReport } from '../services/userHistoryService';
 import { exportPsychometricReportAsPDF } from '../utils/pdfReportGenerator';
+import {
+  PsychometricAcademicIntro,
+  PsychometricAcademicConclusion,
+  ScientificClinicalDisclaimerBanner,
+} from './PsychometricAcademicFraming';
 
 interface Props {
   isOpen: boolean;
@@ -71,6 +78,10 @@ export const PsychologyTestsModal: React.FC<Props> = ({
   onOpenDashboard,
 }) => {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const { theme } = useAppTheme();
+  const isAr = language === 'ar';
+  const isLight = theme === 'light';
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<AssessmentCategory | 'all'>('all');
   const [selectedTest, setSelectedTest] = useState<AssessmentType | null>(initialTestId);
@@ -646,12 +657,21 @@ export const PsychologyTestsModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div
+      dir={isAr ? 'rtl' : 'ltr'}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 backdrop-blur-md overflow-y-auto ${
+        isAr ? 'text-right' : 'text-left'
+      } ${isLight ? 'bg-slate-900/60' : 'bg-black/85'}`}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="glass-panel w-full max-w-4xl rounded-3xl p-5 sm:p-7 border border-white/20 shadow-2xl relative my-auto text-right max-h-[93vh] flex flex-col overflow-hidden"
+        className={`glass-panel w-full max-w-4xl rounded-3xl p-5 sm:p-7 border shadow-2xl relative my-auto max-h-[93vh] flex flex-col overflow-hidden ${
+          isLight
+            ? 'bg-slate-900 border-purple-400/40 text-white'
+            : 'border-white/20 text-white'
+        }`}
       >
         {/* Top Header */}
         <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-white/10 shrink-0">
@@ -664,14 +684,20 @@ export const PsychologyTestsModal: React.FC<Props> = ({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-extrabold text-base sm:text-xl text-white font-['Alexandria']">
-                  قسم مقاييس وتحليل الشخصية العلمي المعتمد
+                  {isAr
+                    ? 'قسم مقاييس وتحليل الشخصية الاستكشافي والتثقيفي'
+                    : 'Exploratory & Educational Personality Scales Suite'}
                 </h2>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  صدق وثبات إحصائي + PDF مفعل 🔬
+                  {isAr
+                    ? 'أدوات استكشافية للوعي الذاتي + PDF مفعل 🔬'
+                    : 'Exploratory Self-Discovery + PDF Export 🔬'}
                 </span>
               </div>
               <p className="text-xs text-gray-300">
-                8 مقاييس عالمية معتمدة (193 سؤالاً محكماً) مع تقارير Sten وPDF حقيقية قابلة للتحميل الفوري
+                {isAr
+                  ? '8 مقاييس عالمية استكشافية (193 سؤالاً محكماً) مع تقارير Sten وPDF حقيقية قابلة للتحميل الفوري'
+                  : '8 Validated Exploratory Scales (193 Items) with Sten Scores & Instant PDF Reports'}
               </p>
             </div>
           </div>
@@ -693,6 +719,12 @@ export const PsychologyTestsModal: React.FC<Props> = ({
             ref={scrollContainerRef}
             className="flex-1 overflow-y-auto pr-1 space-y-4 custom-scrollbar"
           >
+            {/* Clinical & Scientific Exploratory Disclaimer Notice */}
+            <ScientificClinicalDisclaimerBanner testType="personality" />
+
+            {/* Permanent Top Academic Introduction (AR/EN + Dark/Light Mode) */}
+            <PsychometricAcademicIntro variant="modal" focusScope="personality" />
+
             {/* Top Explanatory & Scientific Disclaimer Banner */}
             <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-500/40 text-xs text-purple-200 space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -799,7 +831,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                🧠 علم النفس والطب النفسي
+                {isAr
+                  ? '🧠 سمات الشخصية والاتزان (استكشافية)'
+                  : '🧠 Personality Traits & Balance (Exploratory)'}
               </button>
               <button
                 onClick={() => {
@@ -920,6 +954,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                 );
               })}
             </div>
+
+            {/* Permanent Bottom Academic Conclusion & APA References */}
+            <PsychometricAcademicConclusion variant="modal" />
           </div>
         )}
 
@@ -930,6 +967,14 @@ export const PsychologyTestsModal: React.FC<Props> = ({
             className="flex-1 overflow-y-auto pr-1 flex flex-col justify-between custom-scrollbar"
           >
             <div>
+              {/* Clinical & Scientific Disclaimer at the start of the active test */}
+              <ScientificClinicalDisclaimerBanner
+                testType="personality"
+                testTitleAr={ASSESSMENTS_CATALOG.find((c) => c.id === selectedTest)?.titleAr}
+                testTitleEn={ASSESSMENTS_CATALOG.find((c) => c.id === selectedTest)?.titleEn}
+                compact
+              />
+
               {/* Top Progress, View Mode Switcher & Back */}
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3 text-xs">
                 <button
@@ -1886,6 +1931,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                 </motion.button>
               )}
             </div>
+
+            {/* Permanent Bottom Academic Conclusion & APA References */}
+            <PsychometricAcademicConclusion variant="modal" />
           </div>
         )}
       </motion.div>

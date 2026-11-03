@@ -808,3 +808,67 @@ export async function deleteUnifiedTestRecord(
     );
   } catch {}
 }
+
+/**
+ * Permanently deletes all local and cloud psychometric, intelligence, compatibility, and profile data for the user
+ */
+export async function purgeAllUserDataPermanently(user?: User | null): Promise<void> {
+  const visitorId = getOrCreateVisitorId();
+  const ownerId = getEffectiveOwnerId(user);
+
+  // 1. Delete from Firestore visitor_sessions
+  try {
+    await deleteDoc(doc(db, 'visitor_sessions', visitorId));
+  } catch {}
+
+  // 2. If authenticated user, delete user document and known subcollection records
+  if (user?.uid) {
+    try {
+      const historySnap = await getDocs(collection(db, 'users', user.uid, 'test_history'));
+      for (const d of historySnap.docs) {
+        await deleteDoc(d.ref);
+      }
+    } catch {}
+    try {
+      const savedSnap = await getDocs(collection(db, 'users', user.uid, 'saved_results'));
+      for (const d of savedSnap.docs) {
+        await deleteDoc(d.ref);
+      }
+    } catch {}
+    try {
+      const psychSnap = await getDocs(collection(db, 'users', user.uid, 'psychology_reports'));
+      for (const d of psychSnap.docs) {
+        await deleteDoc(d.ref);
+      }
+    } catch {}
+    try {
+      await deleteDoc(doc(db, 'users', user.uid));
+    } catch {}
+  }
+
+  // 3. Purge all app keys from localStorage (preserving only theme & language preference)
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (
+        k &&
+        (k.startsWith('mirat_') ||
+          k.startsWith('offline_') ||
+          k.includes('intelligence') ||
+          k.includes('psych') ||
+          k.includes(ownerId) ||
+          k.includes(visitorId)) &&
+        k !== 'mirat_al_quloob_theme' &&
+        k !== 'mirat_language'
+      ) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+    localStorage.removeItem(VISITOR_PROFILE_STORAGE_KEY);
+    localStorage.removeItem(VISITOR_LATEST_RESULT_KEY);
+    localStorage.removeItem(VISITOR_ID_STORAGE_KEY);
+  } catch {}
+}
+

@@ -29,6 +29,16 @@ interface Props {
 
 // Preset vector covers for custom novels
 const COVER_PRESETS: Record<NovelGenre, string> = {
+  romance: `
+    <svg viewBox="0 0 400 560" className="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="560" fill="#06281e"/>
+      <circle cx="200" cy="230" r="90" fill="#10b981" opacity="0.25"/>
+      <rect x="30" y="475" width="340" height="38" rx="8" fill="#064e3b" stroke="#34d399" stroke-width="1.5"/>
+      <text x="200" y="500" font-family="sans-serif" font-size="13" font-weight="900" fill="#ecfdf5" text-anchor="middle">
+        ROMANCE &amp; HERITAGE • روايات رومانسية واجتماعية
+      </text>
+    </svg>
+  `,
   crime_mystery: `
     <svg viewBox="0 0 400 560" className="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -417,6 +427,7 @@ export const AddNovelModal: React.FC<Props> = ({
     const totalMinutes = Math.max(3, Math.round(totalWords / 130));
 
     const genreLabels: Record<NovelGenre, { label: string; color: string }> = {
+      romance: { label: 'روايات رومانسية واجتماعية', color: '#10b981' },
       crime_mystery: { label: 'غموض وجرائم جنائية', color: '#ef4444' },
       tactical_action: { label: 'أكشن ومطاردات تكتيكية', color: '#f97316' },
       sci_fi_future: { label: 'خيال علمي وتطوير ومستقبل', color: '#06b6d4' },

@@ -40,12 +40,19 @@ import { IntelligenceRadarChart } from './IntelligenceRadarChart';
 import { ViralShareModal } from './ViralShareModal';
 import { soundManager } from '../utils/sound';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useAppTheme } from '../utils/theme';
 import { db, doc, setDoc } from '../firebase';
 import { saveUnifiedTestRecord } from '../services/userHistoryService';
 import {
   exportPsychometricReportAsPDF,
   generateExecutiveSummary,
 } from '../utils/pdfReportGenerator';
+import {
+  PsychometricAcademicIntro,
+  PsychometricAcademicConclusion,
+  ScientificClinicalDisclaimerBanner,
+} from './PsychometricAcademicFraming';
 
 interface Props {
   isOpen: boolean;
@@ -67,6 +74,10 @@ export const IntelligenceTestModal: React.FC<Props> = ({
   onSaveResultToProfile,
 }) => {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const { theme } = useAppTheme();
+  const isAr = language === 'ar';
+  const isLight = theme === 'light';
   const questionScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Test setup
@@ -973,12 +984,21 @@ export const IntelligenceTestModal: React.FC<Props> = ({
       : '';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md overflow-hidden text-right">
+    <div
+      dir={isAr ? 'rtl' : 'ltr'}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-md overflow-hidden ${
+        isAr ? 'text-right' : 'text-left'
+      } ${isLight ? 'bg-slate-900/60' : 'bg-black/90'}`}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 15 }}
-        className="w-full max-w-5xl h-[95vh] max-h-[920px] bg-slate-950 border border-purple-500/30 rounded-3xl overflow-hidden shadow-2xl flex flex-col relative"
+        className={`w-full max-w-5xl h-[95vh] max-h-[920px] border rounded-3xl overflow-hidden shadow-2xl flex flex-col relative ${
+          isLight
+            ? 'bg-slate-900 border-purple-400/40 text-white'
+            : 'bg-slate-950 border-purple-500/30 text-white'
+        }`}
       >
         {/* ================= MODAL HEADER ================= */}
         <div className="p-3.5 sm:p-4 bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 border-b border-white/10 flex items-center justify-between shrink-0">
@@ -991,14 +1011,18 @@ export const IntelligenceTestModal: React.FC<Props> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-sm sm:text-base text-white font-['Alexandria']">
-                  مختبر مقاييس الذكاء والقدرات المعرفية المعتمد
+                  {isAr
+                    ? 'مختبر مقاييس الذكاء والقدرات المعرفية الاستكشافي'
+                    : 'Exploratory Cognitive & Intelligence Batteries Lab'}
                 </h2>
                 <span className="hidden sm:inline text-[11px] text-purple-300">
                   Gardner • Raven • WAIS • Bar-On • MSCEIT • CogAT
                 </span>
               </div>
               <p className="text-[11px] text-gray-300">
-                4 بطاريات علمية عالمية (135 سؤالاً محكماً: 30 إلى 45 سؤالاً لكل اختبار) مع تحميل PDF مباشر
+                {isAr
+                  ? '4 بطاريات علمية استكشافية (135 سؤالاً محكماً: 30 إلى 45 سؤالاً لكل اختبار) مع تحميل PDF مباشر'
+                  : '4 Exploratory Scientific Batteries (135 Validated Items) with Instant PDF Export'}
               </p>
             </div>
           </div>
@@ -1023,6 +1047,12 @@ export const IntelligenceTestModal: React.FC<Props> = ({
         {/* ================= STAGE 1: WELCOME & BATTERY SELECTION ================= */}
         {step === 'welcome' && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-6 custom-scrollbar max-w-5xl mx-auto w-full">
+            {/* Clinical & Scientific Disclaimer at the start of the Intelligence Lab */}
+            <ScientificClinicalDisclaimerBanner testType="intelligence" />
+
+            {/* Permanent Top Academic Introduction (AR/EN + Dark/Light Mode) */}
+            <PsychometricAcademicIntro variant="modal" focusScope="intelligence" />
+
             {/* Hero Card */}
             <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-950/70 via-slate-900 to-indigo-950/70 border border-purple-500/30 space-y-3 shadow-xl">
               <div className="flex items-center gap-2 text-xs font-bold text-purple-300">
@@ -1207,6 +1237,9 @@ export const IntelligenceTestModal: React.FC<Props> = ({
                 })}
               </div>
             </div>
+
+            {/* Permanent Bottom Academic Conclusion & APA References */}
+            <PsychometricAcademicConclusion variant="modal" />
           </div>
         )}
 
@@ -1218,8 +1251,14 @@ export const IntelligenceTestModal: React.FC<Props> = ({
               className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition cursor-pointer"
             >
               <ArrowRight className="w-4 h-4" />
-              <span>العودة لقائمة البطاريات الأربع</span>
+              <span>{isAr ? 'العودة لقائمة البطاريات الأربع' : 'Back to All 4 Batteries'}</span>
             </button>
+
+            <ScientificClinicalDisclaimerBanner
+              testType="intelligence"
+              testTitleAr={currentBatteryMeta.titleAr}
+              testTitleEn={currentBatteryMeta.scientificScaleName}
+            />
 
             <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-purple-950/50 to-slate-900 border border-purple-500/40 space-y-4 shadow-2xl">
               <div className="flex items-center justify-between text-xs text-purple-300">
@@ -1444,6 +1483,12 @@ export const IntelligenceTestModal: React.FC<Props> = ({
               ref={questionScrollRef}
               className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar max-w-4xl mx-auto w-full"
             >
+              <ScientificClinicalDisclaimerBanner
+                testType="intelligence"
+                testTitleAr={currentBatteryMeta.titleAr}
+                testTitleEn={currentBatteryMeta.scientificScaleName}
+                compact
+              />
               {isMultipleIntelligences
                 ? currentMIQuestionsPage.map((question, qIdx) => {
                     const questionGlobalIdx = safeCurrentPage * questionsPerPage + qIdx + 1;
@@ -2185,6 +2230,9 @@ export const IntelligenceTestModal: React.FC<Props> = ({
                 )}
               </div>
             )}
+
+            {/* Permanent Bottom Academic Conclusion & APA References */}
+            <PsychometricAcademicConclusion variant="modal" />
           </div>
         )}
 

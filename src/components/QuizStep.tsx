@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { QuizQuestion } from '../types';
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppTheme } from '../utils/theme';
+import { ScientificClinicalDisclaimerBanner } from './PsychometricAcademicFraming';
 import {
   ArrowRight,
   Sparkles,
@@ -120,6 +122,9 @@ const PARTNER_QUIZ_AUTOSAVE_KEY = 'mirat_partner_quiz_autosave_v2';
 
 export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfile }) => {
   const { direction, language } = useLanguage();
+  const [theme] = useAppTheme();
+  const isAr = language === 'ar';
+  const isLight = theme === 'light';
   const [currentIndex, setCurrentIndex] = useState<number>(() => {
     try {
       const saved = localStorage.getItem(PARTNER_QUIZ_AUTOSAVE_KEY);
@@ -217,43 +222,84 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto px-4 py-4 text-white" dir={direction}>
+    <div
+      className={`w-full max-w-xl mx-auto px-4 py-4 ${
+        isLight ? 'text-slate-900' : 'text-white'
+      }`}
+      dir={direction}
+    >
+      {/* Clinical & Scientific Disclaimer at the beginning of the Compatibility Quiz */}
+      <ScientificClinicalDisclaimerBanner
+        testType="compatibility"
+        testTitleAr="اختبار التوافق النفسي والقيمي للشريك"
+        testTitleEn="Partner Psychological & Values Compatibility Quiz"
+        compact
+      />
+
       {/* Top Progress & Navigation */}
       <div className="mb-6 space-y-2">
-        <div className="flex items-center justify-between text-xs text-gray-300">
+        <div
+          className={`flex items-center justify-between text-xs ${
+            isLight ? 'text-slate-600' : 'text-gray-300'
+          }`}
+        >
           <div className="flex items-center gap-1.5">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handlePrevious}
-              className="flex items-center gap-1 hover:text-rose-400 transition cursor-pointer py-1 px-2.5 rounded-lg bg-white/5 border border-white/10"
+              className={`flex items-center gap-1 hover:text-rose-500 transition cursor-pointer py-1 px-2.5 rounded-lg border ${
+                isLight
+                  ? 'bg-white border-slate-200 text-slate-700'
+                  : 'bg-white/5 border-white/10 text-gray-200'
+              }`}
             >
               <ArrowRight className={`w-3.5 h-3.5 ${direction === 'ltr' ? 'rotate-180' : ''}`} />
-              <span>{language === 'ar' ? 'السابق' : 'Previous'}</span>
+              <span>{isAr ? 'السابق' : 'Previous'}</span>
             </motion.button>
             {Object.keys(answers).length > 0 && (
               <button
                 type="button"
                 onClick={handleResetQuiz}
-                className="py-1 px-2 rounded-lg bg-white/5 hover:bg-rose-500/20 text-gray-400 hover:text-rose-300 border border-white/10 text-[10px] transition cursor-pointer"
+                className={`py-1 px-2 rounded-lg border text-[10px] transition cursor-pointer ${
+                  isLight
+                    ? 'bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border-slate-200'
+                    : 'bg-white/5 hover:bg-rose-500/20 text-gray-400 hover:text-rose-300 border-white/10'
+                }`}
               >
-                {language === 'ar' ? 'إعادة من الأول' : 'Reset'}
+                {isAr ? 'إعادة من الأول' : 'Reset'}
               </button>
             )}
           </div>
-          <span className="font-bold text-rose-300 font-['Alexandria',sans-serif]">
-            {language === 'ar'
+          <span
+            className={`font-bold font-['Alexandria',sans-serif] ${
+              isLight ? 'text-rose-600' : 'text-rose-300'
+            }`}
+          >
+            {isAr
               ? `السؤال ${currentIndex + 1} من ${questions.length}`
               : `Question ${currentIndex + 1} of ${questions.length}`}
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-emerald-400 hidden sm:inline">● حفظ تلقائي</span>
-            <span className="font-semibold text-gray-400">{progressPercent}%</span>
+            <span
+              className={`text-[10px] hidden sm:inline ${
+                isLight ? 'text-emerald-600 font-bold' : 'text-emerald-400'
+              }`}
+            >
+              {isAr ? '● حفظ تلقائي' : '● Auto-saved'}
+            </span>
+            <span className={`font-semibold ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
+              {progressPercent}%
+            </span>
           </div>
         </div>
 
         {/* Animated Progress Bar */}
-        <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+        <div
+          className={`w-full h-2 rounded-full overflow-hidden ${
+            isLight ? 'bg-slate-200' : 'bg-white/10'
+          }`}
+        >
           <motion.div
             className="h-full bg-gradient-to-l from-rose-500 via-pink-500 to-violet-500 rounded-full"
             initial={{ width: 0 }}
@@ -274,21 +320,45 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
           className="space-y-4"
         >
           {/* Question Card */}
-          <div className="glass-panel-glow p-6 rounded-3xl border border-white/15">
+          <div
+            className={`p-6 rounded-3xl border ${
+              isLight
+                ? 'bg-white border-slate-200 shadow-lg'
+                : 'glass-panel-glow border-white/15'
+            }`}
+          >
             <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-500/30">
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                  isLight
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                }`}
+              >
                 <Sparkles className="w-3.5 h-3.5 text-rose-400" />
                 <span>{currentQ.category}</span>
               </div>
-              <span className="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                  isLight
+                    ? 'bg-slate-100 text-slate-600 border-slate-200'
+                    : 'text-gray-400 bg-white/5 border-white/10'
+                }`}
+              >
                 {currentQ.scientificDimension}
               </span>
             </div>
 
-            <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-snug mb-2 font-['Alexandria']">
+            <h3
+              className={`text-xl sm:text-2xl font-extrabold leading-snug mb-2 font-['Alexandria'] ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}
+            >
               {currentQ.title}
             </h3>
-            <p className="text-gray-300 text-xs sm:text-sm">{currentQ.subtitle}</p>
+            <p className={`text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-gray-300'}`}>
+              {currentQ.subtitle}
+            </p>
           </div>
 
           {/* Options List */}
@@ -309,9 +379,13 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
                   whileTap={{ scale: 0.985 }}
                   type="button"
                   onClick={() => handleSelectOption(option.id)}
-                  className={`w-full p-4 rounded-2xl border text-right transition-colors duration-200 flex items-start gap-3.5 cursor-pointer ${
+                  className={`w-full p-4 rounded-2xl border text-start transition-colors duration-200 flex items-start gap-3.5 cursor-pointer ${
                     isChosen
-                      ? 'bg-gradient-to-l from-rose-500/30 to-violet-600/30 border-rose-400 shadow-lg shadow-rose-500/25 text-white'
+                      ? isLight
+                        ? 'bg-rose-50 border-rose-400 shadow-md text-slate-900'
+                        : 'bg-gradient-to-l from-rose-500/30 to-violet-600/30 border-rose-400 shadow-lg shadow-rose-500/25 text-white'
+                      : isLight
+                      ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 hover:border-rose-300 shadow-sm'
                       : 'bg-[#15102a]/80 hover:bg-[#1a1435] border-white/10 text-gray-200 hover:border-white/20'
                   }`}
                 >
@@ -319,6 +393,8 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
                     className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center transition-transform ${
                       isChosen
                         ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 scale-105'
+                        : isLight
+                        ? 'bg-slate-100 text-slate-600'
                         : 'bg-white/10 text-gray-300'
                     }`}
                   >
@@ -326,10 +402,18 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm sm:text-base leading-snug mb-1 text-white">
+                    <div
+                      className={`font-bold text-sm sm:text-base leading-snug mb-1 ${
+                        isLight ? 'text-slate-900' : 'text-white'
+                      }`}
+                    >
                       {option.text}
                     </div>
-                    <div className="text-xs text-gray-400 leading-relaxed">
+                    <div
+                      className={`text-xs leading-relaxed ${
+                        isLight ? 'text-slate-600' : 'text-gray-400'
+                      }`}
+                    >
                       {option.description}
                     </div>
                   </div>
@@ -341,8 +425,10 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
       </AnimatePresence>
 
       {/* Footer Hint */}
-      <p className="text-center text-xs text-gray-400 mt-6">
-        اختر الإجابة الأقرب لعفويتك وطبيعتك لتكون النتيجة أكثر دقة وواقعية ✨
+      <p className={`text-center text-xs mt-6 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+        {isAr
+          ? 'اختر الإجابة الأقرب لعفويتك وطبيعتك لتكون النتيجة الاستكشافية أكثر دقة وواقعية ✨'
+          : 'Choose the answer closest to your natural behavior for a more accurate exploratory result ✨'}
       </p>
     </div>
   );

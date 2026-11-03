@@ -249,10 +249,11 @@ export const NovelsSectionModal: React.FC<Props> = ({
   // Genre Filters List
   const genresList: { key: 'all' | NovelGenre; labelAr: string; icon: string }[] = [
     { key: 'all', labelAr: 'جميع الروايات', icon: '✨' },
-    { key: 'crime_mystery', labelAr: 'غموض وجرائم جنائية', icon: '🔍' },
-    { key: 'tactical_action', labelAr: 'أكشن ومطاردات تكتيكية', icon: '🎯' },
-    { key: 'sci_fi_future', labelAr: 'خيال علمي وتطوير ومستقبل', icon: '🚀' },
-    { key: 'sci_fantasy', labelAr: 'أكشن وخيال إبداعي', icon: '⚔️' },
+    { key: 'romance', labelAr: 'روايات رومانسية واجتماعية', icon: '🌸' },
+    { key: 'crime_mystery', labelAr: 'روايات التحقيقات الجنائية', icon: '🔍' },
+    { key: 'sci_fi_future', labelAr: 'روايات خيال علمي وتكنولوجيا', icon: '🚀' },
+    { key: 'tactical_action', labelAr: 'روايات أكشن ومطاردات تكتيكية', icon: '🎯' },
+    { key: 'sci_fantasy', labelAr: 'خيال علمي وفانتازيا', icon: '⚔️' },
   ];
 
   const filteredNovels = novelsList.filter((nov) => {
