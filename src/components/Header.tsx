@@ -107,7 +107,9 @@ export const Header: React.FC<Props> = ({
   const handleOpenArticles = () => {
     soundManager.playTap();
     setMobileMenuOpen(false);
-    if (onOpenArticles) {
+    if (onNavigatePage) {
+      onNavigatePage('articles');
+    } else if (onOpenArticles) {
       onOpenArticles();
     } else if (onOpenWebsiteSection) {
       onOpenWebsiteSection('articles');
@@ -225,13 +227,17 @@ export const Header: React.FC<Props> = ({
               {language === 'ar' ? 'كيف يعمل الموقع' : 'How It Works'}
             </button>
 
-            {/* Articles Section Trigger (User Request) */}
+            {/* Articles & Academic Research Section Trigger */}
             <button
               onClick={handleOpenArticles}
-              className="px-2.5 py-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-500/10 transition cursor-pointer flex items-center gap-1.5 font-bold"
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 font-bold ${
+                currentPage === 'articles'
+                  ? 'bg-emerald-500/25 text-emerald-200 font-extrabold border border-emerald-400/40'
+                  : 'text-emerald-300 hover:text-white hover:bg-emerald-500/10'
+              }`}
             >
               <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{language === 'ar' ? 'المقالات' : 'Articles'}</span>
+              <span>{language === 'ar' ? 'المقالات والأبحاث' : 'Articles & Research'}</span>
             </button>
 
             {/* Suspense & Mystery Novels Trigger (User Request) */}

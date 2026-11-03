@@ -55,6 +55,7 @@ import { NovelDetailPage } from './pages/NovelDetailPage';
 import { ChapterReaderPage } from './pages/ChapterReaderPage';
 import { AdminCMSPage } from './pages/AdminCMSPage';
 import { PersonalityTestsPage } from './pages/PersonalityTestsPage';
+import { ArticlesEncyclopediaPage } from './pages/ArticlesEncyclopediaPage';
 
 export type SitePage =
   | 'home'
@@ -70,7 +71,8 @@ export type SitePage =
   | 'novel-detail'
   | 'chapter-reader'
   | 'admin-cms'
-  | 'personality-tests';
+  | 'personality-tests'
+  | 'articles';
 type AppStep = 'profile' | 'quiz' | 'analyzing' | 'result';
 
 // Smooth springy page variants for step transitions
@@ -160,6 +162,8 @@ function AppContent() {
         setCurrentPage('disclaimer');
       } else if (section === 'admin' || section === 'admin-cms') {
         setCurrentPage('admin-cms');
+      } else if (section === 'articles' || section === 'research') {
+        setCurrentPage('articles');
       } else if (
         section === 'personality-tests' ||
         section === 'personality' ||
@@ -204,6 +208,7 @@ function AppContent() {
       'novels',
       'admin-cms',
       'personality-tests',
+      'articles',
     ];
 
     if (validPages.includes(page as SitePage)) {
@@ -710,6 +715,13 @@ function AppContent() {
           />
         )}
 
+        {currentPage === 'articles' && (
+          <ArticlesEncyclopediaPage
+            onBackToHome={() => handleNavigatePage('home')}
+            onNavigatePage={handleNavigatePage}
+          />
+        )}
+
         {currentPage === 'home' && (
           <AnimatePresence mode="wait">
             {step === 'profile' && (
@@ -835,6 +847,7 @@ function AppContent() {
       <ArticlesSectionModal
         isOpen={isArticlesModalOpen}
         onClose={() => setIsArticlesModalOpen(false)}
+        onOpenStandalonePage={() => handleNavigatePage('articles')}
       />
 
       {/* Suspense, Crime, Action & Sci-Fi Novels Modal */}
