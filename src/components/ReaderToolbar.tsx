@@ -8,6 +8,7 @@ import {
   Layers,
   Copy,
   RotateCcw,
+  Maximize2,
 } from 'lucide-react';
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
@@ -27,6 +28,7 @@ interface ReaderToolbarProps {
   viewMode?: ContinuousViewMode;
   onChangeViewMode?: (mode: ContinuousViewMode) => void;
   onJumpToContinuous?: () => void;
+  onOpenFullScreen?: () => void;
   contentTypeLabelAr?: string;
   contentTypeLabelEn?: string;
 }
@@ -43,6 +45,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
   viewMode = 'segmented_and_continuous',
   onChangeViewMode,
   onJumpToContinuous,
+  onOpenFullScreen,
   contentTypeLabelAr = 'البحث / القصة',
   contentTypeLabelEn = 'Paper / Story',
 }) => {
@@ -154,16 +157,16 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
           )}
         </div>
 
-        {/* Font Size, Dark/Light Mode, and Social Share Controls */}
+        {/* Font Size, Dark/Light Mode, Full-Screen, and Social Share Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Font Size Controller */}
           <div
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-xl border ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border ${
               isLight ? 'bg-slate-100 border-slate-200' : 'bg-black/40 border-white/15'
             }`}
             title={isAr ? 'التحكم في حجم الخط' : 'Font Size Control'}
           >
-            <span className="text-[11px] font-bold px-1 opacity-75 hidden sm:inline">
+            <span className="text-[11px] font-bold px-0.5 opacity-75 hidden sm:inline">
               {isAr ? 'حجم الخط:' : 'Font:'}
             </span>
             <button
@@ -179,14 +182,24 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
             >
               A-
             </button>
-            <span className="text-[11px] font-mono font-bold px-1.5 text-indigo-600 dark:text-cyan-300">
+            <input
+              type="range"
+              min={13}
+              max={28}
+              step={1}
+              value={fontSize}
+              onChange={(e) => onChangeFontSize(Number(e.target.value))}
+              className="w-16 sm:w-20 accent-indigo-600 cursor-pointer hidden md:inline-block"
+              aria-label={isAr ? 'شريط التحكم بحجم الخط' : 'Font Size Slider'}
+            />
+            <span className="text-[11px] font-mono tabular-nums font-bold px-1 text-indigo-600 dark:text-cyan-300">
               {pct}%
             </span>
             <button
               type="button"
               onClick={() => {
                 soundManager.playTap();
-                onChangeFontSize(Math.min(26, fontSize + 2));
+                onChangeFontSize(Math.min(28, fontSize + 2));
               }}
               className={`px-2 py-0.5 rounded-lg text-xs font-black transition cursor-pointer ${
                 isLight ? 'hover:bg-white text-slate-800' : 'hover:bg-white/15 text-white'
@@ -195,12 +208,12 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
             >
               A+
             </button>
-            {fontSize !== 16 && (
+            {fontSize !== 17 && (
               <button
                 type="button"
                 onClick={() => {
                   soundManager.playTap();
-                  onChangeFontSize(16);
+                  onChangeFontSize(17);
                 }}
                 className="p-1 rounded-lg opacity-70 hover:opacity-100 cursor-pointer"
                 title={isAr ? 'إعادة ضبط حجم الخط' : 'Reset Font Size'}
@@ -235,6 +248,21 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
                 : 'Light Mode'}
             </span>
           </button>
+
+          {/* Optional Open in Full-Screen Reader Button */}
+          {onOpenFullScreen && (
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playTap();
+                onOpenFullScreen();
+              }}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span>{isAr ? 'ملء الشاشة' : 'Full Screen'}</span>
+            </button>
+          )}
 
           {/* Social Media Share Toggle Button */}
           <button

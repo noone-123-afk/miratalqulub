@@ -21,6 +21,10 @@ import {
   getFullContinuousAcademicText,
 } from '../data/academicPapersData';
 import {
+  Article,
+  getFullContinuousNarrativeText,
+} from '../data/articlesData';
+import {
   FormattedContinuousManuscript,
   ContinuousViewMode,
 } from './ReaderToolbar';
@@ -32,10 +36,12 @@ import { soundManager } from '../utils/sound';
 export interface ResearchArticleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** The full continuous research study text content passed as a prop */
+  /** The full continuous research study or article text content passed as a prop */
   content?: string;
   /** Optional structured AcademicPaper object for metadata, sections, and APA references */
   paper?: AcademicPaper | null;
+  /** Optional structured Clinical Narrative Article object */
+  article?: Article | null;
   /** Optional custom title override */
   title?: string;
   /** Optional custom abstract/summary override */
@@ -48,6 +54,7 @@ export const ResearchArticleModal: React.FC<ResearchArticleModalProps> = ({
   onClose,
   content,
   paper,
+  article,
   title,
   abstract,
   initialViewMode = 'continuous_only',
@@ -64,7 +71,7 @@ export const ResearchArticleModal: React.FC<ResearchArticleModalProps> = ({
 
   useEffect(() => {
     setViewMode(initialViewMode);
-  }, [initialViewMode, paper?.id, content]);
+  }, [initialViewMode, paper?.id, article?.id, content]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -77,16 +84,48 @@ export const ResearchArticleModal: React.FC<ResearchArticleModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || (!paper && !content)) return null;
+  if (!isOpen || (!paper && !article && !content)) return null;
 
   const displayTitle =
     title ||
-    (paper ? (isAr ? paper.titleAr : paper.titleEn) : isAr ? 'دراسة بحثية محكّمة' : 'Peer-Reviewed Research Study');
-  const secondaryTitle = paper ? (isAr ? paper.titleEn : paper.titleAr) : '';
+    (paper
+      ? isAr
+        ? paper.titleAr
+        : paper.titleEn
+      : article
+      ? isAr
+        ? article.title
+        : article.titleEn
+      : isAr
+      ? 'دراسة بحثية / مقال علمي'
+      : 'Research Study / Clinical Article');
+  const secondaryTitle = paper
+    ? isAr
+      ? paper.titleEn
+      : paper.titleAr
+    : article
+    ? isAr
+      ? article.titleEn
+      : article.title
+    : '';
   const displayAbstract =
-    abstract || (paper ? (isAr ? paper.abstractAr : paper.abstractEn) : content?.slice(0, 320) || '');
+    abstract ||
+    (paper
+      ? isAr
+        ? paper.abstractAr
+        : paper.abstractEn
+      : article
+      ? isAr
+        ? article.summary
+        : article.summaryEn
+      : content?.slice(0, 320) || '');
   const fullStudyContent =
-    content || (paper ? getFullContinuousAcademicText(paper, language) : '');
+    content ||
+    (paper
+      ? getFullContinuousAcademicText(paper, language)
+      : article
+      ? getFullContinuousNarrativeText(article, language)
+      : '');
   const fontScalePercent = Math.round((fontSize / 16) * 100);
 
   const handleCopyFullManuscript = () => {

@@ -2004,6 +2004,7 @@ wss.on('connection', (ws: WebSocket) => {
 // Vite integration / Static serving
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
+    app.use('/src/assets', express.static(path.resolve('src/assets')));
     app.use(express.static(path.resolve('dist')));
     app.get('*', (_req: Request, res: Response) => {
       res.sendFile(path.resolve('dist', 'index.html'));

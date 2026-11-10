@@ -75,6 +75,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
   const [activeNarrative, setActiveNarrative] = useState<Article | null>(null);
   const [activeAcademic, setActiveAcademic] = useState<AcademicPaper | null>(null);
   const [fullScreenPaper, setFullScreenPaper] = useState<AcademicPaper | null>(null);
+  const [fullScreenArticle, setFullScreenArticle] = useState<Article | null>(null);
   const [copiedShare, setCopiedShare] = useState(false);
   const [copiedCitationId, setCopiedCitationId] = useState<string | null>(null);
   const [copiedFullText, setCopiedFullText] = useState(false);
@@ -488,6 +489,115 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   );
                 })}
               </div>
+
+              {/* Integrated Encyclopedia Reader Control Bar (Always Visible on Index & Reader) */}
+              <div className="pt-1 space-y-2">
+                <ReaderToolbar
+                  fontSize={readerFontSize}
+                  onChangeFontSize={setReaderFontSize}
+                  viewMode={readerViewMode}
+                  onChangeViewMode={setReaderViewMode}
+                  shareTitle={
+                    language === 'ar'
+                      ? 'موسوعة مرآة القلوب للمقالات والأبحاث النفسية المحكّمة'
+                      : 'Mirror of Hearts Encyclopedia of Peer-Reviewed Research & Clinical Articles'
+                  }
+                  shareSummary={
+                    language === 'ar'
+                      ? 'أبحاث علمية محكّمة بصيغة APA 7th ودراسات حالة عيادية وقصصية كاملة مع قارئ متكامل يدعم التحكم بحجم الخط والوضع الليلي.'
+                      : 'Peer-reviewed APA 7th research papers and clinical case studies with an integrated reader supporting font-size control and Dark/Light mode.'
+                  }
+                  shareUrl="https://miratalqulub.com/#/articles"
+                  contentTypeLabelAr="للمقالات والأبحاث"
+                  contentTypeLabelEn="Articles & Papers"
+                />
+
+                {/* Quick-Launch Reader Selector Bar */}
+                <div
+                  className={`p-3 rounded-2xl border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-200 text-slate-700'
+                      : 'bg-white/[0.03] border-white/10 text-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-extrabold text-indigo-700 dark:text-cyan-300">
+                    <BookOpen className="w-4 h-4 shrink-0" />
+                    <span>
+                      {language === 'ar'
+                        ? 'القارئ المتكامل السريع — اختر بحثاً أو مقالاً لفتحه مباشرة:'
+                        : 'Integrated Quick Reader — Select a study or article to open directly:'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      aria-label={
+                        language === 'ar'
+                          ? 'اختر بحثاً علمياً أو مقالاً لفتحه في القارئ المتكامل'
+                          : 'Select a research paper or article to open in the integrated reader'
+                      }
+                      value=""
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) return;
+                        soundManager.playTap();
+                        if (val.startsWith('paper:')) {
+                          const paperId = val.replace('paper:', '');
+                          const foundPaper = ACADEMIC_PAPERS_CATALOG.find((p) => p.id === paperId);
+                          if (foundPaper) {
+                            setActiveAcademic(foundPaper);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
+                        } else if (val.startsWith('article:')) {
+                          const artId = val.replace('article:', '');
+                          const foundArt = ARTICLES_CATALOG.find((a) => a.id === artId);
+                          if (foundArt) {
+                            setActiveNarrative(foundArt);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer max-w-xs sm:max-w-md truncate ${
+                        isLight
+                          ? 'bg-white border-slate-300 text-slate-800'
+                          : 'bg-slate-900 border-white/15 text-white'
+                      }`}
+                    >
+                      <option value="">
+                        {language === 'ar'
+                          ? '📖 اختر من قائمة الأبحاث المحكّمة والمقالات السريرية...'
+                          : '📖 Choose from Peer-Reviewed Papers & Clinical Articles...'}
+                      </option>
+                      <optgroup
+                        label={
+                          language === 'ar'
+                            ? 'أولاً: الأبحاث العلمية المحكّمة (APA 7th)'
+                            : '1. Peer-Reviewed Research Papers (APA 7th)'
+                        }
+                      >
+                        {ACADEMIC_PAPERS_CATALOG.map((p, idx) => (
+                          <option key={p.id} value={`paper:${p.id}`}>
+                            {idx + 1}. {language === 'ar' ? p.titleAr : p.titleEn}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup
+                        label={
+                          language === 'ar'
+                            ? 'ثانياً: المقالات والسجلات القصصية السريرية'
+                            : '2. Clinical Narrative Articles & Case Records'
+                        }
+                      >
+                        {ARTICLES_CATALOG.map((a, idx) => (
+                          <option key={a.id} value={`article:${a.id}`}>
+                            {idx + 1}. {language === 'ar' ? a.title : a.titleEn}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Track 1: Clinical Narrative Articles */}
@@ -547,7 +657,19 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                       <span className="text-[11px] text-purple-600 dark:text-purple-300 font-semibold truncate max-w-[55%]">
                         🔬 {language === 'ar' ? art.scientificFramework : art.scientificFrameworkEn}
                       </span>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            soundManager.playTap();
+                            setFullScreenArticle(art);
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white text-[11px] font-extrabold flex items-center gap-1 shadow-sm transition cursor-pointer"
+                        >
+                          <Maximize2 className="w-3 h-3" />
+                          <span>{language === 'ar' ? 'ملء الشاشة' : 'Full Screen'}</span>
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -976,12 +1098,17 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Reader Toolbar: Font Size, Dark/Light Mode, View Mode Toggle, Social Media Share */}
+            {/* Reader Toolbar: Font Size, Dark/Light Mode, View Mode Toggle, Full-Screen, Social Media Share */}
             <ReaderToolbar
               fontSize={readerFontSize}
               onChangeFontSize={setReaderFontSize}
               viewMode={readerViewMode}
               onChangeViewMode={setReaderViewMode}
+              onJumpToContinuous={() => {
+                const el = document.getElementById('sec-full-continuous-story');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              onOpenFullScreen={() => setFullScreenArticle(activeNarrative)}
               shareTitle={language === 'ar' ? activeNarrative.title : activeNarrative.titleEn}
               shareSummary={language === 'ar' ? activeNarrative.summary : activeNarrative.summaryEn}
               shareUrl="https://miratalqulub.com/#/articles"
@@ -1453,12 +1580,17 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Reader Toolbar: Font Size, Dark/Light Mode, View Mode Toggle, Social Media Share */}
+            {/* Reader Toolbar: Font Size, Dark/Light Mode, View Mode Toggle, Full-Screen, Social Media Share */}
             <ReaderToolbar
               fontSize={readerFontSize}
               onChangeFontSize={setReaderFontSize}
               viewMode={readerViewMode}
               onChangeViewMode={setReaderViewMode}
+              onJumpToContinuous={() => {
+                const el = document.getElementById('sec-full-continuous-text');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              onOpenFullScreen={() => setFullScreenPaper(activeAcademic)}
               shareTitle={language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn}
               shareSummary={language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
               shareUrl="https://miratalqulub.com/#/articles"
@@ -1918,16 +2050,22 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
         ) : null}
       </AnimatePresence>
 
-      {/* Full-Screen Scrollable Academic Research Reader Modal (ResearchArticleModal) */}
+      {/* Full-Screen Scrollable Academic Research & Clinical Article Reader Modal (ResearchArticleModal) */}
       <ResearchArticleModal
-        isOpen={Boolean(fullScreenPaper)}
-        onClose={() => setFullScreenPaper(null)}
+        isOpen={Boolean(fullScreenPaper || fullScreenArticle)}
+        onClose={() => {
+          setFullScreenPaper(null);
+          setFullScreenArticle(null);
+        }}
         content={
           fullScreenPaper
             ? getFullContinuousAcademicText(fullScreenPaper, language)
+            : fullScreenArticle
+            ? getFullContinuousNarrativeText(fullScreenArticle, language)
             : undefined
         }
         paper={fullScreenPaper}
+        article={fullScreenArticle}
         initialViewMode="continuous_only"
       />
 
