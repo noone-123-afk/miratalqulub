@@ -18,14 +18,40 @@ import {
   ListChecks,
   Quote,
   Home,
+  Sun,
+  Moon,
+  Maximize2,
 } from 'lucide-react';
-import { Article, ARTICLES_CATALOG } from '../data/articlesData';
-import { AcademicPaper, ACADEMIC_PAPERS_CATALOG } from '../data/academicPapersData';
+import {
+  Article,
+  ARTICLES_CATALOG,
+  getFullContinuousNarrativeText,
+} from '../data/articlesData';
+import {
+  AcademicPaper,
+  ACADEMIC_PAPERS_CATALOG,
+  getFullContinuousAcademicText,
+} from '../data/academicPapersData';
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { PageSEO } from '../components/PageSEO';
 import { AdSenseBanner } from '../components/AdSenseBanner';
+import {
+  ReaderToolbar,
+  FormattedContinuousManuscript,
+  ContinuousViewMode,
+} from '../components/ReaderToolbar';
+import {
+  ArticleBottomSocialShare,
+} from '../components/FullScreenResearchStudyModal';
+import {
+  ResearchArticleModal,
+  ResearchArticleModalProps,
+} from '../components/ResearchArticleModal';
+
+export { ResearchArticleModal };
+export type { ResearchArticleModalProps };
 
 interface Props {
   onBackToHome: () => void;
@@ -40,15 +66,61 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
   onNavigatePage,
 }) => {
   const { language, isRTL, toggleLanguage } = useLanguage();
-  const [theme] = useAppTheme();
+  const [theme, toggleTheme] = useAppTheme();
   const isLight = theme === 'light';
 
-  const [activeTrack, setActiveTrack] = useState<ContentTrack>('narrative');
+  const [activeTrack, setActiveTrack] = useState<ContentTrack>('academic');
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeNarrative, setActiveNarrative] = useState<Article | null>(null);
   const [activeAcademic, setActiveAcademic] = useState<AcademicPaper | null>(null);
+  const [fullScreenPaper, setFullScreenPaper] = useState<AcademicPaper | null>(null);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [copiedCitationId, setCopiedCitationId] = useState<string | null>(null);
+  const [copiedFullText, setCopiedFullText] = useState(false);
+  const [copiedStoryFullText, setCopiedStoryFullText] = useState(false);
+  const [readerFontSize, setReaderFontSize] = useState<number>(17);
+  const [readerViewMode, setReaderViewMode] = useState<ContinuousViewMode>('segmented_and_continuous');
+
+  const featuredGccFamilyStudy =
+    ACADEMIC_PAPERS_CATALOG.find(
+      (p) => p.id === 'research-gcc-family-based-psychosocial-interventions-chronic-disorders'
+    ) || null;
+
+  const handleCopyFullText = (paper: AcademicPaper) => {
+    soundManager.playTap();
+    const fullText = getFullContinuousAcademicText(paper, language);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(fullText);
+      setCopiedFullText(true);
+      setTimeout(() => setCopiedFullText(false), 2600);
+    }
+  };
+
+  const handleCopyStoryFullText = (article: Article) => {
+    soundManager.playTap();
+    const fullText = getFullContinuousNarrativeText(article, language);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(fullText);
+      setCopiedStoryFullText(true);
+      setTimeout(() => setCopiedStoryFullText(false), 2600);
+    }
+  };
+
+  const handleCopyApaCitation = (paper: AcademicPaper, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    soundManager.playTap();
+    const year = paper.publishDate.slice(0, 4) || '2026';
+    const citationText =
+      language === 'ar'
+        ? `وحدة الأبحاث والدراسات النفسية - مرآة القلوب. (${year}). ${paper.titleAr}. موسوعة مرآة القلوب للأبحاث النفسية المحكّمة. https://miratalqulub.com/#/articles`
+        : `Mirror of Hearts Psychological Research Unit. (${year}). ${paper.titleEn}. Mirror of Hearts Peer-Reviewed Encyclopedia. https://miratalqulub.com/#/articles`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(citationText);
+      setCopiedCitationId(paper.id);
+      setTimeout(() => setCopiedCitationId(null), 2500);
+    }
+  };
 
   const categories: { key: FilterCategory; labelAr: string; labelEn: string; icon: string }[] = [
     { key: 'all', labelAr: 'جميع التخصصات', labelEn: 'All Specialties', icon: '✨' },
@@ -110,13 +182,13 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
       <PageSEO
         title={
           language === 'ar'
-            ? 'موسوعة المقالات القصصية العيادية والأبحاث العلمية المحكّمة | مرآة القلوب'
-            : 'Clinical Narrative Articles & Peer-Reviewed Research Papers | Mirror of Hearts'
+            ? 'موسوعة مرآة القلوب للمقالات والأبحاث النفسية المحكّمة (APA 7th) | مرآة القلوب'
+            : 'Peer-Reviewed Psychological Research Papers & Clinical Articles | Mirror of Hearts'
         }
         description={
           language === 'ar'
-            ? 'موسوعة مرآة القلوب العلمية: مقالات قصصية عيادية من واقع الجلسات النفسية، وأبحاث أكاديمية محكّمة متكاملة بتوثيق APA 7th حول التوافق، الذكاء العاطفي، والهوية.'
-            : 'Mirror of Hearts Encyclopedia: Clinical narrative case studies and full peer-reviewed academic research papers (APA 7th) on relationship compatibility, EQ, and digital psychology.'
+            ? 'موسوعة مرآة القلوب للمقالات والأبحاث النفسية: أولاً الأبحاث العلمية الكاملة المحكّمة بتوثيق APA 7th، وثانياً المقالات القصصية العيادية من واقع الجلسات النفسية.'
+            : 'Mirror of Hearts Encyclopedia: Full peer-reviewed academic research papers (APA 7th) and clinical narrative case studies on relationship compatibility, EQ, and digital psychology.'
         }
         canonicalPath="/#/articles"
         language={language}
@@ -155,19 +227,45 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
           )}
         </div>
 
-        <button
-          onClick={() => {
-            soundManager.playTap();
-            toggleLanguage();
-          }}
-          className={`px-4 py-2 rounded-2xl text-xs font-extrabold border transition cursor-pointer ${
-            isLight
-              ? 'bg-white hover:bg-slate-100 text-slate-900 border-slate-300 shadow-sm'
-              : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
-          }`}
-        >
-          {language === 'ar' ? 'Read in English 🇬🇧' : 'القراءة باللغة العربية 🇸🇦'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              soundManager.playTap();
+              toggleTheme();
+            }}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold border transition cursor-pointer flex items-center gap-1.5 ${
+              isLight
+                ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 shadow-sm'
+                : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-amber-200 border-indigo-400/30'
+            }`}
+          >
+            {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+            <span>
+              {isLight
+                ? language === 'ar'
+                  ? 'الوضع الليلي'
+                  : 'Dark Mode'
+                : language === 'ar'
+                ? 'الوضع النهاري'
+                : 'Light Mode'}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              soundManager.playTap();
+              toggleLanguage();
+            }}
+            className={`px-4 py-2 rounded-2xl text-xs font-extrabold border transition cursor-pointer ${
+              isLight
+                ? 'bg-white hover:bg-slate-100 text-slate-900 border-slate-300 shadow-sm'
+                : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
+            }`}
+          >
+            {language === 'ar' ? 'Read in English 🇬🇧' : 'القراءة باللغة العربية 🇸🇦'}
+          </button>
+        </div>
       </div>
 
       {/* Hero Section */}
@@ -180,12 +278,12 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
           }`}
         >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-300 text-xs font-extrabold flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5" />
+            <span className="px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-cyan-300 text-xs font-extrabold flex items-center gap-1.5">
+              <GraduationCap className="w-4 h-4" />
               <span>
                 {language === 'ar'
-                  ? 'المكتبة العلمية والعيادية المتخصصة'
-                  : 'Specialized Clinical & Academic Library'}
+                  ? 'وحدة الأبحاث والدراسات النفسية المحكّمة'
+                  : 'Peer-Reviewed Psychological Research Unit'}
               </span>
             </span>
             <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
@@ -195,78 +293,22 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
 
           <h1 className="text-2xl sm:text-4xl font-black font-['Alexandria'] leading-tight">
             {language === 'ar'
-              ? 'موسوعة مرآة القلوب للمقالات القصصية والأبحاث العلمية'
-              : 'Mirror of Hearts Clinical Narratives & Academic Research'}
+              ? 'موسوعة مرآة القلوب للمقالات والأبحاث النفسية'
+              : 'Mirror of Hearts Encyclopedia of Psychological Research & Articles'}
           </h1>
 
           <p
-            className={`text-sm sm:text-base max-w-3xl leading-relaxed ${
+            className={`text-sm sm:text-base max-w-4xl leading-relaxed ${
               isLight ? 'text-slate-600' : 'text-gray-300'
             }`}
           >
             {language === 'ar'
-              ? 'تم تقسيم المحتوى العلمي في المنصة برمجياً ومنهجياً إلى مسارين متمايزين: (1) المقالات القصصية العلمية المستندة إلى حالات عيادية واقعية وأدوات تشخيص سلوكية، و(2) المقالات العلمية البحثية الكاملة المصاغة وفق المعايير الأكاديمية المحكّمة.'
-              : 'Our knowledge repository is methodologically structured into two distinct tracks: (1) Clinical Narrative Articles grounded in real therapy case studies and behavioral diagnostics, and (2) Full Peer-Reviewed Academic Research Papers.'}
+              ? 'ترتكز موسوعة مرآة القلوب على مسارين علميين متكاملين: (أولاً: الأبحاث العلمية الكاملة) وهي أوراق بحثية ودراسات أكاديمية محكّمة مصاغة وفق هيكلة البحث العلمي الرصين (الملخص، المقدمة، الإطار النظري، المنهجية، التحليل والمناقشة، الخاتمة، التوصيات، ومراجع APA 7th)، و(ثانياً: المقالات القصصية العلمية) المستندة إلى دراسات حالة عيادية وأدوات تشخيص سلوكية عملية.'
+              : 'The Mirror of Hearts Encyclopedia is structured into two complementary scholarly tracks: (First: Full Academic Research Papers) featuring complete peer-reviewed studies (Abstract, Introduction, Theoretical Framework, Methodology, Analysis & Discussion, Conclusion, Recommendations, and APA 7th References), and (Second: Clinical Narrative Articles) grounded in real therapy case studies and behavioral exercises.'}
           </p>
 
-          {/* Dual Track Selector Cards */}
+          {/* Dual Track Selector Cards — Track 1: Academic Research FIRST */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                soundManager.playTap();
-                setActiveTrack('narrative');
-              }}
-              className={`p-5 rounded-3xl border text-start transition cursor-pointer flex items-start gap-4 ${
-                activeTrack === 'narrative'
-                  ? isLight
-                    ? 'bg-gradient-to-r from-rose-600 to-purple-600 text-white border-rose-600 shadow-xl'
-                    : 'bg-gradient-to-r from-rose-600/35 to-purple-600/35 text-white border-rose-400 shadow-xl'
-                  : isLight
-                  ? 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 shadow-sm'
-                  : 'bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 border-white/10'
-              }`}
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                  activeTrack === 'narrative'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-rose-500/15 text-rose-500'
-                }`}
-              >
-                <Stethoscope className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-black text-base sm:text-lg font-['Alexandria']">
-                    {language === 'ar' ? '1. المقالات القصصية العلمية' : '1. Clinical Narrative Articles'}
-                  </h2>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
-                      activeTrack === 'narrative'
-                        ? 'bg-white/25 text-white'
-                        : 'bg-rose-500/15 text-rose-500'
-                    }`}
-                  >
-                    {ARTICLES_CATALOG.length} {language === 'ar' ? 'مقالاً' : 'Articles'}
-                  </span>
-                </div>
-                <p
-                  className={`text-xs sm:text-sm mt-1.5 leading-relaxed ${
-                    activeTrack === 'narrative'
-                      ? 'text-white/95'
-                      : isLight
-                      ? 'text-slate-600'
-                      : 'text-gray-400'
-                  }`}
-                >
-                  {language === 'ar'
-                    ? 'جولات داخل عيادة العلاج النفسي والأسري: قصص واقعية، تفكيك سيكولوجي، واختبارات سلوكية عملية.'
-                    : 'Inside the psychotherapy clinic: real-world case narratives, psychological deconstruction, and practical behavioral tests.'}
-                </p>
-              </div>
-            </button>
-
             <button
               type="button"
               onClick={() => {
@@ -296,8 +338,8 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-black text-base sm:text-lg font-['Alexandria']">
                     {language === 'ar'
-                      ? '2. المقالات العلمية البحثية الكاملة'
-                      : '2. Full Academic Research Papers'}
+                      ? 'أولاً: الأبحاث العلمية الكاملة (APA 7th)'
+                      : 'First: Full Academic Research Papers'}
                   </h2>
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
@@ -306,7 +348,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                         : 'bg-cyan-500/15 text-cyan-500'
                     }`}
                   >
-                    {ACADEMIC_PAPERS_CATALOG.length} {language === 'ar' ? 'أبحاث كاملة' : 'Papers'}
+                    {ACADEMIC_PAPERS_CATALOG.length} {language === 'ar' ? 'أبحاث محكّمة' : 'Papers'}
                   </span>
                 </div>
                 <p
@@ -321,6 +363,62 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   {language === 'ar'
                     ? 'دراسات بحثية أكاديمية متكاملة (ملخص، مقدمة، إطار نظري، منهجية، تحليل ومناقشة، توصيات، ومراجع APA 7th).'
                     : 'Complete scholarly research papers (Abstract, Introduction, Theoretical Framework, Methodology, Analysis, & APA 7th References).'}
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playTap();
+                setActiveTrack('narrative');
+              }}
+              className={`p-5 rounded-3xl border text-start transition cursor-pointer flex items-start gap-4 ${
+                activeTrack === 'narrative'
+                  ? isLight
+                    ? 'bg-gradient-to-r from-rose-600 to-purple-600 text-white border-rose-600 shadow-xl'
+                    : 'bg-gradient-to-r from-rose-600/35 to-purple-600/35 text-white border-rose-400 shadow-xl'
+                  : isLight
+                  ? 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 shadow-sm'
+                  : 'bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 border-white/10'
+              }`}
+            >
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  activeTrack === 'narrative'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-rose-500/15 text-rose-500'
+                }`}
+              >
+                <Stethoscope className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-black text-base sm:text-lg font-['Alexandria']">
+                    {language === 'ar' ? 'ثانياً: المقالات القصصية العلمية' : 'Second: Clinical Narrative Articles'}
+                  </h2>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                      activeTrack === 'narrative'
+                        ? 'bg-white/25 text-white'
+                        : 'bg-rose-500/15 text-rose-500'
+                    }`}
+                  >
+                    {ARTICLES_CATALOG.length} {language === 'ar' ? 'مقالاً' : 'Articles'}
+                  </span>
+                </div>
+                <p
+                  className={`text-xs sm:text-sm mt-1.5 leading-relaxed ${
+                    activeTrack === 'narrative'
+                      ? 'text-white/95'
+                      : isLight
+                      ? 'text-slate-600'
+                      : 'text-gray-400'
+                  }`}
+                >
+                  {language === 'ar'
+                    ? 'جولات داخل عيادة العلاج النفسي والأسري: قصص واقعية، تفكيك سيكولوجي، واختبارات سلوكية عملية.'
+                    : 'Inside the psychotherapy clinic: real-world case narratives, psychological deconstruction, and practical behavioral tests.'}
                 </p>
               </div>
             </button>
@@ -442,116 +540,351 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                     </div>
 
                     <div
-                      className={`pt-3 border-t flex items-center justify-between text-xs ${
+                      className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
                         isLight ? 'border-slate-200' : 'border-white/10'
                       }`}
                     >
-                      <span className="text-[11px] text-purple-600 dark:text-purple-300 font-semibold truncate max-w-[65%]">
+                      <span className="text-[11px] text-purple-600 dark:text-purple-300 font-semibold truncate max-w-[55%]">
                         🔬 {language === 'ar' ? art.scientificFramework : art.scientificFrameworkEn}
                       </span>
-                      <span className="text-rose-600 dark:text-rose-400 font-extrabold flex items-center gap-1 shrink-0">
-                        <span>{language === 'ar' ? 'قراءة المقال كاملاً' : 'Read Full Article'}</span>
-                        <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            soundManager.playTap();
+                            setReaderViewMode('continuous_only');
+                            setActiveNarrative(art);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer ${
+                            isLight
+                              ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                              : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border-rose-400/30'
+                          }`}
+                        >
+                          📜 {language === 'ar' ? 'قراءة كاملة دون تجزئة' : 'Full Unsegmented'}
+                        </button>
+                        <span className="text-rose-600 dark:text-rose-400 font-extrabold flex items-center gap-1">
+                          <span>{language === 'ar' ? 'قراءة المقال' : 'Read'}</span>
+                          <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                        </span>
+                      </div>
                     </div>
                   </motion.article>
                 ))}
               </div>
             )}
 
-            {/* Track 2: Full Academic Research Papers */}
+            {/* Track 1: Full Academic Research Papers (أولاً: الأبحاث العلمية الكاملة) */}
             {activeTrack === 'academic' && (
-              <div className="grid grid-cols-1 gap-5">
-                {filteredAcademicPapers.map((paper) => (
-                  <motion.article
-                    key={paper.id}
-                    whileHover={{ scale: 1.005, y: -2 }}
-                    onClick={() => {
-                      soundManager.playTap();
-                      setActiveAcademic(paper);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className={`p-6 sm:p-7 rounded-3xl border transition cursor-pointer flex flex-col justify-between space-y-4 group shadow-md ${
+              <div className="space-y-5">
+                {/* Academic Methodology & Peer-Review Charter Banner */}
+                <div
+                  className={`p-5 sm:p-6 rounded-3xl border space-y-3 ${
+                    isLight
+                      ? 'bg-gradient-to-r from-indigo-50 via-cyan-50/60 to-slate-50 border-indigo-200 text-slate-800 shadow-sm'
+                      : 'bg-gradient-to-r from-indigo-950/50 via-slate-900/80 to-cyan-950/40 border-cyan-500/30 text-gray-200'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-indigo-700 dark:text-cyan-300 font-black text-sm sm:text-base font-['Alexandria']">
+                      <GraduationCap className="w-5 h-5 shrink-0" />
+                      <span>
+                        {language === 'ar'
+                          ? 'ميثاق الأبحاث العلمية الكاملة ومنهجية التوثيق المرجعي (APA 7th Edition)'
+                          : 'Full Academic Research Charter & Peer-Review Methodology (APA 7th Edition)'}
+                      </span>
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold">
+                      {language === 'ar'
+                        ? 'إشراف: وحدة الأبحاث والدراسات النفسية — مرآة القلوب'
+                        : 'Supervised by: Mirror of Hearts Psychological Research Unit'}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm leading-relaxed opacity-90">
+                    {language === 'ar'
+                      ? 'يضم هذا القسم أوراقاً بحثية ودراسات نفسية وعصبية متكاملة مصاغة وفق المعايير الأكاديمية المحكّمة: (الملخص، الكلمات المفتاحية، المقدمة والإشكالية البحثية، الإطار النظري والدراسات السابقة، منهجية البحث، التحليل والمناقشة، الخاتمة، التوصيات السريرية والتشريعية، وقائمة المراجع بصيغة APA 7th). جميع الأبحاث متاحة للقراءة الكاملة والاستشهاد العلمي المباشر.'
+                      : 'This section houses complete peer-reviewed psychological and neuroscientific papers structured according to rigorous academic standards: Abstract, Keywords, Introduction & Research Problem, Theoretical Framework, Methodology, Analysis & Discussion, Conclusion, Multi-Tier Recommendations, and verified APA 7th References.'}
+                  </p>
+                </div>
+
+                {/* Featured Research Study Spotlight: GCC Family-Based Psychosocial Interventions */}
+                {featuredGccFamilyStudy && (
+                  <div
+                    className={`p-6 sm:p-7 rounded-3xl border-2 space-y-4 shadow-xl transition-all ${
                       isLight
-                        ? 'bg-white hover:bg-indigo-50/40 border-slate-200 hover:border-indigo-400'
-                        : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-cyan-500/40'
+                        ? 'bg-gradient-to-br from-indigo-50 via-white to-emerald-50/70 border-indigo-300 text-slate-900'
+                        : 'bg-gradient-to-br from-indigo-950/60 via-slate-900/95 to-emerald-950/45 border-cyan-400/45 text-white'
                     }`}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-3 py-1 rounded-xl bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 text-xs font-extrabold border border-cyan-500/30 flex items-center gap-1.5">
-                            <span>{paper.icon}</span>
-                            <span>
-                              {language === 'ar' ? paper.categoryLabelAr : paper.categoryLabelEn}
-                            </span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-3 py-1 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center gap-1.5 shadow-sm">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>
+                            {language === 'ar'
+                              ? 'دراسة مرجعية مميزة — العرض الكامل بملء الشاشة'
+                              : 'Featured Reference Study — Full-Screen Scrollable View'}
                           </span>
-                          <span className="px-3 py-1 rounded-xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-500/30">
-                            {language === 'ar' ? paper.methodologyBadgeAr : paper.methodologyBadgeEn}
-                          </span>
-                        </div>
-                        <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? paper.readTimeAr : paper.readTimeEn}</span>
+                        </span>
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold">
+                          {language === 'ar'
+                            ? featuredGccFamilyStudy.methodologyBadgeAr
+                            : featuredGccFamilyStudy.methodologyBadgeEn}
                         </span>
                       </div>
-
-                      <h3
-                        className={`text-lg sm:text-xl font-black leading-snug font-['Alexandria'] ${
-                          isLight
-                            ? 'text-slate-900 group-hover:text-indigo-700'
-                            : 'text-white group-hover:text-cyan-300'
-                        }`}
-                      >
-                        {language === 'ar' ? paper.titleAr : paper.titleEn}
-                      </h3>
-
-                      <p
-                        className={`text-xs sm:text-sm line-clamp-3 leading-relaxed ${
-                          isLight ? 'text-slate-600' : 'text-gray-300'
-                        }`}
-                      >
-                        {language === 'ar' ? paper.abstractAr : paper.abstractEn}
-                      </p>
-
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {(language === 'ar' ? paper.keywordsAr : paper.keywordsEn).map((kw, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-2.5 py-0.5 rounded-lg text-[11px] font-semibold ${
-                              isLight
-                                ? 'bg-slate-100 text-slate-700 border border-slate-200'
-                                : 'bg-white/5 text-gray-300 border border-white/10'
-                            }`}
-                          >
-                            #{kw}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div
-                      className={`pt-3 border-t flex items-center justify-between text-xs ${
-                        isLight ? 'border-slate-200' : 'border-white/10'
-                      }`}
-                    >
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                        📚 {paper.apaReferences.length}{' '}
-                        {language === 'ar'
-                          ? 'مرجعاً أكاديمياً موثقاً بصيغة APA 7th'
-                          : 'Verified APA 7th Citations'}
-                      </span>
-                      <span className="text-indigo-600 dark:text-cyan-400 font-extrabold flex items-center gap-1">
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-300 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
                         <span>
                           {language === 'ar'
-                            ? 'قراءة البحث العلمي الكامل'
-                            : 'Read Full Research Paper'}
+                            ? featuredGccFamilyStudy.readTimeAr
+                            : featuredGccFamilyStudy.readTimeEn}
                         </span>
-                        <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
                       </span>
                     </div>
-                  </motion.article>
-                ))}
+
+                    <h3 className="text-lg sm:text-2xl font-black leading-snug font-['Alexandria']">
+                      {language === 'ar'
+                        ? featuredGccFamilyStudy.titleAr
+                        : featuredGccFamilyStudy.titleEn}
+                    </h3>
+
+                    <p
+                      className={`text-xs sm:text-sm leading-relaxed ${
+                        isLight ? 'text-slate-700' : 'text-gray-200'
+                      }`}
+                    >
+                      {language === 'ar'
+                        ? featuredGccFamilyStudy.abstractAr
+                        : featuredGccFamilyStudy.abstractEn}
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-indigo-200/70 dark:border-white/10">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="font-bold text-indigo-700 dark:text-cyan-300">
+                          🎛️{' '}
+                          {language === 'ar'
+                            ? 'يدعم التحكم بحجم الخط (A-/A+) • الوضع الليلي/النهاري • المشاركة الاجتماعية'
+                            : 'Supports Font-Size Control • Dark/Light Mode • Social Sharing'}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundManager.playTap();
+                            setFullScreenPaper(featuredGccFamilyStudy);
+                          }}
+                          className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow-lg transition cursor-pointer"
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                          <span>
+                            {language === 'ar'
+                              ? 'فتح الدراسة في نافذة ملء الشاشة القابلة للتمرير'
+                              : 'Open in Full-Screen Scrollable View'}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundManager.playTap();
+                            setReaderViewMode('continuous_only');
+                            setActiveAcademic(featuredGccFamilyStudy);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold border transition cursor-pointer flex items-center gap-1.5 ${
+                            isLight
+                              ? 'bg-white hover:bg-indigo-50 text-indigo-800 border-indigo-300'
+                              : 'bg-white/10 hover:bg-white/20 text-cyan-200 border-white/15'
+                          }`}
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span>
+                            {language === 'ar'
+                              ? 'قراءة متصلة داخل الصفحة'
+                              : 'Read Inline Unsegmented'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Academic Papers Grid */}
+                <div className="grid grid-cols-1 gap-5">
+                  {filteredAcademicPapers.map((paper, pIdx) => (
+                    <motion.article
+                      key={paper.id}
+                      whileHover={{ scale: 1.005, y: -2 }}
+                      onClick={() => {
+                        soundManager.playTap();
+                        setActiveAcademic(paper);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`p-6 sm:p-7 rounded-3xl border transition cursor-pointer flex flex-col justify-between space-y-4 group shadow-md ${
+                        isLight
+                          ? 'bg-white hover:bg-indigo-50/40 border-slate-200 hover:border-indigo-400'
+                          : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-cyan-500/40'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs font-black border border-amber-500/30">
+                              {language === 'ar' ? `الدراسة البحثية #${pIdx + 1}` : `Research Study #${pIdx + 1}`}
+                            </span>
+                            <span className="px-3 py-1 rounded-xl bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 text-xs font-extrabold border border-cyan-500/30 flex items-center gap-1.5">
+                              <span>{paper.icon}</span>
+                              <span>
+                                {language === 'ar' ? paper.categoryLabelAr : paper.categoryLabelEn}
+                              </span>
+                            </span>
+                            <span className="px-3 py-1 rounded-xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-500/30">
+                              {language === 'ar' ? paper.methodologyBadgeAr : paper.methodologyBadgeEn}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{language === 'ar' ? paper.readTimeAr : paper.readTimeEn}</span>
+                            </span>
+                            <span className="text-slate-500 dark:text-gray-400 font-medium flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{paper.publishDate}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <h3
+                          className={`text-lg sm:text-xl font-black leading-snug font-['Alexandria'] ${
+                            isLight
+                              ? 'text-slate-900 group-hover:text-indigo-700'
+                              : 'text-white group-hover:text-cyan-300'
+                          }`}
+                        >
+                          {language === 'ar' ? paper.titleAr : paper.titleEn}
+                        </h3>
+
+                        <p
+                          className={`text-xs italic font-medium ${
+                            isLight ? 'text-slate-500' : 'text-gray-400'
+                          }`}
+                        >
+                          {language === 'ar' ? paper.titleEn : paper.titleAr}
+                        </p>
+
+                        <p
+                          className={`text-xs sm:text-sm line-clamp-3 leading-relaxed ${
+                            isLight ? 'text-slate-600' : 'text-gray-300'
+                          }`}
+                        >
+                          {language === 'ar' ? paper.abstractAr : paper.abstractEn}
+                        </p>
+
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {(language === 'ar' ? paper.keywordsAr : paper.keywordsEn).map((kw, idx) => (
+                            <span
+                              key={idx}
+                              className={`px-2.5 py-0.5 rounded-lg text-[11px] font-semibold ${
+                                isLight
+                                  ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                                  : 'bg-white/5 text-gray-300 border border-white/10'
+                              }`}
+                            >
+                              #{kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div
+                        className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
+                          isLight ? 'border-slate-200' : 'border-white/10'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                            📚 {paper.apaReferences.length}{' '}
+                            {language === 'ar'
+                              ? 'مرجعاً أكاديمياً موثقاً بصيغة APA 7th'
+                              : 'Verified APA 7th Citations'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyApaCitation(paper, e)}
+                            className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer flex items-center gap-1 ${
+                              copiedCitationId === paper.id
+                                ? 'bg-emerald-600 text-white border-emerald-500'
+                                : isLight
+                                ? 'bg-slate-100 hover:bg-indigo-50 text-slate-700 border-slate-300'
+                                : 'bg-white/5 hover:bg-white/10 text-cyan-200 border-white/15'
+                            }`}
+                          >
+                            {copiedCitationId === paper.id ? (
+                              <Check className="w-3 h-3" />
+                            ) : (
+                              <BookMarked className="w-3 h-3" />
+                            )}
+                            <span>
+                              {copiedCitationId === paper.id
+                                ? language === 'ar'
+                                  ? 'تم نسخ توثيق APA!'
+                                  : 'APA Citation Copied!'
+                                : language === 'ar'
+                                ? 'نسخ التوثيق (APA)'
+                                : 'Copy APA Citation'}
+                            </span>
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundManager.playTap();
+                              setFullScreenPaper(paper);
+                            }}
+                            className="px-3 py-1 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-[11px] font-extrabold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                            <span>
+                              {language === 'ar' ? 'عرض بملء الشاشة' : 'Full-Screen View'}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundManager.playTap();
+                              setReaderViewMode('continuous_only');
+                              setActiveAcademic(paper);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className={`px-3 py-1 rounded-xl text-[11px] font-extrabold border transition cursor-pointer ${
+                              isLight
+                                ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border-indigo-200'
+                                : 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 border-cyan-400/30'
+                            }`}
+                          >
+                            📜 {language === 'ar' ? 'قراءة كاملة دون تجزئة' : 'Full Continuous'}
+                          </button>
+                          <span className="text-indigo-600 dark:text-cyan-400 font-extrabold flex items-center gap-1">
+                            <span>
+                              {language === 'ar'
+                                ? 'قراءة البحث العلمي الكامل'
+                                : 'Read Full Research Paper'}
+                            </span>
+                            <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                          </span>
+                        </div>
+                      </div>
+                    </motion.article>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
@@ -643,232 +976,331 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               </div>
             </div>
 
-            {activeNarrative.clinicalCaseQuoteAr && (
+            {/* Reader Toolbar: Font Size, Dark/Light Mode, View Mode Toggle, Social Media Share */}
+            <ReaderToolbar
+              fontSize={readerFontSize}
+              onChangeFontSize={setReaderFontSize}
+              viewMode={readerViewMode}
+              onChangeViewMode={setReaderViewMode}
+              shareTitle={language === 'ar' ? activeNarrative.title : activeNarrative.titleEn}
+              shareSummary={language === 'ar' ? activeNarrative.summary : activeNarrative.summaryEn}
+              shareUrl="https://miratalqulub.com/#/articles"
+              contentTypeLabelAr="للقصة والسجل العيادي"
+              contentTypeLabelEn="Story"
+            />
+
+            {readerViewMode === 'segmented_and_continuous' && (
               <div
-                className={`p-5 sm:p-6 rounded-3xl border-s-4 border-rose-500 space-y-2 ${
-                  isLight
-                    ? 'bg-rose-50/70 text-slate-800 border border-rose-200'
-                    : 'bg-rose-950/25 text-rose-100 border border-rose-500/20'
-                }`}
+                className="space-y-6 transition-all"
+                style={{ fontSize: `${readerFontSize}px` }}
               >
-                <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs">
-                  <Quote className="w-4 h-4" />
-                  <span>
-                    {language === 'ar'
-                      ? 'من داخل غرفة الاستشارة النفسية:'
-                      : 'Inside the Clinical Consultation Room:'}
-                  </span>
-                </div>
-                <p className="text-sm sm:text-base italic leading-relaxed font-medium">
-                  {language === 'ar'
-                    ? activeNarrative.clinicalCaseQuoteAr
-                    : activeNarrative.clinicalCaseQuoteEn}
-                </p>
-              </div>
-            )}
-
-            <div
-              className={`p-5 sm:p-6 rounded-3xl border space-y-3 ${
-                isLight
-                  ? 'bg-amber-50 border-amber-200 text-slate-800'
-                  : 'bg-amber-500/10 border-amber-500/30 text-gray-200'
-              }`}
-            >
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-300 font-extrabold text-sm">
-                <Sparkles className="w-4 h-4" />
-                <span>
-                  {language === 'ar'
-                    ? 'الخلاصة الإكلينيكية وأبرز النقاط المستفادة:'
-                    : 'Key Clinical Takeaways:'}
-                </span>
-              </div>
-              <ul className="space-y-2 text-xs sm:text-sm">
-                {(language === 'ar'
-                  ? activeNarrative.keyTakeaways
-                  : activeNarrative.keyTakeawaysEn
-                ).map((takeaway, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold shrink-0">✓</span>
-                    <span className="leading-relaxed">{takeaway}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="space-y-4">
-              {activeNarrative.contentParagraphs.map((para, i) => (
-                <div
-                  key={i}
-                  className={`p-6 rounded-3xl border space-y-2.5 ${
-                    isLight
-                      ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                      : 'bg-white/[0.02] border-white/10 text-gray-200'
-                  }`}
-                >
-                  <h3
-                    className={`text-base sm:text-lg font-extrabold font-['Alexandria'] flex items-center gap-2 ${
-                      isLight ? 'text-slate-900' : 'text-white'
+                {activeNarrative.clinicalCaseQuoteAr && (
+                  <div
+                    className={`p-5 sm:p-6 rounded-3xl border-s-4 border-rose-500 space-y-2 ${
+                      isLight
+                        ? 'bg-rose-50/70 text-slate-800 border border-rose-200'
+                        : 'bg-rose-950/25 text-rose-100 border border-rose-500/20'
                     }`}
                   >
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
-                    <span>{language === 'ar' ? para.heading : para.headingEn}</span>
-                  </h3>
-                  <p
-                    className={`leading-loose text-sm sm:text-base ${
-                      isLight ? 'text-slate-700' : 'text-gray-300'
-                    }`}
-                  >
-                    {language === 'ar' ? para.text : para.textEn}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {activeNarrative.diagnosticTable && (
-              <div
-                className={`p-6 rounded-3xl border space-y-4 overflow-x-auto ${
-                  isLight
-                    ? 'bg-white border-indigo-200 shadow-sm'
-                    : 'bg-indigo-950/20 border-indigo-500/30'
-                }`}
-              >
-                <h3
-                  className={`text-base font-black font-['Alexandria'] ${
-                    isLight ? 'text-indigo-900' : 'text-indigo-300'
-                  }`}
-                >
-                  ⚖️{' '}
-                  {language === 'ar'
-                    ? activeNarrative.diagnosticTable.titleAr
-                    : activeNarrative.diagnosticTable.titleEn}
-                </h3>
-                <table className="w-full text-xs sm:text-sm border-collapse">
-                  <thead>
-                    <tr
-                      className={
-                        isLight
-                          ? 'bg-indigo-50 text-indigo-900 border-b border-indigo-200'
-                          : 'bg-white/5 text-white border-b border-white/10'
-                      }
-                    >
-                      <th className="p-3 text-start font-bold">
+                    <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs">
+                      <Quote className="w-4 h-4" />
+                      <span>
                         {language === 'ar'
-                          ? activeNarrative.diagnosticTable.col1Ar
-                          : activeNarrative.diagnosticTable.col1En}
-                      </th>
-                      <th className="p-3 text-start font-bold text-emerald-600 dark:text-emerald-400">
-                        {language === 'ar'
-                          ? activeNarrative.diagnosticTable.col2Ar
-                          : activeNarrative.diagnosticTable.col2En}
-                      </th>
-                      <th className="p-3 text-start font-bold text-rose-600 dark:text-rose-400">
-                        {language === 'ar'
-                          ? activeNarrative.diagnosticTable.col3Ar
-                          : activeNarrative.diagnosticTable.col3En}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeNarrative.diagnosticTable.rows.map((row, rIdx) => (
-                      <tr
-                        key={rIdx}
-                        className={`border-b ${isLight ? 'border-slate-200' : 'border-white/5'}`}
-                      >
-                        <td className="p-3 font-bold">
-                          {language === 'ar' ? row.criterionAr : row.criterionEn}
-                        </td>
-                        <td className="p-3">
-                          {language === 'ar' ? row.naturalAr : row.naturalEn}
-                        </td>
-                        <td className="p-3">
-                          {language === 'ar' ? row.manipulationAr : row.manipulationEn}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            <div
-              className={`p-6 rounded-3xl border space-y-3 shadow-lg ${
-                isLight
-                  ? 'bg-emerald-50/90 border-emerald-300 text-slate-900'
-                  : 'bg-gradient-to-r from-emerald-950/60 via-slate-900 to-teal-950/60 border-emerald-500/35 text-gray-200'
-              }`}
-            >
-              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-black text-base sm:text-lg">
-                <span>⚡</span>
-                <h3 className="font-['Alexandria']">
-                  {language === 'ar'
-                    ? activeNarrative.practicalExercise.title
-                    : activeNarrative.practicalExercise.titleEn}
-                </h3>
-              </div>
-              <div className="space-y-2.5">
-                {(language === 'ar'
-                  ? activeNarrative.practicalExercise.steps
-                  : activeNarrative.practicalExercise.stepsEn
-                ).map((st, i) => (
-                  <div key={i} className="flex items-start gap-2.5 text-xs sm:text-sm">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                      {i + 1}
-                    </span>
-                    <span className="leading-relaxed">{st}</span>
+                          ? 'من داخل غرفة الاستشارة النفسية:'
+                          : 'Inside the Clinical Consultation Room:'}
+                      </span>
+                    </div>
+                    <p className="italic leading-relaxed font-medium" style={{ fontSize: `${readerFontSize}px` }}>
+                      {language === 'ar'
+                        ? activeNarrative.clinicalCaseQuoteAr
+                        : activeNarrative.clinicalCaseQuoteEn}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
+                )}
 
-            {activeNarrative.conclusionAr && (
-              <div
-                className={`p-6 rounded-3xl border space-y-2 ${
-                  isLight
-                    ? 'bg-purple-50 border-purple-200 text-slate-800'
-                    : 'bg-purple-950/30 border-purple-500/30 text-purple-100'
-                }`}
-              >
-                <p className="text-sm sm:text-base leading-relaxed font-semibold">
-                  {language === 'ar' ? activeNarrative.conclusionAr : activeNarrative.conclusionEn}
-                </p>
-              </div>
-            )}
+                <div
+                  className={`p-5 sm:p-6 rounded-3xl border space-y-3 ${
+                    isLight
+                      ? 'bg-amber-50 border-amber-200 text-slate-800'
+                      : 'bg-amber-500/10 border-amber-500/30 text-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-300 font-extrabold text-sm">
+                    <Sparkles className="w-4 h-4" />
+                    <span>
+                      {language === 'ar'
+                        ? 'الخلاصة الإكلينيكية وأبرز النقاط المستفادة:'
+                        : 'Key Clinical Takeaways:'}
+                    </span>
+                  </div>
+                  <ul className="space-y-2" style={{ fontSize: `${Math.max(14, readerFontSize - 1)}px` }}>
+                    {(language === 'ar'
+                      ? activeNarrative.keyTakeaways
+                      : activeNarrative.keyTakeawaysEn
+                    ).map((takeaway, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-amber-500 font-bold shrink-0">✓</span>
+                        <span className="leading-relaxed">{takeaway}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-            {activeNarrative.apaReferences && activeNarrative.apaReferences.length > 0 && (
-              <div
-                className={`p-6 rounded-3xl border space-y-3 ${
-                  isLight
-                    ? 'bg-slate-100 border-slate-300 text-slate-800'
-                    : 'bg-slate-900/80 border-white/10 text-gray-300'
-                }`}
-              >
-                <h4 className="font-extrabold text-sm flex items-center gap-2">
-                  <BookMarked className="w-4 h-4 text-indigo-500" />
-                  <span>
-                    {language === 'ar'
-                      ? 'أبرز المراجع العلمية الحديثة المعتمدة في المقال (2023 - 2025):'
-                      : 'Verified Modern Scientific References (2023–2025):'}
-                  </span>
-                </h4>
-                <ul className="space-y-3 text-xs">
-                  {activeNarrative.apaReferences.map((ref, idx) => (
-                    <li
-                      key={idx}
-                      className={`p-3.5 rounded-xl border ${
-                        isLight ? 'bg-white border-slate-200' : 'bg-black/30 border-white/5'
+                <div className="space-y-4">
+                  {activeNarrative.contentParagraphs.map((para, i) => (
+                    <div
+                      key={i}
+                      className={`p-6 rounded-3xl border space-y-2.5 ${
+                        isLight
+                          ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                          : 'bg-white/[0.02] border-white/10 text-gray-200'
                       }`}
                     >
-                      <p className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-300 dir-ltr text-left">
-                        {ref.citation}
+                      <h3
+                        className={`font-extrabold font-['Alexandria'] flex items-center gap-2 ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                        style={{ fontSize: `${readerFontSize + 2}px` }}
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+                        <span>{language === 'ar' ? para.heading : para.headingEn}</span>
+                      </h3>
+                      <p
+                        className={`leading-loose whitespace-pre-line ${
+                          isLight ? 'text-slate-700' : 'text-gray-300'
+                        }`}
+                        style={{ fontSize: `${readerFontSize}px` }}
+                      >
+                        {language === 'ar' ? para.text : para.textEn}
                       </p>
-                      <p className="mt-1 text-xs opacity-90">
-                        {language === 'ar' ? ref.noteAr : ref.noteEn}
-                      </p>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
+
+                {activeNarrative.diagnosticTable && (
+                  <div
+                    className={`p-6 rounded-3xl border space-y-4 overflow-x-auto ${
+                      isLight
+                        ? 'bg-white border-indigo-200 shadow-sm'
+                        : 'bg-indigo-950/20 border-indigo-500/30'
+                    }`}
+                  >
+                    <h3
+                      className={`text-base font-black font-['Alexandria'] ${
+                        isLight ? 'text-indigo-900' : 'text-indigo-300'
+                      }`}
+                    >
+                      ⚖️{' '}
+                      {language === 'ar'
+                        ? activeNarrative.diagnosticTable.titleAr
+                        : activeNarrative.diagnosticTable.titleEn}
+                    </h3>
+                    <table className="w-full text-xs sm:text-sm border-collapse">
+                      <thead>
+                        <tr
+                          className={
+                            isLight
+                              ? 'bg-indigo-50 text-indigo-900 border-b border-indigo-200'
+                              : 'bg-white/5 text-white border-b border-white/10'
+                          }
+                        >
+                          <th className="p-3 text-start font-bold">
+                            {language === 'ar'
+                              ? activeNarrative.diagnosticTable.col1Ar
+                              : activeNarrative.diagnosticTable.col1En}
+                          </th>
+                          <th className="p-3 text-start font-bold text-emerald-600 dark:text-emerald-400">
+                            {language === 'ar'
+                              ? activeNarrative.diagnosticTable.col2Ar
+                              : activeNarrative.diagnosticTable.col2En}
+                          </th>
+                          <th className="p-3 text-start font-bold text-rose-600 dark:text-rose-400">
+                            {language === 'ar'
+                              ? activeNarrative.diagnosticTable.col3Ar
+                              : activeNarrative.diagnosticTable.col3En}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeNarrative.diagnosticTable.rows.map((row, rIdx) => (
+                          <tr
+                            key={rIdx}
+                            className={`border-b ${isLight ? 'border-slate-200' : 'border-white/5'}`}
+                          >
+                            <td className="p-3 font-bold">
+                              {language === 'ar' ? row.criterionAr : row.criterionEn}
+                            </td>
+                            <td className="p-3">
+                              {language === 'ar' ? row.naturalAr : row.naturalEn}
+                            </td>
+                            <td className="p-3">
+                              {language === 'ar' ? row.manipulationAr : row.manipulationEn}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div
+                  className={`p-6 rounded-3xl border space-y-3 shadow-lg ${
+                    isLight
+                      ? 'bg-emerald-50/90 border-emerald-300 text-slate-900'
+                      : 'bg-gradient-to-r from-emerald-950/60 via-slate-900 to-teal-950/60 border-emerald-500/35 text-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-black text-base sm:text-lg">
+                    <span>⚡</span>
+                    <h3 className="font-['Alexandria']">
+                      {language === 'ar'
+                        ? activeNarrative.practicalExercise.title
+                        : activeNarrative.practicalExercise.titleEn}
+                    </h3>
+                  </div>
+                  <div className="space-y-2.5">
+                    {(language === 'ar'
+                      ? activeNarrative.practicalExercise.steps
+                      : activeNarrative.practicalExercise.stepsEn
+                    ).map((st, i) => (
+                      <div key={i} className="flex items-start gap-2.5 text-xs sm:text-sm">
+                        <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          {i + 1}
+                        </span>
+                        <span className="leading-relaxed">{st}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {activeNarrative.conclusionAr && (
+                  <div
+                    className={`p-6 rounded-3xl border space-y-2 ${
+                      isLight
+                        ? 'bg-purple-50 border-purple-200 text-slate-800'
+                        : 'bg-purple-950/30 border-purple-500/30 text-purple-100'
+                    }`}
+                  >
+                    <p className="leading-relaxed font-semibold" style={{ fontSize: `${readerFontSize}px` }}>
+                      {language === 'ar' ? activeNarrative.conclusionAr : activeNarrative.conclusionEn}
+                    </p>
+                  </div>
+                )}
+
+                {activeNarrative.apaReferences && activeNarrative.apaReferences.length > 0 && (
+                  <div
+                    className={`p-6 rounded-3xl border space-y-3 ${
+                      isLight
+                        ? 'bg-slate-100 border-slate-300 text-slate-800'
+                        : 'bg-slate-900/80 border-white/10 text-gray-300'
+                    }`}
+                  >
+                    <h4 className="font-extrabold text-sm flex items-center gap-2">
+                      <BookMarked className="w-4 h-4 text-indigo-500" />
+                      <span>
+                        {language === 'ar'
+                          ? 'أبرز المراجع العلمية الحديثة المعتمدة في المقال (2023 - 2025):'
+                          : 'Verified Modern Scientific References (2023–2025):'}
+                      </span>
+                    </h4>
+                    <ul className="space-y-3 text-xs">
+                      {activeNarrative.apaReferences.map((ref, idx) => (
+                        <li
+                          key={idx}
+                          className={`p-3.5 rounded-xl border ${
+                            isLight ? 'bg-white border-slate-200' : 'bg-black/30 border-white/5'
+                          }`}
+                        >
+                          <p className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-300 dir-ltr text-left">
+                            {ref.citation}
+                          </p>
+                          <p className="mt-1 text-xs opacity-90">
+                            {language === 'ar' ? ref.noteAr : ref.noteEn}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* FULL CONTINUOUS UNSEGMENTED STORY / NARRATIVE SECTION (قراءة كاملة متواصلة للقصص دون تجزئة) */}
+            <div
+              id="sec-full-continuous-story"
+              className={`p-6 sm:p-8 rounded-3xl border-2 space-y-5 shadow-xl ${
+                isLight
+                  ? 'bg-gradient-to-b from-rose-50/70 via-white to-slate-50 border-rose-300 text-slate-900'
+                  : 'bg-gradient-to-b from-rose-950/35 via-slate-900/95 to-slate-950 border-rose-500/40 text-gray-100'
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4 border-rose-200 dark:border-white/15">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-extrabold">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>
+                      {language === 'ar'
+                        ? 'خيار القراءة الكاملة المتواصلة للقصص والسجلات العيادية (دون تجزئة)'
+                        : 'Full Continuous Unsegmented Story & Clinical Case Manuscript'}
+                    </span>
+                  </div>
+                  <h2 className="text-lg sm:text-2xl font-black font-['Alexandria'] text-rose-700 dark:text-rose-300">
+                    {language === 'ar'
+                      ? '📜 النص الكامل المتواصل للقصة / السجلات السريرية (قراءة متصلة دون تجزئة)'
+                      : '📜 Full Continuous Unsegmented Story Manuscript'}
+                  </h2>
+                  <p className="text-xs opacity-80">
+                    {language === 'ar'
+                      ? 'استمتع بقراءة المجموعة القصصية أو السجل العيادي كاملاً ومتواصلاً من السطر الأول حتى الخاتمة دون أي تجزئة.'
+                      : 'Read the complete clinical story collection continuously from start to finish without segmentation.'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleCopyStoryFullText(activeNarrative)}
+                  className="px-4 py-2 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shrink-0"
+                >
+                  {copiedStoryFullText ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <FileText className="w-4 h-4" />
+                  )}
+                  <span>
+                    {copiedStoryFullText
+                      ? language === 'ar'
+                        ? 'تم نسخ القصة الكاملة!'
+                        : 'Full Story Copied!'
+                      : language === 'ar'
+                      ? 'نسخ النص الكامل للقصة'
+                      : 'Copy Full Story Text'}
+                  </span>
+                </button>
+              </div>
+
+              <div
+                className={`p-5 sm:p-8 rounded-2xl border select-text ${
+                  isLight
+                    ? 'bg-white border-slate-200 text-slate-800 shadow-inner'
+                    : 'bg-black/40 border-white/10 text-gray-200'
+                }`}
+              >
+                <FormattedContinuousManuscript
+                  text={getFullContinuousNarrativeText(activeNarrative, language)}
+                  fontSize={readerFontSize}
+                  isLight={isLight}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Social Media Share Bar for Narrative Story */}
+            <ArticleBottomSocialShare
+              title={language === 'ar' ? activeNarrative.title : activeNarrative.titleEn}
+              summary={language === 'ar' ? activeNarrative.summary : activeNarrative.summaryEn}
+              url="https://miratalqulub.com/#/articles"
+              isLight={isLight}
+              language={language}
+            />
           </motion.article>
         ) : activeAcademic ? (
           /* Full-Page Academic Research Paper Reader */
@@ -926,243 +1358,578 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   )
                 )}
               </div>
-            </div>
 
-            <div
-              className={`p-6 rounded-3xl border space-y-2.5 ${
-                isLight
-                  ? 'bg-amber-50/70 border-amber-200 text-slate-800'
-                  : 'bg-amber-500/10 border-amber-500/30 text-gray-200'
-              }`}
-            >
-              <h2 className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300 font-['Alexandria'] flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                <span>{language === 'ar' ? 'الملخص (Abstract)' : 'Abstract'}</span>
-              </h2>
-              <p className="text-sm leading-loose">
-                {language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
-              </p>
-            </div>
-
-            <div
-              className={`p-6 rounded-3xl border space-y-3 ${
-                isLight
-                  ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                  : 'bg-white/[0.02] border-white/10 text-gray-200'
-              }`}
-            >
-              <h2 className="text-lg font-black text-indigo-600 dark:text-cyan-300 font-['Alexandria']">
-                {language === 'ar' ? '1. المقدمة (Introduction)' : '1. Introduction'}
-              </h2>
-              {(language === 'ar'
-                ? activeAcademic.introductionAr
-                : activeAcademic.introductionEn
-              ).map((p, idx) => (
-                <p key={idx} className="text-sm leading-loose">
-                  {p}
-                </p>
-              ))}
-            </div>
-
-            <div
-              className={`p-6 rounded-3xl border space-y-4 ${
-                isLight
-                  ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                  : 'bg-white/[0.02] border-white/10 text-gray-200'
-              }`}
-            >
-              <h2 className="text-lg font-black text-indigo-600 dark:text-cyan-300 font-['Alexandria']">
-                {language === 'ar'
-                  ? '2. الإطار النظري والدراسات السابقة (Theoretical Framework)'
-                  : '2. Theoretical Framework'}
-              </h2>
-              <div className="space-y-4">
-                {activeAcademic.theoreticalFramework.map((sec, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-4 rounded-2xl border space-y-2 ${
-                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'
-                    }`}
-                  >
-                    <h3 className="text-sm sm:text-base font-extrabold text-purple-700 dark:text-purple-300">
-                      {sec.sectionNumber} {language === 'ar' ? sec.titleAr : sec.titleEn}
-                    </h3>
-                    <p className="text-sm leading-relaxed">
-                      {language === 'ar' ? sec.contentAr : sec.contentEn}
-                    </p>
-                    {sec.subPointsAr && (
-                      <ul className="space-y-1.5 pt-2 text-xs sm:text-sm">
-                        {(language === 'ar' ? sec.subPointsAr : sec.subPointsEn || []).map(
-                          (pt, pIdx) => (
-                            <li key={pIdx} className="flex items-start gap-2">
-                              <span className="text-cyan-500 font-bold">•</span>
-                              <span>{pt}</span>
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div
-              className={`p-6 rounded-3xl border space-y-3 ${
-                isLight
-                  ? 'bg-indigo-50/70 border-indigo-200 text-slate-800'
-                  : 'bg-indigo-950/30 border-indigo-500/30 text-gray-200'
-              }`}
-            >
-              <h2 className="text-lg font-black text-indigo-700 dark:text-indigo-300 font-['Alexandria']">
-                {language === 'ar' ? '3. منهجية البحث (Methodology)' : '3. Research Methodology'}
-              </h2>
-              <p className="text-sm font-semibold">
-                {language === 'ar'
-                  ? activeAcademic.methodology.approachAr
-                  : activeAcademic.methodology.approachEn}
-              </p>
-              <ul className="space-y-2 text-sm">
-                {(language === 'ar'
-                  ? activeAcademic.methodology.pillarsAr
-                  : activeAcademic.methodology.pillarsEn
-                ).map((pil, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
+              {/* Academic Metadata & Citation Actions Bar */}
+              <div
+                className={`p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-3 text-xs ${
+                  isLight
+                    ? 'bg-white border-slate-200 text-slate-800'
+                    : 'bg-black/40 border-white/10 text-cyan-100'
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="font-extrabold flex items-center gap-1.5 text-indigo-700 dark:text-cyan-300">
+                    <Award className="w-4 h-4 shrink-0" />
+                    <span>
+                      {language === 'ar'
+                        ? 'جهة الإصدار والتحكيم: وحدة الأبحاث والدراسات النفسية — مرآة القلوب (عمّان، الأردن)'
+                        : 'Published & Peer-Reviewed by: Mirror of Hearts Psychological Research Unit (Amman, Jordan)'}
                     </span>
-                    <span className="leading-relaxed">{pil}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] opacity-85">
+                    <span>
+                      📅 {language === 'ar' ? 'تاريخ النشر:' : 'Published:'} {activeAcademic.publishDate}
+                    </span>
+                    <span>
+                      ⏱️ {language === 'ar' ? activeAcademic.readTimeAr : activeAcademic.readTimeEn}
+                    </span>
+                    <span>
+                      📚 {activeAcademic.apaReferences.length}{' '}
+                      {language === 'ar' ? 'مرجعاً بصيغة APA 7th' : 'APA 7th References'}
+                    </span>
+                  </div>
+                </div>
 
-            <div
-              className={`p-6 rounded-3xl border space-y-4 ${
-                isLight
-                  ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                  : 'bg-white/[0.02] border-white/10 text-gray-200'
-              }`}
-            >
-              <h2 className="text-lg font-black text-indigo-600 dark:text-cyan-300 font-['Alexandria']">
-                {language === 'ar'
-                  ? '4. التحليل والمناقشة (Analysis and Discussion)'
-                  : '4. Analysis and Discussion'}
-              </h2>
-              <div className="space-y-4">
-                {activeAcademic.analysisAndDiscussion.map((sec, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-4 rounded-2xl border space-y-2 ${
-                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'
-                    }`}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      setFullScreenPaper(activeAcademic);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm"
                   >
-                    <h3 className="text-sm sm:text-base font-extrabold text-rose-700 dark:text-rose-300">
-                      {sec.sectionNumber} {language === 'ar' ? sec.titleAr : sec.titleEn}
-                    </h3>
-                    <p className="text-sm leading-relaxed">
-                      {language === 'ar' ? sec.contentAr : sec.contentEn}
-                    </p>
-                    {sec.subPointsAr && (
-                      <ul className="space-y-2 pt-2 text-xs sm:text-sm">
-                        {(language === 'ar' ? sec.subPointsAr : sec.subPointsEn || []).map(
-                          (pt, pIdx) => (
-                            <li key={pIdx} className="flex items-start gap-2">
-                              <span className="text-rose-500 font-bold">▪</span>
-                              <span className="leading-relaxed">{pt}</span>
-                            </li>
-                          )
-                        )}
-                      </ul>
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>
+                      {language === 'ar'
+                        ? 'وضع ملء الشاشة القابل للتمرير'
+                        : 'Full-Screen Scrollable View'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopyApaCitation(activeAcademic)}
+                    className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedCitationId === activeAcademic.id ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <BookMarked className="w-3.5 h-3.5" />
                     )}
-                  </div>
-                ))}
+                    <span>
+                      {copiedCitationId === activeAcademic.id
+                        ? language === 'ar'
+                          ? 'تم نسخ توثيق APA!'
+                          : 'APA Citation Copied!'
+                        : language === 'ar'
+                        ? 'نسخ التوثيق المرجعي (APA)'
+                        : 'Copy APA Citation'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleShareContent(
+                        language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn,
+                        language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn
+                      )
+                    }
+                    className="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedShare ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                    <span>
+                      {copiedShare
+                        ? language === 'ar'
+                          ? 'تم النسخ!'
+                          : 'Copied!'
+                        : language === 'ar'
+                        ? 'مشاركة البحث'
+                        : 'Share Paper'}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div
-              className={`p-6 rounded-3xl border space-y-2 ${
-                isLight
-                  ? 'bg-emerald-50 border-emerald-200 text-slate-800'
-                  : 'bg-emerald-950/30 border-emerald-500/30 text-gray-200'
-              }`}
-            >
-              <h2 className="text-lg font-black text-emerald-700 dark:text-emerald-300 font-['Alexandria']">
-                {language === 'ar' ? '5. الخاتمة (Conclusion)' : '5. Conclusion'}
-              </h2>
-              <p className="text-sm leading-loose">
-                {language === 'ar' ? activeAcademic.conclusionAr : activeAcademic.conclusionEn}
-              </p>
-            </div>
+            {/* Reader Toolbar: Font Size, Dark/Light Mode, View Mode Toggle, Social Media Share */}
+            <ReaderToolbar
+              fontSize={readerFontSize}
+              onChangeFontSize={setReaderFontSize}
+              viewMode={readerViewMode}
+              onChangeViewMode={setReaderViewMode}
+              shareTitle={language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn}
+              shareSummary={language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
+              shareUrl="https://miratalqulub.com/#/articles"
+              contentTypeLabelAr="للبحث العلمي"
+              contentTypeLabelEn="Paper"
+            />
 
+            {readerViewMode === 'segmented_and_continuous' && (
+              <div
+                className="space-y-6 transition-all"
+                style={{ fontSize: `${readerFontSize}px` }}
+              >
+                {/* Interactive Table of Contents for Full Paper */}
+                <div
+                  className={`p-5 rounded-3xl border space-y-3 ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-200 text-slate-800'
+                      : 'bg-white/[0.03] border-white/10 text-gray-200'
+                  }`}
+                >
+                  <div className="text-xs sm:text-sm font-black text-indigo-700 dark:text-cyan-300 font-['Alexandria']">
+                    📑{' '}
+                    {language === 'ar'
+                      ? 'الفهرس الهيكلي للدراسة العلمية المحكّمة:'
+                      : 'Structured Index of the Peer-Reviewed Study:'}
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {[
+                      { id: 'sec-abstract', ar: 'الملخص (Abstract)', en: 'Abstract' },
+                      { id: 'sec-intro', ar: '1. المقدمة', en: '1. Introduction' },
+                      { id: 'sec-theory', ar: '2. الإطار النظري', en: '2. Theoretical Framework' },
+                      { id: 'sec-method', ar: '3. منهجية البحث', en: '3. Methodology' },
+                      { id: 'sec-analysis', ar: '4. النتائج والتحليل والمناقشة', en: '4. Results & Discussion' },
+                      { id: 'sec-conclusion', ar: '5. الخاتمة', en: '5. Conclusion' },
+                      { id: 'sec-recommendations', ar: '6. التوصيات', en: '6. Recommendations' },
+                      { id: 'sec-references', ar: '7. المراجع (APA 7th)', en: '7. APA 7th References' },
+                      {
+                        id: 'sec-full-continuous-text',
+                        ar: '📜 النص الكامل المتواصل للبحث (دون تجزئة)',
+                        en: '📜 Full Continuous Unsegmented Paper',
+                      },
+                    ].map((secItem) => (
+                      <button
+                        key={secItem.id}
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(secItem.id);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className={`px-3 py-1.5 rounded-xl font-bold border transition cursor-pointer ${
+                          isLight
+                            ? 'bg-white hover:bg-indigo-50 text-slate-700 border-slate-200'
+                            : 'bg-black/30 hover:bg-white/10 text-gray-300 border-white/10'
+                        }`}
+                      >
+                        {language === 'ar' ? secItem.ar : secItem.en}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  id="sec-abstract"
+                  className={`p-6 rounded-3xl border space-y-2.5 ${
+                    isLight
+                      ? 'bg-amber-50/70 border-amber-200 text-slate-800'
+                      : 'bg-amber-500/10 border-amber-500/30 text-gray-200'
+                  }`}
+                >
+                  <h2 className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300 font-['Alexandria'] flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'الملخص (Abstract)' : 'Abstract'}</span>
+                  </h2>
+                  <p className="leading-loose" style={{ fontSize: `${readerFontSize}px` }}>
+                    {language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
+                  </p>
+                </div>
+
+                <div
+                  id="sec-intro"
+                  className={`p-6 rounded-3xl border space-y-3 ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                      : 'bg-white/[0.02] border-white/10 text-gray-200'
+                  }`}
+                >
+                  <h2 className="text-lg font-black text-indigo-600 dark:text-cyan-300 font-['Alexandria']">
+                    {language === 'ar' ? '1. المقدمة (Introduction)' : '1. Introduction'}
+                  </h2>
+                  {(language === 'ar'
+                    ? activeAcademic.introductionAr
+                    : activeAcademic.introductionEn
+                  ).map((p, idx) => (
+                    <p key={idx} className="leading-loose" style={{ fontSize: `${readerFontSize}px` }}>
+                      {p}
+                    </p>
+                  ))}
+                </div>
+
+                <div
+                  id="sec-theory"
+                  className={`p-6 rounded-3xl border space-y-4 ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                      : 'bg-white/[0.02] border-white/10 text-gray-200'
+                  }`}
+                >
+                  <h2 className="text-lg font-black text-indigo-600 dark:text-cyan-300 font-['Alexandria']">
+                    {language === 'ar'
+                      ? '2. الإطار النظري والدراسات السابقة (Theoretical Framework)'
+                      : '2. Theoretical Framework'}
+                  </h2>
+                  <div className="space-y-4">
+                    {activeAcademic.theoreticalFramework.map((sec, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-2xl border space-y-2 ${
+                          isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'
+                        }`}
+                      >
+                        <h3 className="text-sm sm:text-base font-extrabold text-purple-700 dark:text-purple-300">
+                          {sec.sectionNumber} {language === 'ar' ? sec.titleAr : sec.titleEn}
+                        </h3>
+                        <p className="leading-relaxed" style={{ fontSize: `${readerFontSize}px` }}>
+                          {language === 'ar' ? sec.contentAr : sec.contentEn}
+                        </p>
+                        {sec.subPointsAr && (
+                          <ul className="space-y-1.5 pt-2" style={{ fontSize: `${Math.max(14, readerFontSize - 1)}px` }}>
+                            {(language === 'ar' ? sec.subPointsAr : sec.subPointsEn || []).map(
+                              (pt, pIdx) => (
+                                <li key={pIdx} className="flex items-start gap-2">
+                                  <span className="text-cyan-500 font-bold">•</span>
+                                  <span>{pt}</span>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  id="sec-method"
+                  className={`p-6 rounded-3xl border space-y-3 ${
+                    isLight
+                      ? 'bg-indigo-50/70 border-indigo-200 text-slate-800'
+                      : 'bg-indigo-950/30 border-indigo-500/30 text-gray-200'
+                  }`}
+                >
+                  <h2 className="text-lg font-black text-indigo-700 dark:text-indigo-300 font-['Alexandria']">
+                    {language === 'ar' ? '3. منهجية البحث (Methodology)' : '3. Research Methodology'}
+                  </h2>
+                  <p className="font-semibold" style={{ fontSize: `${readerFontSize}px` }}>
+                    {language === 'ar'
+                      ? activeAcademic.methodology.approachAr
+                      : activeAcademic.methodology.approachEn}
+                  </p>
+                  <ul className="space-y-2" style={{ fontSize: `${readerFontSize}px` }}>
+                    {(language === 'ar'
+                      ? activeAcademic.methodology.pillarsAr
+                      : activeAcademic.methodology.pillarsEn
+                    ).map((pil, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <span className="leading-relaxed">{pil}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div
+                  id="sec-analysis"
+                  className={`p-6 rounded-3xl border space-y-4 ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                      : 'bg-white/[0.02] border-white/10 text-gray-200'
+                  }`}
+                >
+                  <h2 className="text-lg font-black text-indigo-600 dark:text-cyan-300 font-['Alexandria']">
+                    {language === 'ar'
+                      ? '4. التحليل والمناقشة (Analysis and Discussion)'
+                      : '4. Analysis and Discussion'}
+                  </h2>
+                  <div className="space-y-4">
+                    {activeAcademic.analysisAndDiscussion.map((sec, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-2xl border space-y-2 ${
+                          isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'
+                        }`}
+                      >
+                        <h3 className="text-sm sm:text-base font-extrabold text-rose-700 dark:text-rose-300">
+                          {sec.sectionNumber} {language === 'ar' ? sec.titleAr : sec.titleEn}
+                        </h3>
+                        <p className="leading-relaxed" style={{ fontSize: `${readerFontSize}px` }}>
+                          {language === 'ar' ? sec.contentAr : sec.contentEn}
+                        </p>
+                        {sec.subPointsAr && (
+                          <ul className="space-y-2 pt-2" style={{ fontSize: `${Math.max(14, readerFontSize - 1)}px` }}>
+                            {(language === 'ar' ? sec.subPointsAr : sec.subPointsEn || []).map(
+                              (pt, pIdx) => (
+                                <li key={pIdx} className="flex items-start gap-2">
+                                  <span className="text-rose-500 font-bold">▪</span>
+                                  <span className="leading-relaxed">{pt}</span>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {activeAcademic.summaryTable && (
+                    <div
+                      className={`mt-4 p-5 rounded-2xl border space-y-3 overflow-x-auto ${
+                        isLight
+                          ? 'bg-indigo-50/60 border-indigo-200'
+                          : 'bg-indigo-950/25 border-indigo-500/30'
+                      }`}
+                    >
+                      <h3 className="text-sm sm:text-base font-black text-indigo-800 dark:text-cyan-300 font-['Alexandria']">
+                        📊{' '}
+                        {language === 'ar'
+                          ? activeAcademic.summaryTable.titleAr
+                          : activeAcademic.summaryTable.titleEn}
+                      </h3>
+                      <table className="w-full text-xs sm:text-sm border-collapse">
+                        <thead>
+                          <tr
+                            className={
+                              isLight
+                                ? 'bg-indigo-100/80 text-indigo-950 border-b border-indigo-200'
+                                : 'bg-white/10 text-white border-b border-white/15'
+                            }
+                          >
+                            {(language === 'ar'
+                              ? activeAcademic.summaryTable.headersAr
+                              : activeAcademic.summaryTable.headersEn
+                            ).map((hdr, hIdx) => (
+                              <th key={hIdx} className="p-3 text-start font-extrabold">
+                                {hdr}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {activeAcademic.summaryTable.rows.map((row, rIdx) => (
+                            <tr
+                              key={rIdx}
+                              className={`border-b ${
+                                isLight ? 'border-indigo-100 bg-white/80' : 'border-white/10 bg-black/20'
+                              }`}
+                            >
+                              <td className="p-3 font-bold text-indigo-700 dark:text-cyan-300">
+                                {language === 'ar' ? row.col1Ar : row.col1En}
+                              </td>
+                              <td className="p-3">
+                                {language === 'ar' ? row.col2Ar : row.col2En}
+                              </td>
+                              <td className="p-3">
+                                {language === 'ar' ? row.col3Ar : row.col3En}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  id="sec-conclusion"
+                  className={`p-6 rounded-3xl border space-y-2 ${
+                    isLight
+                      ? 'bg-emerald-50 border-emerald-200 text-slate-800'
+                      : 'bg-emerald-950/30 border-emerald-500/30 text-gray-200'
+                  }`}
+                >
+                  <h2 className="text-lg font-black text-emerald-700 dark:text-emerald-300 font-['Alexandria']">
+                    {language === 'ar' ? '5. الخاتمة (Conclusion)' : '5. Conclusion'}
+                  </h2>
+                  <p className="leading-loose" style={{ fontSize: `${readerFontSize}px` }}>
+                    {language === 'ar' ? activeAcademic.conclusionAr : activeAcademic.conclusionEn}
+                  </p>
+                </div>
+
+                <div
+                  id="sec-recommendations"
+                  className={`p-6 rounded-3xl border space-y-4 ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                      : 'bg-white/[0.02] border-white/10 text-gray-200'
+                  }`}
+                >
+                  <h2 className="text-lg font-black text-amber-600 dark:text-amber-300 font-['Alexandria'] flex items-center gap-2">
+                    <ListChecks className="w-5 h-5" />
+                    <span>{language === 'ar' ? '6. التوصيات (Recommendations)' : '6. Recommendations'}</span>
+                  </h2>
+                  <div className="grid grid-cols-1 gap-3">
+                    {activeAcademic.recommendations.map((rec, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-2xl border space-y-2 ${
+                          isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'
+                        }`}
+                      >
+                        <h3 className="text-sm font-extrabold text-indigo-600 dark:text-cyan-300">
+                          {language === 'ar' ? rec.categoryAr : rec.categoryEn}
+                        </h3>
+                        <ul className="space-y-1.5" style={{ fontSize: `${Math.max(14, readerFontSize - 1)}px` }}>
+                          {(language === 'ar' ? rec.itemsAr : rec.itemsEn).map((item, iIdx) => (
+                            <li key={iIdx} className="flex items-start gap-2">
+                              <span className="text-emerald-500 font-bold">✓</span>
+                              <span className="leading-relaxed">{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  id="sec-references"
+                  className={`p-6 rounded-3xl border space-y-3 ${
+                    isLight
+                      ? 'bg-slate-100 border-slate-300 text-slate-800'
+                      : 'bg-slate-900/90 border-white/15 text-gray-300'
+                  }`}
+                >
+                  <h2 className="text-base sm:text-lg font-black flex items-center gap-2 font-['Alexandria']">
+                    <BookMarked className="w-4 h-4 text-cyan-500" />
+                    <span>
+                      {language === 'ar'
+                        ? '7. المراجع العلمية الموثقة (References - APA 7th Edition)'
+                        : '7. References (APA 7th Edition)'}
+                    </span>
+                  </h2>
+                  <ul className="space-y-2 text-xs font-mono dir-ltr text-left">
+                    {activeAcademic.apaReferences.map((cite, idx) => (
+                      <li
+                        key={idx}
+                        className={`p-3 rounded-xl border ${
+                          isLight
+                            ? 'bg-white border-slate-200 text-slate-800'
+                            : 'bg-black/40 border-white/5 text-cyan-100'
+                        }`}
+                      >
+                        {idx + 1}. {cite}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* FULL CONTINUOUS UNSEGMENTED RESEARCH PAPER SECTION (النص الكامل المتواصل للبحث العلمي دون تجزئة) */}
             <div
-              className={`p-6 rounded-3xl border space-y-4 ${
+              id="sec-full-continuous-text"
+              className={`p-6 sm:p-8 rounded-3xl border-2 space-y-5 shadow-xl ${
                 isLight
-                  ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                  : 'bg-white/[0.02] border-white/10 text-gray-200'
+                  ? 'bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 border-indigo-300 text-slate-900'
+                  : 'bg-gradient-to-b from-indigo-950/40 via-slate-900/95 to-slate-950 border-cyan-500/40 text-gray-100'
               }`}
             >
-              <h2 className="text-lg font-black text-amber-600 dark:text-amber-300 font-['Alexandria'] flex items-center gap-2">
-                <ListChecks className="w-5 h-5" />
-                <span>{language === 'ar' ? '6. التوصيات (Recommendations)' : '6. Recommendations'}</span>
-              </h2>
-              <div className="grid grid-cols-1 gap-3">
-                {activeAcademic.recommendations.map((rec, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-4 rounded-2xl border space-y-2 ${
-                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'
-                    }`}
-                  >
-                    <h3 className="text-sm font-extrabold text-indigo-600 dark:text-cyan-300">
-                      {language === 'ar' ? rec.categoryAr : rec.categoryEn}
-                    </h3>
-                    <ul className="space-y-1.5 text-xs sm:text-sm">
-                      {(language === 'ar' ? rec.itemsAr : rec.itemsEn).map((item, iIdx) => (
-                        <li key={iIdx} className="flex items-start gap-2">
-                          <span className="text-emerald-500 font-bold">✓</span>
-                          <span className="leading-relaxed">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4 border-indigo-200 dark:border-white/15">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-cyan-300 text-xs font-extrabold">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>
+                      {language === 'ar'
+                        ? 'النسخة المرجعية الكاملة المتواصلة (دون تجزئة)'
+                        : 'Complete Unsegmented Reference Manuscript'}
+                    </span>
                   </div>
-                ))}
+                  <h2 className="text-lg sm:text-2xl font-black font-['Alexandria'] text-indigo-800 dark:text-cyan-300">
+                    {language === 'ar'
+                      ? '📜 النص الكامل المتواصل للبحث العلمي (قراءة متصلة دون تجزئة)'
+                      : '📜 Full Continuous Unsegmented Research Paper'}
+                  </h2>
+                  <p className="text-xs opacity-80">
+                    {language === 'ar'
+                      ? 'يُعرض هنا المقال العلمي كاملاً ومتواصلاً من البداية إلى النهاية دون أي تجزئة أو اختصار مع الحفاظ على التنسيق الأكاديمي والجداول والمراجع.'
+                      : 'The complete research manuscript is presented below continuously from start to finish without segmentation, preserving academic formatting, tables, and citations.'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleCopyFullText(activeAcademic)}
+                  className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shrink-0"
+                >
+                  {copiedFullText ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <FileText className="w-4 h-4" />
+                  )}
+                  <span>
+                    {copiedFullText
+                      ? language === 'ar'
+                        ? 'تم نسخ النص الكامل للبحث!'
+                        : 'Full Paper Text Copied!'
+                      : language === 'ar'
+                      ? 'نسخ النص الكامل المتواصل للبحث'
+                      : 'Copy Full Continuous Paper Text'}
+                  </span>
+                </button>
+              </div>
+
+              <div
+                className={`p-5 sm:p-8 rounded-2xl border select-text ${
+                  isLight
+                    ? 'bg-white border-slate-200 text-slate-800 shadow-inner'
+                    : 'bg-black/40 border-white/10 text-gray-200'
+                }`}
+              >
+                <FormattedContinuousManuscript
+                  text={getFullContinuousAcademicText(activeAcademic, language)}
+                  fontSize={readerFontSize}
+                  isLight={isLight}
+                />
               </div>
             </div>
 
+            {/* Bottom Social Media Share Button & Bar */}
+            <ArticleBottomSocialShare
+              title={language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn}
+              summary={language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
+              url="https://miratalqulub.com/#/articles"
+              isLight={isLight}
+              language={language}
+            />
+
+            {/* Scientific & Clinical Disclaimer Box */}
             <div
-              className={`p-6 rounded-3xl border space-y-3 ${
+              className={`p-5 rounded-3xl border text-xs leading-relaxed ${
                 isLight
-                  ? 'bg-slate-100 border-slate-300 text-slate-800'
-                  : 'bg-slate-900/90 border-white/15 text-gray-300'
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-amber-950/30 border-amber-500/30 text-amber-200'
               }`}
             >
-              <h2 className="text-base sm:text-lg font-black flex items-center gap-2 font-['Alexandria']">
-                <BookMarked className="w-4 h-4 text-cyan-500" />
-                <span>
-                  {language === 'ar'
-                    ? '7. المراجع العلمية الموثقة (References - APA 7th Edition)'
-                    : '7. References (APA 7th Edition)'}
-                </span>
-              </h2>
-              <ul className="space-y-2 text-xs font-mono dir-ltr text-left">
-                {activeAcademic.apaReferences.map((cite, idx) => (
-                  <li
-                    key={idx}
-                    className={`p-3 rounded-xl border ${
-                      isLight
-                        ? 'bg-white border-slate-200 text-slate-800'
-                        : 'bg-black/40 border-white/5 text-cyan-100'
-                    }`}
-                  >
-                    {cite}
-                  </li>
-                ))}
-              </ul>
+              <strong className="block mb-1 font-extrabold">
+                {language === 'ar'
+                  ? '⚖️ إخلاء مسؤولية علمي وعيادي (Scientific & Clinical Disclaimer):'
+                  : '⚖️ Scientific & Clinical Disclaimer:'}
+              </strong>
+              {language === 'ar'
+                ? 'تم إعداد هذه الدراسة البحثية لأغراض التثقيف النفسي والأكاديمي وتعميق الوعي الذاتي والعلائقي، ولا تُعد بديلاً عن التشخيص الطبي أو العيادي المباشر لدى طبيب نفسي أو معالج إكلينيكي مرخص.'
+                : 'This academic research paper is published for psychoeducational and scholarly awareness purposes and does not constitute a substitute for formal psychiatric or clinical diagnosis by a licensed mental health professional.'}
             </div>
           </motion.article>
         ) : null}
       </AnimatePresence>
+
+      {/* Full-Screen Scrollable Academic Research Reader Modal (ResearchArticleModal) */}
+      <ResearchArticleModal
+        isOpen={Boolean(fullScreenPaper)}
+        onClose={() => setFullScreenPaper(null)}
+        content={
+          fullScreenPaper
+            ? getFullContinuousAcademicText(fullScreenPaper, language)
+            : undefined
+        }
+        paper={fullScreenPaper}
+        initialViewMode="continuous_only"
+      />
 
       {/* Bottom AdSense Banner */}
       <div className="pt-4">

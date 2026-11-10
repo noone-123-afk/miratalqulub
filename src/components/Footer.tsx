@@ -109,8 +109,15 @@ export const Footer: React.FC<FooterProps> = ({
         >
           {/* Brand Summary */}
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">🔮</span>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-md shadow-rose-500/20 shrink-0 overflow-hidden">
+                <img
+                  src="/src/assets/images/mirat_al_qulub_logo_1794297285302.jpg"
+                  alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Logo'}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover rounded-[14px]"
+                />
+              </div>
               <span
                 className={`font-extrabold text-base sm:text-lg font-['Alexandria'] ${
                   isLight ? 'text-slate-900' : 'text-white'

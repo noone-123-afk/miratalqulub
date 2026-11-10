@@ -35,7 +35,14 @@ export function applyTheme(theme: AppTheme) {
   }
 }
 
-export function useAppTheme(): [AppTheme, (newTheme?: AppTheme) => void] {
+export type UseAppThemeReturn = [AppTheme, (newTheme?: AppTheme) => void] & {
+  theme: AppTheme;
+  appTheme: AppTheme;
+  toggleTheme: (newTheme?: AppTheme) => void;
+  toggleAppTheme: (newTheme?: AppTheme) => void;
+};
+
+export function useAppTheme(): UseAppThemeReturn {
   const [theme, setThemeState] = useState<AppTheme>(getInitialTheme);
 
   useEffect(() => {
@@ -60,5 +67,11 @@ export function useAppTheme(): [AppTheme, (newTheme?: AppTheme) => void] {
     applyTheme(target);
   };
 
-  return [theme, toggleTheme];
+  const result = [theme, toggleTheme] as UseAppThemeReturn;
+  result.theme = theme;
+  result.appTheme = theme;
+  result.toggleTheme = toggleTheme;
+  result.toggleAppTheme = toggleTheme;
+  return result;
 }
+

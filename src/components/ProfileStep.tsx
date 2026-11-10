@@ -498,17 +498,27 @@ export const ProfileStep: React.FC<Props> = ({
             : 'bg-slate-900/80 border-slate-800 shadow-lg'
         }`}
       >
-        <div
-          className={`inline-flex items-center gap-2 text-xs font-bold mb-2 ${
-            isLight ? 'text-blue-700' : 'text-blue-300'
-          }`}
-        >
-          <BookOpen className="w-4 h-4 text-emerald-500" />
-          <span>
-            {isAr
-              ? 'منظومة التوافق الفكري والاجتماعي وعلم النفس التطبيقي'
-              : 'Behavioral & Sociological Compatibility Framework'}
-          </span>
+        <div className="flex flex-col items-center justify-center mb-3">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-xl shadow-rose-500/20 mb-3 overflow-hidden">
+            <img
+              src="/src/assets/images/mirat_al_qulub_logo_1794297285302.jpg"
+              alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Emblem'}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover rounded-[22px]"
+            />
+          </div>
+          <div
+            className={`inline-flex items-center gap-2 text-xs font-bold ${
+              isLight ? 'text-blue-700' : 'text-blue-300'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-emerald-500" />
+            <span>
+              {isAr
+                ? 'منظومة التوافق الفكري والاجتماعي وعلم النفس التطبيقي'
+                : 'Behavioral & Sociological Compatibility Framework'}
+            </span>
+          </div>
         </div>
 
         <h2

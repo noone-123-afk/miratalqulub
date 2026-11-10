@@ -124,7 +124,7 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
     setIsCompleted(true);
     setIsSavingCloud(true);
 
-    if (test.id === 'mbti_16') {
+    if (test.id === 'mbti_16types' || test.id === 'mbti_16') {
       const sums: Record<string, { score: number; count: number }> = {
         EI: { score: 0, count: 0 },
         SN: { score: 0, count: 0 },
@@ -134,7 +134,8 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
 
       test.questions.forEach((q) => {
         const raw = finalAnswers[q.id] || 3;
-        const val = q.direction === 1 ? raw : 6 - raw;
+        const isFirstPole = ['E', 'S', 'T', 'J'].includes(q.positivePole);
+        const val = (q.direction !== undefined ? q.direction === 1 : isFirstPole) ? raw : 6 - raw;
         if (sums[q.dimension]) {
           sums[q.dimension].score += val;
           sums[q.dimension].count += 1;
@@ -188,7 +189,7 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
       } finally {
         setIsSavingCloud(false);
       }
-    } else if (test.id === 'big_five') {
+    } else if (test.id === 'big_five_ocean' || test.id === 'big_five') {
       const sums: Record<string, { score: number; count: number }> = {
         O: { score: 0, count: 0 },
         C: { score: 0, count: 0 },
@@ -199,10 +200,11 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
 
       test.questions.forEach((q) => {
         const raw = finalAnswers[q.id] || 3;
-        const val = q.direction === 1 ? raw : 6 - raw;
-        if (sums[q.dimension]) {
-          sums[q.dimension].score += val;
-          sums[q.dimension].count += 1;
+        const val = q.direction === -1 ? 6 - raw : raw;
+        const dimKey = q.dimension === 'N' ? 'ES' : q.dimension;
+        if (sums[dimKey]) {
+          sums[dimKey].score += val;
+          sums[dimKey].count += 1;
         }
       });
 

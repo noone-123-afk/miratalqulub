@@ -138,20 +138,25 @@ function AppContent() {
   const [activeNovelId, setActiveNovelId] = useState<string>('room_104_cipher');
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
 
-  // Synchronize URL hash with currentPage for direct deep linking and SEO crawlers
+  // Synchronize URL hash, pathname, and query params with currentPage for direct deep linking, OAuth/AdSense validators, and SEO crawlers
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleRouteChange = () => {
       const rawHash = window.location.hash.toLowerCase().replace('#/', '').replace('#', '').trim();
-      const parts = rawHash.split('/');
+      const rawPath = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '').trim();
+      const searchParams = new URLSearchParams(window.location.search);
+      const queryPage = (searchParams.get('page') || '').toLowerCase().trim();
+
+      const effectiveRoute = rawHash || queryPage || rawPath;
+      const parts = effectiveRoute.split('/');
       const section = parts[0];
 
       if (section === 'about' || section === 'about-us') {
         setCurrentPage('about');
       } else if (section === 'how-it-works' || section === 'howitworks') {
         setCurrentPage('how-it-works');
-      } else if (section === 'privacy' || section === 'privacy-policy') {
+      } else if (section === 'privacy' || section === 'privacy-policy' || section === 'privacypolicy') {
         setCurrentPage('privacy');
-      } else if (section === 'terms' || section === 'terms-of-service') {
+      } else if (section === 'terms' || section === 'terms-of-service' || section === 'tos') {
         setCurrentPage('terms');
       } else if (section === 'contact' || section === 'contact-us') {
         setCurrentPage('contact');
@@ -190,9 +195,13 @@ function AppContent() {
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleRouteChange();
+    window.addEventListener('hashchange', handleRouteChange);
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('hashchange', handleRouteChange);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   const handleNavigatePage = (page: string) => {

@@ -191,13 +191,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               })
             }
           >
-            <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 p-0.5 shadow-md flex items-center justify-center">
+            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 p-0.5 shadow-md shadow-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform">
               <div
                 className={`w-full h-full rounded-[14px] flex items-center justify-center relative overflow-hidden ${
-                  isLight ? 'bg-white' : 'bg-[#120d24]'
+                  isLight ? 'bg-slate-950' : 'bg-[#0b0e17]'
                 }`}
               >
-                <span className="text-lg sm:text-xl relative z-10">🔮</span>
+                <img
+                  src="/src/assets/images/mirat_al_qulub_logo_1794297285302.jpg"
+                  alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Official Logo'}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover rounded-[13px]"
+                />
               </div>
             </div>
             <div>

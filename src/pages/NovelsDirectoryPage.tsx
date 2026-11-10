@@ -64,7 +64,8 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
   }, []);
 
   const genres: Array<{ id: 'all' | NovelGenre; labelAr: string; labelEn: string }> = [
-    { id: 'all', labelAr: 'كافة الروايات (جميع الأنواع)', labelEn: 'All Novels & Genres' },
+    { id: 'all', labelAr: 'كافة الروايات والقصص (جميع الأنواع)', labelEn: 'All Novels & Story Collections' },
+    { id: 'clinical_stories', labelAr: '🩺 مجموعات قصصية عيادية وسيكولوجية', labelEn: '🩺 Clinical Psychological Stories' },
     { id: 'romance', labelAr: 'روايات رومانسية واجتماعية', labelEn: 'Romantic & Social Novels' },
     { id: 'crime_mystery', labelAr: 'روايات التحقيقات الجنائية المشوقة', labelEn: 'Forensic Crime & Mystery' },
     { id: 'sci_fi_future', labelAr: 'روايات خيال علمي وتكنولوجيا', labelEn: 'Sci-Fi & Reverse Engineering' },

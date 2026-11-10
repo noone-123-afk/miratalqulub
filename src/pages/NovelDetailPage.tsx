@@ -21,14 +21,24 @@ import {
   Sun,
   Moon,
   Globe,
+  ScrollText,
 } from 'lucide-react';
-import { Novel, NOVELS_CATALOG } from '../data/novelsData';
+import {
+  Novel,
+  NOVELS_CATALOG,
+  getFullNovelContinuousText,
+} from '../data/novelsData';
 import { getAllNovels } from '../services/novelsService';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { NovelCommentsSection } from '../components/NovelCommentsSection';
+import {
+  ReaderToolbar,
+  FormattedContinuousManuscript,
+  ContinuousViewMode,
+} from '../components/ReaderToolbar';
 
 interface Props {
   novelId: string;
@@ -36,7 +46,7 @@ interface Props {
   onReadChapter: (novelId: string, chapterIndex: number) => void;
 }
 
-type TabType = 'chapters' | 'appendix' | 'evidence' | 'suspects' | 'comments';
+type TabType = 'chapters' | 'full_continuous' | 'appendix' | 'evidence' | 'suspects' | 'comments';
 
 export const NovelDetailPage: React.FC<Props> = ({
   novelId,
@@ -51,6 +61,9 @@ export const NovelDetailPage: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('chapters');
   const [copiedShare, setCopiedShare] = useState(false);
+  const [copiedFullStory, setCopiedFullStory] = useState(false);
+  const [readerFontSize, setReaderFontSize] = useState<number>(18);
+  const [readerViewMode, setReaderViewMode] = useState<ContinuousViewMode>('continuous_only');
   const [bookmarkChapterIndex, setBookmarkChapterIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -383,6 +396,32 @@ export const NovelDetailPage: React.FC<Props> = ({
                   {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                 </button>
 
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundManager.playTap();
+                    setActiveTab('full_continuous');
+                    setTimeout(() => {
+                      const el = document.getElementById('novel-full-continuous-reader');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  }}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all border flex items-center gap-2 cursor-pointer shadow-md ${
+                    activeTab === 'full_continuous'
+                      ? 'bg-indigo-600 text-white border-indigo-500'
+                      : isLight
+                      ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border-indigo-300'
+                      : 'bg-indigo-950/70 hover:bg-indigo-900/80 text-cyan-200 border-indigo-500/40'
+                  }`}
+                >
+                  <ScrollText className="w-4 h-4 text-cyan-400" />
+                  <span>
+                    {language === 'ar'
+                      ? '📜 قراءة القصة / الرواية كاملة دون تجزئة'
+                      : '📜 Read Full Story Unsegmented'}
+                  </span>
+                </button>
+
                 {bookmarkChapterIndex !== null && bookmarkChapterIndex < novel.chapters.length && (
                   <button
                     onClick={() => {
@@ -428,8 +467,29 @@ export const NovelDetailPage: React.FC<Props> = ({
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>{language === 'ar' ? 'فصول الرواية الكاملة' : 'Full Chapters'}</span>
+            <span>{language === 'ar' ? 'فصول القصة / الرواية' : 'Story Chapters'}</span>
             <span className="text-xs bg-black/20 px-2 py-0.5 rounded-full">{novel.chapters.length}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              soundManager.playTap();
+              setActiveTab('full_continuous');
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-extrabold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'full_continuous'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : isLight
+                ? 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100 border border-indigo-200'
+                : 'bg-indigo-950/60 text-cyan-200 hover:bg-indigo-900/70 border border-indigo-500/40'
+            }`}
+          >
+            <ScrollText className="w-4 h-4" />
+            <span>
+              {language === 'ar'
+                ? '📜 قراءة كاملة دون تجزئة (النص الكامل)'
+                : '📜 Full Unsegmented Story'}
+            </span>
           </button>
 
           {(novel.appendixItems || novel.authorWordAr) && (
@@ -573,6 +633,96 @@ export const NovelDetailPage: React.FC<Props> = ({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* 1-B. Full Continuous Unsegmented Story / Novel Reader Tab */}
+          {activeTab === 'full_continuous' && (
+            <div id="novel-full-continuous-reader" className="space-y-5">
+              <ReaderToolbar
+                fontSize={readerFontSize}
+                onChangeFontSize={setReaderFontSize}
+                viewMode={readerViewMode}
+                onChangeViewMode={(mode) => {
+                  setReaderViewMode(mode);
+                  if (mode === 'segmented_and_continuous') {
+                    setActiveTab('chapters');
+                  }
+                }}
+                shareTitle={displayTitle}
+                shareSummary={displaySynopsis}
+                shareUrl={window.location.href}
+                contentTypeLabelAr="للقصة / الرواية"
+                contentTypeLabelEn="Story"
+              />
+
+              <div
+                className={`p-6 sm:p-10 rounded-3xl border-2 space-y-5 shadow-xl ${
+                  isLight
+                    ? 'bg-gradient-to-b from-indigo-50/50 via-white to-slate-50 border-indigo-300 text-slate-900'
+                    : 'bg-gradient-to-b from-indigo-950/35 via-slate-900/95 to-slate-950 border-indigo-500/40 text-slate-100'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4 border-indigo-200 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-cyan-300 text-xs font-extrabold">
+                      <ScrollText className="w-3.5 h-3.5" />
+                      <span>
+                        {language === 'ar'
+                          ? 'وضع القراءة المتصلة الكاملة دون تجزئة'
+                          : 'Full Continuous Unsegmented Reading Mode'}
+                      </span>
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-black">
+                      {displayTitle} — {language === 'ar' ? 'النص الكامل المتواصل' : 'Complete Unsegmented Text'}
+                    </h2>
+                    <p className="text-xs opacity-80">
+                      {language === 'ar'
+                        ? 'جميع الفصول والحالات السريرية والملاحق معروضة بشكل متصل ومتواصل دون أي تجزئة لقراءة غامرة.'
+                        : 'All chapters, clinical cases, and appendices presented continuously without segmentation.'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      const fullText = getFullNovelContinuousText(novel, language);
+                      if (navigator.clipboard) {
+                        navigator.clipboard.writeText(fullText);
+                        setCopiedFullStory(true);
+                        setTimeout(() => setCopiedFullStory(false), 2500);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-md"
+                  >
+                    {copiedFullStory ? <Check className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                    <span>
+                      {copiedFullStory
+                        ? language === 'ar'
+                          ? 'تم نسخ النص الكامل!'
+                          : 'Full Text Copied!'
+                        : language === 'ar'
+                        ? 'نسخ النص الكامل للقصة'
+                        : 'Copy Full Story Text'}
+                    </span>
+                  </button>
+                </div>
+
+                <div
+                  className={`p-5 sm:p-8 rounded-2xl border select-text ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-800 shadow-inner'
+                      : 'bg-slate-950/70 border-slate-800 text-slate-200'
+                  }`}
+                >
+                  <FormattedContinuousManuscript
+                    text={getFullNovelContinuousText(novel, language)}
+                    fontSize={readerFontSize}
+                    isLight={isLight}
+                  />
+                </div>
+              </div>
             </div>
           )}
 

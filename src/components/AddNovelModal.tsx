@@ -29,6 +29,16 @@ interface Props {
 
 // Preset vector covers for custom novels
 const COVER_PRESETS: Record<NovelGenre, string> = {
+  clinical_stories: `
+    <svg viewBox="0 0 400 560" className="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="560" fill="#1e1b4b"/>
+      <circle cx="200" cy="230" r="90" fill="#ec4899" opacity="0.25"/>
+      <rect x="30" y="475" width="340" height="38" rx="8" fill="#312e81" stroke="#f472b6" stroke-width="1.5"/>
+      <text x="200" y="500" font-family="sans-serif" font-size="13" font-weight="900" fill="#fdf2f8" text-anchor="middle">
+        CLINICAL STORIES • مجموعات قصصية عيادية
+      </text>
+    </svg>
+  `,
   romance: `
     <svg viewBox="0 0 400 560" className="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
       <rect width="400" height="560" fill="#06281e"/>
@@ -427,6 +437,7 @@ export const AddNovelModal: React.FC<Props> = ({
     const totalMinutes = Math.max(3, Math.round(totalWords / 130));
 
     const genreLabels: Record<NovelGenre, { label: string; color: string }> = {
+      clinical_stories: { label: 'مجموعات قصصية عيادية وسيكولوجية', color: '#ec4899' },
       romance: { label: 'روايات رومانسية واجتماعية', color: '#10b981' },
       crime_mystery: { label: 'غموض وجرائم جنائية', color: '#ef4444' },
       tactical_action: { label: 'أكشن ومطاردات تكتيكية', color: '#f97316' },

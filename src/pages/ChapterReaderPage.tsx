@@ -16,14 +16,20 @@ import {
   Sun,
   Moon,
   Globe,
+  ScrollText,
 } from 'lucide-react';
-import { Novel, NOVELS_CATALOG } from '../data/novelsData';
+import {
+  Novel,
+  NOVELS_CATALOG,
+  getFullNovelContinuousText,
+} from '../data/novelsData';
 import { getAllNovels } from '../services/novelsService';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { NovelCommentsSection } from '../components/NovelCommentsSection';
+import { FormattedContinuousManuscript } from '../components/ReaderToolbar';
 
 interface Props {
   novelId: string;
@@ -49,6 +55,7 @@ export const ChapterReaderPage: React.FC<Props> = ({
   const [readerTheme, setReaderTheme] = useState<ReaderTheme>(appTheme === 'light' ? 'light' : 'noir');
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isAmbiencePlaying, setIsAmbiencePlaying] = useState(false);
+  const [isFullContinuousMode, setIsFullContinuousMode] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -260,6 +267,33 @@ export const ChapterReaderPage: React.FC<Props> = ({
 
           {/* Reader Preferences */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Full Continuous Unsegmented Story Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playTap();
+                setIsFullContinuousMode((prev) => !prev);
+              }}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
+                isFullContinuousMode
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                  : isLightReader
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-800 hover:bg-indigo-100'
+                  : 'bg-indigo-950/70 border-indigo-500/40 text-cyan-200 hover:bg-indigo-900/80'
+              }`}
+            >
+              <ScrollText className="w-3.5 h-3.5" />
+              <span>
+                {isFullContinuousMode
+                  ? language === 'ar'
+                    ? 'العودة لقراءة الفصول'
+                    : 'Chapter View'
+                  : language === 'ar'
+                  ? '📜 قراءة كاملة دون تجزئة'
+                  : '📜 Full Unsegmented'}
+              </span>
+            </button>
+
             {/* Language Switcher */}
             <button
               onClick={() => {
@@ -446,58 +480,80 @@ export const ChapterReaderPage: React.FC<Props> = ({
         </div>
 
         {/* Main Narrative Content */}
-        <article
-          className={`rounded-3xl border p-6 sm:p-12 leading-relaxed font-serif ${themePaperClasses[readerTheme]}`}
-          style={{ fontSize: `${fontSize}px`, lineHeight: 1.95 }}
-        >
-          {displayContent.split('\n\n').map((block, pIdx) => {
-            const trimmed = block.trim();
-            if (!trimmed) return null;
-            if (trimmed === '***' || trimmed === '---') {
+        {isFullContinuousMode ? (
+          <article
+            className={`rounded-3xl border p-6 sm:p-12 leading-relaxed ${themePaperClasses[readerTheme]}`}
+          >
+            <div className="mb-6 pb-4 border-b border-rose-500/20 flex flex-wrap items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-500 dark:text-cyan-300 text-xs font-extrabold">
+                <ScrollText className="w-3.5 h-3.5" />
+                <span>
+                  {language === 'ar'
+                    ? 'وضع القراءة الكاملة المتواصلة للقصة / الرواية (دون تجزئة)'
+                    : 'Full Continuous Unsegmented Story Mode'}
+                </span>
+              </span>
+            </div>
+            <FormattedContinuousManuscript
+              text={getFullNovelContinuousText(novel, language)}
+              fontSize={fontSize}
+              isLight={isLightReader}
+            />
+          </article>
+        ) : (
+          <article
+            className={`rounded-3xl border p-6 sm:p-12 leading-relaxed font-serif ${themePaperClasses[readerTheme]}`}
+            style={{ fontSize: `${fontSize}px`, lineHeight: 1.95 }}
+          >
+            {displayContent.split('\n\n').map((block, pIdx) => {
+              const trimmed = block.trim();
+              if (!trimmed) return null;
+              if (trimmed === '***' || trimmed === '---') {
+                return (
+                  <div key={pIdx} className="my-8 flex items-center justify-center gap-3 opacity-50">
+                    <span className="w-12 h-px bg-current" />
+                    <span>✦ ✦ ✦</span>
+                    <span className="w-12 h-px bg-current" />
+                  </div>
+                );
+              }
+              if (trimmed.startsWith('## ')) {
+                return (
+                  <h2
+                    key={pIdx}
+                    className="text-xl sm:text-2xl font-black text-rose-500 mt-8 mb-4 pb-2 border-b border-rose-500/20"
+                  >
+                    {trimmed.replace(/^##\s+/, '')}
+                  </h2>
+                );
+              }
+              if (trimmed.startsWith('### ')) {
+                return (
+                  <h3 key={pIdx} className="text-lg sm:text-xl font-bold text-amber-500 mt-6 mb-3">
+                    {trimmed.replace(/^###\s+/, '')}
+                  </h3>
+                );
+              }
+              if (trimmed.startsWith('>')) {
+                return (
+                  <blockquote
+                    key={pIdx}
+                    className={`my-6 p-5 rounded-2xl border-r-4 rtl:border-r-4 ltr:border-l-4 ltr:border-r-0 border-rose-500 italic ${
+                      isLightReader ? 'bg-rose-50/70 text-slate-800' : 'bg-rose-950/20 text-rose-100'
+                    }`}
+                  >
+                    {trimmed.replace(/^>\s*/gm, '')}
+                  </blockquote>
+                );
+              }
               return (
-                <div key={pIdx} className="my-8 flex items-center justify-center gap-3 opacity-50">
-                  <span className="w-12 h-px bg-current" />
-                  <span>✦ ✦ ✦</span>
-                  <span className="w-12 h-px bg-current" />
-                </div>
+                <p key={pIdx} className="mb-6 whitespace-pre-line">
+                  {trimmed}
+                </p>
               );
-            }
-            if (trimmed.startsWith('## ')) {
-              return (
-                <h2
-                  key={pIdx}
-                  className="text-xl sm:text-2xl font-black text-rose-500 mt-8 mb-4 pb-2 border-b border-rose-500/20"
-                >
-                  {trimmed.replace(/^##\s+/, '')}
-                </h2>
-              );
-            }
-            if (trimmed.startsWith('### ')) {
-              return (
-                <h3 key={pIdx} className="text-lg sm:text-xl font-bold text-amber-500 mt-6 mb-3">
-                  {trimmed.replace(/^###\s+/, '')}
-                </h3>
-              );
-            }
-            if (trimmed.startsWith('>')) {
-              return (
-                <blockquote
-                  key={pIdx}
-                  className={`my-6 p-5 rounded-2xl border-r-4 rtl:border-r-4 ltr:border-l-4 ltr:border-r-0 border-rose-500 italic ${
-                    isLightReader ? 'bg-rose-50/70 text-slate-800' : 'bg-rose-950/20 text-rose-100'
-                  }`}
-                >
-                  {trimmed.replace(/^>\s*/gm, '')}
-                </blockquote>
-              );
-            }
-            return (
-              <p key={pIdx} className="mb-6 whitespace-pre-line">
-                {trimmed}
-              </p>
-            );
-          })}
-        </article>
+            })}
+          </article>
+        )}
 
         {/* Detective Notes Callout (if present) */}
         {currentChapter.detectiveNotesAr && currentChapter.detectiveNotesAr.length > 0 && (

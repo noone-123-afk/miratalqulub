@@ -1,7 +1,13 @@
 // Comprehensive Certified Personality Assessments Data (MBTI 16-Personalities, Big Five OCEAN, Cattell 16PF, ECR-R Attachment)
 // Fully bilingual (Arabic & English) with scientific scoring rubrics and ethical disclaimers.
 
-export type PersonalityTestId = 'mbti_16types' | 'big_five_ocean' | 'cattell_16pf' | 'attachment_ecrr';
+export type PersonalityTestId =
+  | 'mbti_16types'
+  | 'mbti_16'
+  | 'big_five_ocean'
+  | 'big_five'
+  | 'cattell_16pf'
+  | 'attachment_ecrr';
 
 export interface PersonalityQuestion {
   id: number;
@@ -10,6 +16,7 @@ export interface PersonalityQuestion {
   textEn: string;
   positivePole: string; // Dimension rewarded by high score
   weight: number;
+  direction?: 1 | -1;
 }
 
 export interface PersonalityTestMeta {
