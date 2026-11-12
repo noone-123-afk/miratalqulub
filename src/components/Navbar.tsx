@@ -38,6 +38,7 @@ import { useAppTheme } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 export interface NavbarProps {
   onReset?: () => void;
@@ -198,7 +199,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <img
-                  src="/src/assets/images/mirat_al_qulub_logo_1794297285302.jpg"
+                  src={OFFICIAL_LOGO_URL}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Official Logo'}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover rounded-[13px]"

@@ -34,6 +34,7 @@ import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { LegalModal } from './components/LegalModal';
 import { ContactFeedbackModal } from './components/ContactFeedbackModal';
 import { AnalyticsDashboardModal } from './components/AnalyticsDashboardModal';
+import { BookClubCommunityModal } from './components/BookClubCommunityModal';
 import { trackSiteVisit } from './services/analyticsService';
 import {
   loadPersistentUserSession,
@@ -133,6 +134,7 @@ function AppContent() {
   const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms'>('privacy');
   const [isContactFeedbackOpen, setIsContactFeedbackOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isBookClubOpen, setIsBookClubOpen] = useState(false);
   const [savedTestsCount, setSavedTestsCount] = useState(0);
   const [currentPage, setCurrentPage] = useState<SitePage>('home');
   const [activeNovelId, setActiveNovelId] = useState<string>('room_104_cipher');
@@ -170,6 +172,9 @@ function AppContent() {
         setCurrentPage('admin-cms');
       } else if (section === 'articles' || section === 'research') {
         setCurrentPage('articles');
+      } else if (section === 'community' || section === 'book-club' || section === 'salon') {
+        setIsBookClubOpen(true);
+        setCurrentPage('home');
       } else if (
         section === 'personality-tests' ||
         section === 'personality' ||
@@ -220,6 +225,11 @@ function AppContent() {
       'personality-tests',
       'articles',
     ];
+
+    if (page === 'community' || page === 'book-club' || page === 'salon') {
+      setIsBookClubOpen(true);
+      return;
+    }
 
     if (validPages.includes(page as SitePage)) {
       setCurrentPage(page as SitePage);
@@ -629,6 +639,9 @@ function AppContent() {
               handleReset();
             }}
             onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+            onOpenIntelligenceTests={handleOpenIntelligenceTests}
+            onOpenArticles={handleOpenArticles}
+            onOpenNovels={handleOpenNovels}
           />
         )}
 
@@ -758,6 +771,8 @@ function AppContent() {
                 onOpenArticles={handleOpenArticles}
                 onOpenNovels={handleOpenNovels}
                 onOpenContactFeedback={handleOpenContactFeedback}
+                onOpenCommunity={() => setIsBookClubOpen(true)}
+                onNavigatePage={handleNavigatePage}
               />
             </motion.div>
           )}
@@ -986,6 +1001,12 @@ function AppContent() {
       <AnalyticsDashboardModal
         isOpen={isAnalyticsOpen}
         onClose={() => setIsAnalyticsOpen(false)}
+      />
+
+      {/* Community & Weekly Book Discussion Salon Modal */}
+      <BookClubCommunityModal
+        isOpen={isBookClubOpen}
+        onClose={() => setIsBookClubOpen(false)}
       />
 
       {/* Global GDPR & AdSense Cookie Consent Banner */}

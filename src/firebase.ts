@@ -21,6 +21,8 @@ import {
   where,
   orderBy,
   deleteDoc,
+  addDoc,
+  limit,
   getDocFromServer,
   Firestore,
 } from 'firebase/firestore';
@@ -65,5 +67,7 @@ export {
   where,
   orderBy,
   deleteDoc,
+  addDoc,
+  limit,
 };
 export type { User };

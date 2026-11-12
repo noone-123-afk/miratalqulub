@@ -27,6 +27,7 @@ import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { AdSenseBanner } from './AdSenseBanner';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 export interface FooterProps {
   currentPage?: string;
@@ -112,7 +113,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-md shadow-rose-500/20 shrink-0 overflow-hidden">
                 <img
-                  src="/src/assets/images/mirat_al_qulub_logo_1794297285302.jpg"
+                  src={OFFICIAL_LOGO_URL}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Logo'}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover rounded-[14px]"
@@ -276,6 +277,245 @@ export const Footer: React.FC<FooterProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ========================================================
+            7. التذييل: المجموعات الثلاث المحددة
+            (روابط الموقع • معلومات المنصة • القانونية)
+        ======================================================== */}
+        <div
+          className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 ${
+            isLight
+              ? 'bg-white border-slate-200/90 shadow-sm'
+              : 'bg-slate-900/60 border-white/10 shadow-lg'
+          }`}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-start">
+            {/* 1. روابط الموقع */}
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                    isLight
+                      ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                      : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
+                  }`}
+                >
+                  <Compass className="w-4 h-4" />
+                </div>
+                <h4
+                  className={`font-black text-sm font-['Alexandria'] ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isAr ? 'روابط الموقع' : 'Site Links'}
+                </h4>
+              </div>
+
+              <ul className="space-y-2.5 text-xs font-bold">
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('home');
+                      onResetHome();
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'home'
+                        ? 'text-indigo-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-indigo-600'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'الرئيسية' : 'Home'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      if (currentPage !== 'home') {
+                        onNavigatePage('home');
+                        setTimeout(() => {
+                          const elem = document.getElementById('site-sections-directory');
+                          if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                      } else {
+                        const elem = document.getElementById('site-sections-directory');
+                        if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      isLight
+                        ? 'text-slate-700 hover:text-indigo-600'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'الأقسام' : 'Sections'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('articles');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'articles'
+                        ? 'text-indigo-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-indigo-600'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'المقالات' : 'Articles & Research'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('community');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      isLight
+                        ? 'text-slate-700 hover:text-indigo-600'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'المجتمع وصالون كتاب الأسبوع' : 'Community & Book Salon'}</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* 2. معلومات المنصة */}
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                    isLight
+                      ? 'bg-purple-50 border-purple-200 text-purple-700'
+                      : 'bg-purple-500/15 border-purple-500/30 text-purple-300'
+                  }`}
+                >
+                  <Info className="w-4 h-4" />
+                </div>
+                <h4
+                  className={`font-black text-sm font-['Alexandria'] ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isAr ? 'معلومات المنصة' : 'Platform Info'}
+                </h4>
+              </div>
+
+              <ul className="space-y-2.5 text-xs font-bold">
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('about');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'about'
+                        ? 'text-purple-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-purple-600'
+                        : 'text-slate-200 hover:text-purple-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'من نحن' : 'About Us'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('contact');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'contact'
+                        ? 'text-purple-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-purple-600'
+                        : 'text-slate-200 hover:text-purple-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'اتصل بنا' : 'Contact Us'}</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* 3. القانونية */}
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                    isLight
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <h4
+                  className={`font-black text-sm font-['Alexandria'] ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isAr ? 'القانونية' : 'Legal'}
+                </h4>
+              </div>
+
+              <ul className="space-y-2.5 text-xs font-bold">
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('privacy');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'privacy'
+                        ? 'text-emerald-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-emerald-600'
+                        : 'text-slate-200 hover:text-emerald-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'سياسة الخصوصية الحالية' : 'Current Privacy Policy'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('terms');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'terms'
+                        ? 'text-emerald-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-emerald-600'
+                        : 'text-slate-200 hover:text-emerald-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'شروط الاستخدام الحالية' : 'Current Terms of Service'}</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 

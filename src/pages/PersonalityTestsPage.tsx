@@ -448,6 +448,134 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
               </div>
             </header>
 
+            {/* Section Overview, Features & Contents (تفاصيل قسم تحليل الشخصية) */}
+            <div
+              className={`p-6 sm:p-8 rounded-3xl border space-y-5 ${
+                isLight
+                  ? 'bg-white border-slate-200/90 shadow-sm'
+                  : 'bg-slate-900/70 border-white/10 shadow-lg'
+              }`}
+            >
+              <div className="space-y-2">
+                <h2
+                  className={`text-xl sm:text-2xl font-black font-['Alexandria'] ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isAr ? 'عن قسم تحليل الشخصية' : 'About Personality Analysis'}
+                </h2>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed md:leading-loose ${
+                    isLight ? 'text-slate-600' : 'text-slate-300'
+                  }`}
+                >
+                  {isAr
+                    ? 'يساعدك قسم تحليل الشخصية على فهم ذاتك بصورة أوضح من خلال مجموعة من الأدوات والاختبارات المصممة لاستكشاف أنماط التفكير والسلوك والسمات الشخصية. يهدف هذا القسم إلى تعزيز الوعي الذاتي ومساعدتك على تطوير نقاط القوة وفهم جوانب شخصيتك المختلفة.'
+                    : 'The personality analysis section empowers you to understand yourself with greater clarity through instruments designed to explore cognitive styles, behaviors, and core traits, unlocking your inner potential.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                {/* مميزات القسم */}
+                <div
+                  className={`p-4 rounded-2xl border ${
+                    isLight
+                      ? 'bg-emerald-50/70 border-emerald-100'
+                      : 'bg-emerald-950/20 border-emerald-500/20'
+                  }`}
+                >
+                  <h3
+                    className={`text-xs font-black mb-2.5 font-['Alexandria'] flex items-center gap-1.5 ${
+                      isLight ? 'text-emerald-900' : 'text-emerald-300'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>{isAr ? 'مميزات القسم:' : 'Section Features:'}</span>
+                  </h3>
+                  <ul className="space-y-1.5 text-xs">
+                    {(isAr
+                      ? [
+                          'نتائج واضحة وسهلة الفهم',
+                          'تقارير تفصيلية وشاملة',
+                          'تحليل لأنماط التفكير والسلوك',
+                          'توصيات عملية للتطوير الشخصي',
+                          'تجربة تفاعلية وسهلة الاستخدام',
+                          'تحديثات وتحسينات مستمرة',
+                        ]
+                      : [
+                          'Clear, digestible analytical results',
+                          'Comprehensive multi-page reports',
+                          'Cognitive and behavioral style analysis',
+                          'Practical self-growth recommendations',
+                          'Interactive, user-friendly experience',
+                          'Continuous updates and psychometric refinements',
+                        ]
+                    ).map((feat, idx) => (
+                      <li
+                        key={idx}
+                        className={`flex items-center gap-2 ${
+                          isLight ? 'text-slate-700' : 'text-slate-200'
+                        }`}
+                      >
+                        <span className="text-emerald-500 shrink-0 font-bold">✓</span>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* ماذا ستجد في هذا القسم؟ */}
+                <div
+                  className={`p-4 rounded-2xl border ${
+                    isLight
+                      ? 'bg-slate-50/80 border-slate-200/80'
+                      : 'bg-white/[0.03] border-white/5'
+                  }`}
+                >
+                  <h3
+                    className={`text-xs font-black mb-2.5 font-['Alexandria'] flex items-center gap-1.5 ${
+                      isLight ? 'text-slate-800' : 'text-slate-200'
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-indigo-500" />
+                    <span>{isAr ? 'ماذا ستجد في هذا القسم؟' : 'What You Will Find in This Section:'}</span>
+                  </h3>
+                  <ul className="space-y-1.5 text-xs">
+                    {(isAr
+                      ? [
+                          'اختبار الشخصية الشامل (MBTI)',
+                          'مقياس العوامل الخمسة الكبرى (Big Five / OCEAN)',
+                          'نقاط القوة والتميز الفطرية',
+                          'نقاط التحسين والتطوير',
+                          'التقارير التفصيلية المعتمدة',
+                          'التوصيات الشخصية للحياة والعلاقات',
+                          'مؤشرات النمو والتقدم',
+                        ]
+                      : [
+                          'Comprehensive Personality Inventory (MBTI)',
+                          'Big Five (OCEAN) Framework',
+                          'Innate Strengths & Unique Talents',
+                          'Growth & Development Horizons',
+                          'Validated Psychometric Dossiers',
+                          'Personalized Relational Advice',
+                          'Progress & Awareness Metrics',
+                        ]
+                    ).map((item, idx) => (
+                      <li
+                        key={idx}
+                        className={`flex items-center gap-2 ${
+                          isLight ? 'text-slate-600' : 'text-slate-300'
+                        }`}
+                      >
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             {/* Clinical & Scientific Exploratory Disclaimer Notice */}
             <ScientificClinicalDisclaimerBanner testType="personality" />
 

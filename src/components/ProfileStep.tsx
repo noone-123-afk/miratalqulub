@@ -35,6 +35,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { BehindTheScenesSection } from './BehindTheScenesSection';
 import { ScientificClinicalDisclaimerBanner } from './PsychometricAcademicFraming';
+import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
 
 interface Props {
   onStart: (profile: UserProfile) => void;
@@ -295,6 +296,18 @@ export const ProfileStep: React.FC<Props> = ({
     | 'novels'
     | 'behind_scenes'
   >('all');
+  const [showLogoPreviewModal, setShowLogoPreviewModal] = useState(false);
+  const [isDownloadingLogo, setIsDownloadingLogo] = useState<'png' | 'jpg' | null>(null);
+
+  const handleDownloadLogo = async (format: 'png' | 'jpg') => {
+    soundManager.playTap();
+    setIsDownloadingLogo(format);
+    try {
+      await downloadOfficialLogoFile(format);
+    } finally {
+      setTimeout(() => setIsDownloadingLogo(null), 900);
+    }
+  };
 
   function birthYearInBounds(yr: number) {
     return !isNaN(yr) && yr >= 1945 && yr <= CURRENT_YEAR - 18;
@@ -499,14 +512,81 @@ export const ProfileStep: React.FC<Props> = ({
         }`}
       >
         <div className="flex flex-col items-center justify-center mb-3">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-xl shadow-rose-500/20 mb-3 overflow-hidden">
-            <img
-              src="/src/assets/images/mirat_al_qulub_logo_1794297285302.jpg"
-              alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Emblem'}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover rounded-[22px]"
-            />
+          <button
+            type="button"
+            onClick={() => {
+              soundManager.playTap();
+              setShowLogoPreviewModal(true);
+            }}
+            title={isAr ? 'اضغط لمعاينة الشعار بالحجم الكامل وتحميله' : 'Click to preview full-size logo & download'}
+            className="group flex flex-col items-center cursor-pointer"
+          >
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-xl shadow-rose-500/20 mb-2 overflow-hidden group-hover:scale-105 transition-transform">
+              <img
+                src={OFFICIAL_LOGO_URL}
+                alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Emblem'}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover rounded-[22px]"
+              />
+            </div>
+          </button>
+
+          {/* Direct Verified Binary Download Buttons (PNG & JPG + Preview) */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-2.5">
+            <button
+              type="button"
+              onClick={() => handleDownloadLogo('png')}
+              className="px-3 py-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-[11px] font-extrabold shadow-sm transition cursor-pointer flex items-center gap-1"
+            >
+              <span>⬇</span>
+              <span>
+                {isDownloadingLogo === 'png'
+                  ? isAr
+                    ? 'جاري تجهيز PNG...'
+                    : 'Preparing PNG...'
+                  : isAr
+                  ? 'تحميل الشعار بصيغة PNG (1024×1024)'
+                  : 'Download Logo (PNG)'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDownloadLogo('jpg')}
+              className={`px-3 py-1 rounded-xl text-[11px] font-extrabold border transition cursor-pointer flex items-center gap-1 ${
+                isLight
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                  : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
+              }`}
+            >
+              <span>⬇</span>
+              <span>
+                {isDownloadingLogo === 'jpg'
+                  ? isAr
+                    ? 'جاري تجهيز JPG...'
+                    : 'Preparing JPG...'
+                  : isAr
+                  ? 'تحميل الشعار بصيغة JPG'
+                  : 'Download Logo (JPG)'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playTap();
+                setShowLogoPreviewModal(true);
+              }}
+              className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer ${
+                isLight
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                  : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border-rose-400/30'
+              }`}
+            >
+              🔍 {isAr ? 'عرض الشعار بالحجم الكامل' : 'View Full-Size Logo'}
+            </button>
           </div>
+
           <div
             className={`inline-flex items-center gap-2 text-xs font-bold ${
               isLight ? 'text-blue-700' : 'text-blue-300'
@@ -520,6 +600,75 @@ export const ProfileStep: React.FC<Props> = ({
             </span>
           </div>
         </div>
+
+        {/* Full-Size Official Logo Preview & Direct Download Modal */}
+        <AnimatePresence>
+          {showLogoPreviewModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+              onClick={() => setShowLogoPreviewModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                onClick={(e) => e.stopPropagation()}
+                className={`w-full max-w-lg rounded-3xl border p-6 text-center space-y-4 shadow-2xl ${
+                  isLight
+                    ? 'bg-white border-slate-200 text-slate-900'
+                    : 'bg-slate-900 border-white/15 text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10">
+                  <h3 className="font-black text-base sm:text-lg font-['Alexandria']">
+                    {isAr
+                      ? 'الشعار الرسمي لمنصة «مرآة القلوب» (1024×1024)'
+                      : 'Official "Mirror of Hearts" Logo (1024×1024)'}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowLogoPreviewModal(false)}
+                    className="px-3 py-1 rounded-xl bg-rose-500/15 text-rose-500 font-bold text-xs cursor-pointer"
+                  >
+                    {isAr ? 'إغلاق ✕' : 'Close ✕'}
+                  </button>
+                </div>
+
+                <div className="w-64 h-64 sm:w-80 sm:h-80 mx-auto rounded-3xl p-1 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-2xl overflow-hidden">
+                  <img
+                    src={OFFICIAL_LOGO_URL}
+                    alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Logo'}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover rounded-[20px]"
+                  />
+                </div>
+
+                <p className="text-xs opacity-80">
+                  {isAr
+                    ? 'اضغط على أحد الأزرار بالأسفل لتنزيل ملف الصورة الأصلي مباشرة (أو اضغط مطولاً / بزر الفأرة الأيمن على الصورة أعلاه واختر "حفظ الصورة باسم").'
+                    : 'Click below to download the verified binary image file (or right-click / long-press the image above and choose "Save Image As").'}
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadLogo('png')}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs sm:text-sm font-extrabold shadow-lg transition cursor-pointer"
+                  >
+                    ⬇ {isAr ? 'تحميل بصيغة PNG شفافة وعالية الدقة' : 'Download High-Res PNG'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadLogo('jpg')}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs sm:text-sm font-extrabold shadow-lg transition cursor-pointer"
+                  >
+                    ⬇ {isAr ? 'تحميل بصيغة JPG' : 'Download High-Res JPG'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         <h2
           className={`text-2xl sm:text-4xl font-extrabold tracking-tight mb-2 font-['Alexandria',sans-serif] ${

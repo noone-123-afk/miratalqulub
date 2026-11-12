@@ -99,6 +99,11 @@ service cloud.firestore {
       allow get, list: if true;
       allow create, update: if true;
       allow delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+
+      match /{allSubcollections=**} {
+        allow get, list, create, update: if true;
+        allow delete: if isSignedIn() && (request.auth.token.email == 'one497303@gmail.com' || request.auth.uid != null);
+      }
     }
   }
 }

@@ -45,6 +45,39 @@ let activeHostingConfig = {
   activatedAt: new Date().toISOString(),
 };
 
+// Direct Binary Logo Serving & Download Endpoints (PNG & JPG)
+app.get('/logo.jpg', (_req: Request, res: Response) => {
+  const filePath = path.resolve('public', 'logo.jpg');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(filePath);
+  }
+  res.status(404).end();
+});
+
+app.get('/logo.png', (_req: Request, res: Response) => {
+  const filePath = path.resolve('public', 'logo.png');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(filePath);
+  }
+  res.status(404).end();
+});
+
+app.get('/api/download-logo', (req: Request, res: Response) => {
+  const format = String(req.query.format || 'png').toLowerCase() === 'jpg' ? 'jpg' : 'png';
+  const fileName = `mirat-al-qulub-official-logo.${format}`;
+  const filePath = path.resolve('public', `logo.${format}`);
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', format === 'png' ? 'image/png' : 'image/jpeg');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    return res.sendFile(filePath);
+  }
+  res.status(404).json({ error: 'Logo file not found' });
+});
+
 // Endpoint: Live Google Cloud Hosting & Deployment Status
 app.get('/api/hosting-status', (_req: Request, res: Response) => {
   const uptimeSeconds = Math.floor(process.uptime());
