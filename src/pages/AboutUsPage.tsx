@@ -36,6 +36,7 @@ import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { AdSenseBanner } from '../components/AdSenseBanner';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 export interface AboutUsProps {
   onBackToHome: () => void;
@@ -442,28 +443,41 @@ export const AboutUsPage: React.FC<AboutUsProps> = ({
           }`}
         >
           <div className="relative z-10 space-y-5 max-w-4xl">
-            <div
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-extrabold ${
-                isLight
-                  ? 'bg-indigo-100/80 border-indigo-200 text-indigo-800'
-                  : 'bg-indigo-500/20 border-indigo-400/30 text-indigo-300'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-              <span>
-                {isAr
-                  ? 'من نحن • منصة عربية معرفية وتفاعلية'
-                  : 'About Us • Arab Knowledge & Interactive Platform'}
-              </span>
-            </div>
+            <div className="flex items-center gap-3.5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-lg shadow-rose-500/25 shrink-0 overflow-hidden">
+                <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
+                  <img
+                    src={OFFICIAL_LOGO_URL}
+                    alt={isAr ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                    className="w-full h-full object-cover rounded-[14px]"
+                  />
+                </div>
+              </div>
+              <div>
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-extrabold mb-1.5 ${
+                    isLight
+                      ? 'bg-indigo-100/80 border-indigo-200 text-indigo-800'
+                      : 'bg-indigo-500/20 border-indigo-400/30 text-indigo-300'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>
+                    {isAr
+                      ? 'من نحن • منصة عربية معرفية وتفاعلية'
+                      : 'About Us • Arab Knowledge & Interactive Platform'}
+                  </span>
+                </div>
 
-            <h1
-              className={`text-3xl sm:text-5xl font-black font-['Alexandria',sans-serif] tracking-tight leading-tight ${
-                isLight ? 'text-slate-900' : 'text-white'
-              }`}
-            >
-              {isAr ? 'من نحن — مرآة القلوب' : 'About Us — Mirror of Hearts'}
-            </h1>
+                <h1
+                  className={`text-2xl sm:text-4xl md:text-5xl font-black font-['Alexandria',sans-serif] tracking-tight leading-tight ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isAr ? 'من نحن — مرآة القلوب' : 'About Us — Mirror of Hearts'}
+                </h1>
+              </div>
+            </div>
 
             <div className="space-y-4 text-sm sm:text-base leading-relaxed md:leading-loose">
               <p

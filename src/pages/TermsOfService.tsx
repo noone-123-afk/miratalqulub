@@ -27,6 +27,7 @@ import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { AdSenseBanner } from '../components/AdSenseBanner';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 export interface TermsOfServiceProps {
   onBackToHome: () => void;
@@ -189,15 +190,11 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
           }`}
         >
           <div className="flex items-start sm:items-center gap-3.5 mb-4">
-            <div
-              className={`w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 ${
-                isLight
-                  ? 'bg-blue-100 border-blue-300 text-blue-700'
-                  : 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-              }`}
-            >
-              <Scale className="w-6 h-6" />
-            </div>
+            <img
+              src={OFFICIAL_LOGO_URL}
+              alt="شعار مرآة القلوب الرسمي"
+              className="w-12 h-12 rounded-2xl object-cover border border-blue-500/40 shadow-lg shrink-0"
+            />
             <div>
               <div
                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${

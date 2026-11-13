@@ -38,6 +38,7 @@ import {
 } from '../components/PsychometricAcademicFraming';
 import { IntelligenceTestModal } from '../components/IntelligenceTestModal';
 import { PsychologyTestsModal } from '../components/PsychologyTestsModal';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
   onBackToHome: () => void;
@@ -412,30 +413,43 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
                   : 'bg-gradient-to-r from-rose-950/40 via-slate-900/90 to-purple-950/40 border-rose-500/30'
               }`}
             >
-              <div className="relative z-10 max-w-3xl space-y-3">
-                <div
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
-                    isLight
-                      ? 'bg-rose-100 text-rose-800 border-rose-300'
-                      : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                  }`}
-                >
-                  <Brain className="w-4 h-4" />
-                  <span>
-                    {isAr
-                      ? 'المقاييس النفسية واختبارات الذكاء العالمية المعتمدة'
-                      : 'Validated Psychometric & Cognitive Intelligence Inventories'}
-                  </span>
+              <div className="relative z-10 max-w-3xl space-y-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-14 h-14 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-lg shadow-rose-500/25 shrink-0 overflow-hidden">
+                    <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
+                      <img
+                        src={OFFICIAL_LOGO_URL}
+                        alt={isAr ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                        className="w-full h-full object-cover rounded-[14px]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border mb-1.5 ${
+                        isLight
+                          ? 'bg-rose-100 text-rose-800 border-rose-300'
+                          : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                      }`}
+                    >
+                      <Brain className="w-4 h-4" />
+                      <span>
+                        {isAr
+                          ? 'المقاييس النفسية واختبارات الذكاء العالمية المعتمدة'
+                          : 'Validated Psychometric & Cognitive Intelligence Inventories'}
+                      </span>
+                    </div>
+                    <h1
+                      className={`text-2xl sm:text-4xl font-black tracking-tight ${
+                        isLight ? 'text-slate-900' : 'text-white'
+                      }`}
+                    >
+                      {isAr
+                        ? 'قسم تحليل الشخصية — اكتشف شخصيتك بعمق'
+                        : 'Personality Analysis — Discover Your Personality Deeply'}
+                    </h1>
+                  </div>
                 </div>
-                <h1
-                  className={`text-2xl sm:text-4xl font-black tracking-tight ${
-                    isLight ? 'text-slate-900' : 'text-white'
-                  }`}
-                >
-                  {isAr
-                    ? 'مختبر استكشاف الشخصية والذكاءات المتعددة'
-                    : 'Personality Archetypes & Multi-Modal Intelligence Matrix'}
-                </h1>
                 <p
                   className={`text-sm sm:text-base leading-relaxed ${
                     isLight ? 'text-slate-700' : 'text-slate-300'

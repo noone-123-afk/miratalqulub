@@ -503,421 +503,148 @@ export const ProfileStep: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Hero Section & Quick Hub Switcher */}
+      {/* قسم كاشف شريك الحياة: تعريف القسم ومميزاته ومحتوياته (بدون تكرار للأقسام الأخرى) */}
       <div
-        className={`text-center mb-6 relative p-5 sm:p-6 rounded-3xl border ${
+        className={`mb-6 p-6 sm:p-8 rounded-3xl border text-start space-y-5 ${
           isLight
-            ? 'bg-white border-slate-200 shadow-sm'
-            : 'bg-slate-900/80 border-slate-800 shadow-lg'
+            ? 'bg-white border-rose-200/90 shadow-sm'
+            : 'bg-slate-900/80 border-rose-500/25 shadow-lg'
         }`}
       >
-        <div className="flex flex-col items-center justify-center mb-3">
-          <button
-            type="button"
-            onClick={() => {
-              soundManager.playTap();
-              setShowLogoPreviewModal(true);
-            }}
-            title={isAr ? 'اضغط لمعاينة الشعار بالحجم الكامل وتحميله' : 'Click to preview full-size logo & download'}
-            className="group flex flex-col items-center cursor-pointer"
-          >
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-xl shadow-rose-500/20 mb-2 overflow-hidden group-hover:scale-105 transition-transform">
-              <img
-                src={OFFICIAL_LOGO_URL}
-                alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Emblem'}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover rounded-[22px]"
-              />
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4 border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-md shadow-rose-500/20 shrink-0 overflow-hidden">
+              <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
+                <img
+                  src={OFFICIAL_LOGO_URL}
+                  alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Logo'}
+                  className="w-full h-full object-cover rounded-[14px]"
+                />
+              </div>
             </div>
-          </button>
-
-          {/* Direct Verified Binary Download Buttons (PNG & JPG + Preview) */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-2.5">
-            <button
-              type="button"
-              onClick={() => handleDownloadLogo('png')}
-              className="px-3 py-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-[11px] font-extrabold shadow-sm transition cursor-pointer flex items-center gap-1"
-            >
-              <span>⬇</span>
-              <span>
-                {isDownloadingLogo === 'png'
-                  ? isAr
-                    ? 'جاري تجهيز PNG...'
-                    : 'Preparing PNG...'
-                  : isAr
-                  ? 'تحميل الشعار بصيغة PNG (1024×1024)'
-                  : 'Download Logo (PNG)'}
+            <div>
+              <span className="text-[11px] font-extrabold text-rose-500 uppercase tracking-wider block">
+                {isAr ? 'قسم كاشف شريك الحياة' : 'Partner Compatibility Detector Section'}
               </span>
-            </button>
+              <h2
+                className={`text-xl sm:text-2xl md:text-3xl font-black font-['Alexandria',sans-serif] ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}
+              >
+                {isAr ? 'فهم أعمق للتوافق بين الشركاء' : 'Deeper Understanding of Partner Compatibility'}
+              </h2>
+            </div>
+          </div>
 
-            <button
-              type="button"
-              onClick={() => handleDownloadLogo('jpg')}
-              className={`px-3 py-1 rounded-xl text-[11px] font-extrabold border transition cursor-pointer flex items-center gap-1 ${
-                isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                  : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
-              }`}
-            >
-              <span>⬇</span>
-              <span>
-                {isDownloadingLogo === 'jpg'
-                  ? isAr
-                    ? 'جاري تجهيز JPG...'
-                    : 'Preparing JPG...'
-                  : isAr
-                  ? 'تحميل الشعار بصيغة JPG'
-                  : 'Download Logo (JPG)'}
-              </span>
-            </button>
-
+          {onOpenBlindDate && (
             <button
               type="button"
               onClick={() => {
                 soundManager.playTap();
-                setShowLogoPreviewModal(true);
+                onOpenBlindDate();
               }}
-              className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer ${
-                isLight
-                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
-                  : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border-rose-400/30'
-              }`}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-extrabold transition cursor-pointer shadow-sm flex items-center gap-1.5"
             >
-              🔍 {isAr ? 'عرض الشعار بالحجم الكامل' : 'View Full-Size Logo'}
+              <Heart className="w-3.5 h-3.5 fill-current" />
+              <span>{isAr ? 'تجربة اللقاء الأعمى (The Blind Date)' : 'Launch The Blind Date'}</span>
             </button>
-          </div>
-
-          <div
-            className={`inline-flex items-center gap-2 text-xs font-bold ${
-              isLight ? 'text-blue-700' : 'text-blue-300'
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-emerald-500" />
-            <span>
-              {isAr
-                ? 'منظومة التوافق الفكري والاجتماعي وعلم النفس التطبيقي'
-                : 'Behavioral & Sociological Compatibility Framework'}
-            </span>
-          </div>
+          )}
         </div>
 
-        {/* Full-Size Official Logo Preview & Direct Download Modal */}
-        <AnimatePresence>
-          {showLogoPreviewModal && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
-              onClick={() => setShowLogoPreviewModal(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                onClick={(e) => e.stopPropagation()}
-                className={`w-full max-w-lg rounded-3xl border p-6 text-center space-y-4 shadow-2xl ${
-                  isLight
-                    ? 'bg-white border-slate-200 text-slate-900'
-                    : 'bg-slate-900 border-white/15 text-white'
-                }`}
-              >
-                <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10">
-                  <h3 className="font-black text-base sm:text-lg font-['Alexandria']">
-                    {isAr
-                      ? 'الشعار الرسمي لمنصة «مرآة القلوب» (1024×1024)'
-                      : 'Official "Mirror of Hearts" Logo (1024×1024)'}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowLogoPreviewModal(false)}
-                    className="px-3 py-1 rounded-xl bg-rose-500/15 text-rose-500 font-bold text-xs cursor-pointer"
-                  >
-                    {isAr ? 'إغلاق ✕' : 'Close ✕'}
-                  </button>
-                </div>
-
-                <div className="w-64 h-64 sm:w-80 sm:h-80 mx-auto rounded-3xl p-1 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-2xl overflow-hidden">
-                  <img
-                    src={OFFICIAL_LOGO_URL}
-                    alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Logo'}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover rounded-[20px]"
-                  />
-                </div>
-
-                <p className="text-xs opacity-80">
-                  {isAr
-                    ? 'اضغط على أحد الأزرار بالأسفل لتنزيل ملف الصورة الأصلي مباشرة (أو اضغط مطولاً / بزر الفأرة الأيمن على الصورة أعلاه واختر "حفظ الصورة باسم").'
-                    : 'Click below to download the verified binary image file (or right-click / long-press the image above and choose "Save Image As").'}
-                </p>
-
-                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadLogo('png')}
-                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs sm:text-sm font-extrabold shadow-lg transition cursor-pointer"
-                  >
-                    ⬇ {isAr ? 'تحميل بصيغة PNG شفافة وعالية الدقة' : 'Download High-Res PNG'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadLogo('jpg')}
-                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs sm:text-sm font-extrabold shadow-lg transition cursor-pointer"
-                  >
-                    ⬇ {isAr ? 'تحميل بصيغة JPG' : 'Download High-Res JPG'}
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        <h2
-          className={`text-2xl sm:text-4xl font-extrabold tracking-tight mb-2 font-['Alexandria',sans-serif] ${
-            isLight ? 'text-slate-900' : 'text-white'
-          }`}
-        >
-          {t('hero_title_1')} <span className="text-blue-500">{t('hero_title_highlight')}</span>
-        </h2>
         <p
-          className={`text-xs sm:text-sm max-w-xl mx-auto leading-relaxed ${
+          className={`text-xs sm:text-sm leading-relaxed ${
             isLight ? 'text-slate-600' : 'text-slate-300'
           }`}
         >
-          {t('hero_subtitle')}
+          {isAr
+            ? 'يساعدك قسم كاشف شريك الحياة على استكشاف جوانب التوافق النفسي والعاطفي والفكري والسلوكي بين شخصين، بهدف فهم نقاط الانسجام ومجالات الاختلاف وبناء علاقة أكثر وعياً وتوازناً.'
+            : 'The Partner Compatibility Detector section helps you explore psychological, emotional, intellectual, and behavioral compatibility between two partners to understand areas of harmony and build a balanced, mindful relationship.'}
         </p>
 
-        {/* Smart Hub Tabs Bar */}
-        <div
-          className={`mt-5 flex items-center justify-start sm:justify-center gap-1.5 overflow-x-auto py-1.5 px-2 rounded-2xl border scrollbar-none ${
-            isLight
-              ? 'bg-slate-100 border-slate-200'
-              : 'bg-slate-950/90 border-slate-800'
-          }`}
-        >
-          {[
-            { id: 'all', labelAr: 'جميع الأقسام', labelEn: 'All Sections', icon: '✨' },
-            { id: 'compatibility', labelAr: 'معالج كاشف التوافق', labelEn: 'Compatibility Wizard', icon: '🔮' },
-            { id: 'intelligence', labelAr: 'اختبارات الذكاء', labelEn: 'Intelligence Lab', icon: '💡' },
-            { id: 'psychology', labelAr: 'مقاييس الشخصية', labelEn: 'Personality Scales', icon: '🧠' },
-            { id: 'blind_date', labelAr: 'The Blind Date', labelEn: 'The Blind Date', icon: '💬' },
-            { id: 'articles', labelAr: 'المقالات والأبحاث', labelEn: 'Articles & Research', icon: '📚' },
-            { id: 'novels', labelAr: 'الروايات والتحقيقات', labelEn: 'Novels Library', icon: '🕵️‍♂️' },
-            { id: 'behind_scenes', labelAr: 'فريق العمل', labelEn: 'Engineering Team', icon: '👥' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                soundManager.playTap();
-                setActiveHubTab(tab.id as any);
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                activeHubTab === tab.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : isLight
-                  ? 'text-slate-700 hover:bg-white'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <span>{tab.icon}</span>
-              <span>{isAr ? tab.labelAr : tab.labelEn}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Dynamic Quick Cards when browsing other tabs */}
-        {(activeHubTab === 'all' || activeHubTab !== 'compatibility') && (
+        {/* مميزات القسم + ماذا ستجد في هذا القسم */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
           <div
-            className={`mt-4 text-start ${
-              activeHubTab === 'all'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3'
-                : 'max-w-xl mx-auto'
+            className={`p-4 rounded-2xl border space-y-2.5 ${
+              isLight
+                ? 'bg-rose-50/50 border-rose-200/80'
+                : 'bg-slate-950/60 border-white/10'
             }`}
           >
-            {activeHubTab === 'behind_scenes' && (
-              <BehindTheScenesSection
-                onExploreTests={onOpenIntelligenceTests}
-                onExploreNovels={onOpenNovels}
-                onOpenContactFeedback={onOpenContactFeedback}
-              />
-            )}
-
-            {(activeHubTab === 'all' || activeHubTab === 'blind_date') && onOpenBlindDate && (
-              <div
-                className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 transition ${
-                  isLight
-                    ? 'bg-rose-50/50 border-rose-200 hover:border-rose-400'
-                    : 'bg-slate-950/90 border-rose-900/50 hover:border-rose-500'
-                }`}
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-rose-500">
-                    <span>💬 The Blind Date</span>
-                  </div>
-                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    {isAr
-                      ? '4 مراحل حوارية متبادلة وتقييم إجابات الشريك خلف الستار.'
-                      : '4 progressive dialogue stages evaluating partner responses behind the curtain.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    onOpenBlindDate();
-                  }}
-                  className="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition cursor-pointer"
-                >
-                  {isAr ? 'بدء The Blind Date' : 'Launch The Blind Date'}
-                </button>
-              </div>
-            )}
-
-            {(activeHubTab === 'all' || activeHubTab === 'intelligence') && (
-              <div
-                className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 transition ${
-                  isLight
-                    ? 'bg-blue-50/50 border-blue-200 hover:border-blue-400'
-                    : 'bg-slate-950/90 border-blue-900/50 hover:border-blue-500'
-                }`}
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-blue-500">
-                    <span>💡 {isAr ? 'مختبر اختبارات الذكاء' : 'Intelligence Lab'}</span>
-                  </div>
-                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    {isAr
-                      ? '4 بطاريات محكّمة: الذكاءات الـ 9، مصفوفات رافين IQ، والذكاء العاطفي EQ.'
-                      : '4 validated batteries: 9 Multiple Intelligences, Raven IQ & Emotional Intelligence.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    if (onOpenIntelligenceTests) onOpenIntelligenceTests();
-                  }}
-                  className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition cursor-pointer"
-                >
-                  {isAr ? 'بدء اختبار الذكاء' : 'Start IQ / MI Test'}
-                </button>
-              </div>
-            )}
-
-            {(activeHubTab === 'all' || activeHubTab === 'psychology') && (
-              <div
-                className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 transition ${
-                  isLight
-                    ? 'bg-purple-50/50 border-purple-200 hover:border-purple-400'
-                    : 'bg-slate-950/90 border-slate-700 hover:border-purple-500'
-                }`}
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-purple-500">
-                    <span>🧠 {isAr ? 'مقاييس تحليل الشخصية' : 'Personality Scales'}</span>
-                  </div>
-                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    {isAr
-                      ? '8 مقاييس عالمية محكّمة (Big Five, 16PF, MBTI, التعلق ECR-R) مع تقرير PDF.'
-                      : '8 validated scales (Big Five, 16PF, MBTI, ECR-R Attachment) with PDF report.'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {onOpenPsychologyTests && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundManager.playTap();
-                        onOpenPsychologyTests();
-                      }}
-                      className="flex-1 py-2 px-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition cursor-pointer"
-                    >
-                      {isAr ? 'خوض مقياس' : 'Take Scale'}
-                    </button>
-                  )}
-                  {onOpenUserDashboard && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundManager.playTap();
-                        onOpenUserDashboard();
-                      }}
-                      className={`py-2 px-2.5 rounded-xl border font-bold text-xs transition cursor-pointer ${
-                        isLight
-                          ? 'bg-white border-purple-200 text-purple-800'
-                          : 'bg-slate-800 border-slate-700 text-slate-200'
-                      }`}
-                    >
-                      👤 {isAr ? 'ملفي' : 'Profile'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {(activeHubTab === 'all' || activeHubTab === 'articles') && (
-              <div
-                className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 transition ${
-                  isLight
-                    ? 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400'
-                    : 'bg-slate-950/90 border-emerald-900/50 hover:border-emerald-500'
-                }`}
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-emerald-500">
-                    <span>📚 {isAr ? 'موسوعة المقالات والأبحاث' : 'Articles & Research'}</span>
-                  </div>
-                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    {isAr
-                      ? 'أبحاث محكّمة ومقالات معمقة في التوافق الزوجي، إدارة الخلافات، والنضج النفسي.'
-                      : 'Peer-reviewed papers and clinical articles on marital harmony and emotional maturity.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    if (onOpenArticles) onOpenArticles();
-                    else if (onOpenWebsiteSection) onOpenWebsiteSection('articles');
-                  }}
-                  className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer"
-                >
-                  {isAr ? 'تصفح الموسوعة العلمية' : 'Browse Encyclopedia'}
-                </button>
-              </div>
-            )}
-
-            {(activeHubTab === 'all' || activeHubTab === 'novels') && (
-              <div
-                className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 transition ${
-                  isLight
-                    ? 'bg-amber-50/50 border-amber-200 hover:border-amber-400'
-                    : 'bg-slate-950/90 border-slate-800 hover:border-amber-500/50'
-                }`}
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-amber-500">
-                    <span>🕵️‍♂️ {isAr ? 'الروايات والتحقيقات' : 'Novels Library'}</span>
-                  </div>
-                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    {isAr
-                      ? 'روايات رومانسية، تحقيقات جنائية، وخيال علمي تكنولوجي بوضع قراءة مريح.'
-                      : 'Romance, forensic mystery, and sci-fi novels with customizable reader mode.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    if (onOpenNovels) onOpenNovels();
-                  }}
-                  className="w-full py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition cursor-pointer"
-                >
-                  {isAr ? 'دخول واحة الروايات' : 'Enter Novels Oasis'}
-                </button>
-              </div>
-            )}
+            <h3 className={`text-xs sm:text-sm font-black font-['Alexandria'] ${isLight ? 'text-rose-900' : 'text-rose-300'}`}>
+              {isAr ? 'مميزات القسم:' : 'Section Features:'}
+            </h3>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold">
+              {(isAr
+                ? [
+                    'تحليل شامل لأبعاد التوافق',
+                    'قياس التوافق العاطفي والفكري',
+                    'مقارنة القيم وأسلوب الحياة',
+                    'تقارير واضحة ومبسطة',
+                    'توصيات لتعزيز التفاهم',
+                    'خصوصية كاملة للبيانات',
+                  ]
+                : [
+                    'Comprehensive compatibility analysis',
+                    'Emotional & intellectual alignment',
+                    'Values & lifestyle comparison',
+                    'Clear and structured reports',
+                    'Actionable harmony advice',
+                    'Complete data privacy (TLS 1.3)',
+                  ]
+              ).map((item, idx) => (
+                <li key={idx} className="flex items-center gap-1.5">
+                  <span className="text-emerald-500 font-bold">✓</span>
+                  <span className={isLight ? 'text-slate-700' : 'text-slate-200'}>{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
+
+          <div
+            className={`p-4 rounded-2xl border space-y-2.5 ${
+              isLight
+                ? 'bg-indigo-50/50 border-indigo-200/80'
+                : 'bg-slate-950/60 border-white/10'
+            }`}
+          >
+            <h3 className={`text-xs sm:text-sm font-black font-['Alexandria'] ${isLight ? 'text-indigo-900' : 'text-indigo-300'}`}>
+              {isAr ? 'ماذا ستجد في هذا القسم؟' : 'What You Will Find Here:'}
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {(isAr
+                ? [
+                    'التوافق العاطفي',
+                    'التوافق الفكري',
+                    'التوافق السلوكي',
+                    'التوافق القيمي',
+                    'نقاط الانسجام',
+                    'التحديات المحتملة',
+                    'التقرير النهائي للتوافق',
+                  ]
+                : [
+                    'Emotional Compatibility',
+                    'Intellectual Compatibility',
+                    'Behavioral Compatibility',
+                    'Values Alignment',
+                    'Harmony Strengths',
+                    'Potential Challenges',
+                    'Final Compatibility Report',
+                  ]
+              ).map((tag, idx) => (
+                <span
+                  key={idx}
+                  className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border ${
+                    isLight
+                      ? 'bg-white border-indigo-200 text-indigo-800'
+                      : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-200'
+                  }`}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ================= 4-STEP MULTI-STEP COMPATIBILITY WIZARD ================= */}
@@ -1892,15 +1619,6 @@ export const ProfileStep: React.FC<Props> = ({
             </div>
           </form>
         </div>
-      )}
-
-      {/* Behind The Scenes: Human Team & Philosophy Section */}
-      {(activeHubTab === 'all' || activeHubTab === 'behind_scenes') && (
-        <BehindTheScenesSection
-          onExploreTests={onOpenIntelligenceTests}
-          onExploreNovels={onOpenNovels}
-          onOpenContactFeedback={onOpenContactFeedback}
-        />
       )}
     </div>
   );

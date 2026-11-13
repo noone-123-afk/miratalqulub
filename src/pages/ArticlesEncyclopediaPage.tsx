@@ -49,6 +49,7 @@ import {
   ResearchArticleModal,
   ResearchArticleModalProps,
 } from '../components/ResearchArticleModal';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 export { ResearchArticleModal };
 export type { ResearchArticleModalProps };
@@ -278,25 +279,38 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               : 'bg-gradient-to-br from-purple-950/60 via-slate-900/90 to-indigo-950/60 border-white/15 text-white'
           }`}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-cyan-300 text-xs font-extrabold flex items-center gap-1.5">
-              <GraduationCap className="w-4 h-4" />
-              <span>
-                {language === 'ar'
-                  ? 'وحدة الأبحاث والدراسات النفسية المحكّمة'
-                  : 'Peer-Reviewed Psychological Research Unit'}
-              </span>
-            </span>
-            <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
-              {language === 'ar' ? 'توثيق مرجعي APA 7th Edition' : 'APA 7th Edition Verified'}
-            </span>
-          </div>
+          <div className="flex items-center gap-3.5">
+            <div className="w-14 h-14 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-lg shadow-rose-500/25 shrink-0 overflow-hidden">
+              <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
+                <img
+                  src={OFFICIAL_LOGO_URL}
+                  alt={language === 'ar' ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                  className="w-full h-full object-cover rounded-[14px]"
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <span className="px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-cyan-300 text-xs font-extrabold flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>
+                    {language === 'ar'
+                      ? 'قسم المقالات المعرفية والأبحاث العلمية المحكّمة'
+                      : 'Knowledge Articles & Peer-Reviewed Research Section'}
+                  </span>
+                </span>
+                <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
+                  {language === 'ar' ? 'توثيق مرجعي APA 7th Edition' : 'APA 7th Edition Verified'}
+                </span>
+              </div>
 
-          <h1 className="text-2xl sm:text-4xl font-black font-['Alexandria'] leading-tight">
-            {language === 'ar'
-              ? 'موسوعة مرآة القلوب للمقالات والأبحاث النفسية'
-              : 'Mirror of Hearts Encyclopedia of Psychological Research & Articles'}
-          </h1>
+              <h1 className="text-2xl sm:text-4xl font-black font-['Alexandria'] leading-tight">
+                {language === 'ar'
+                  ? 'محتوى معرفي يعزز الوعي الذاتي والعلاقات الإنسانية'
+                  : 'Knowledge Content Elevating Self-Awareness & Human Relationships'}
+              </h1>
+            </div>
+          </div>
 
           <p
             className={`text-sm sm:text-base max-w-4xl leading-relaxed ${
@@ -304,9 +318,90 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
             }`}
           >
             {language === 'ar'
-              ? 'ترتكز موسوعة مرآة القلوب على مسارين علميين متكاملين: (أولاً: الأبحاث العلمية الكاملة) وهي أوراق بحثية ودراسات أكاديمية محكّمة مصاغة وفق هيكلة البحث العلمي الرصين (الملخص، المقدمة، الإطار النظري، المنهجية، التحليل والمناقشة، الخاتمة، التوصيات، ومراجع APA 7th)، و(ثانياً: المقالات القصصية العلمية) المستندة إلى دراسات حالة عيادية وأدوات تشخيص سلوكية عملية.'
-              : 'The Mirror of Hearts Encyclopedia is structured into two complementary scholarly tracks: (First: Full Academic Research Papers) featuring complete peer-reviewed studies (Abstract, Introduction, Theoretical Framework, Methodology, Analysis & Discussion, Conclusion, Recommendations, and APA 7th References), and (Second: Clinical Narrative Articles) grounded in real therapy case studies and behavioral exercises.'}
+              ? 'يقدم قسم المقالات المعرفية محتوى متخصصاً ومبسطاً يتناول موضوعات الشخصية والعلاقات الإنسانية والتوافق النفسي والتطوير الذاتي، بالإضافة إلى الأبحاث العلمية المحكّمة، بهدف إثراء معرفة القارئ ومساعدته على فهم نفسه والآخرين بصورة أعمق.'
+              : 'The Knowledge Articles & Research section offers specialized yet accessible content covering personality, human relationships, psychological compatibility, and self-development alongside peer-reviewed studies.'}
           </p>
+
+          {/* مميزات القسم + ماذا ستجد في هذا القسم */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            <div
+              className={`p-4 rounded-2xl border space-y-2 ${
+                isLight ? 'bg-white/90 border-slate-200' : 'bg-slate-950/60 border-white/10'
+              }`}
+            >
+              <h3 className="text-xs sm:text-sm font-black font-['Alexandria'] text-emerald-600 dark:text-emerald-400">
+                {language === 'ar' ? 'مميزات القسم:' : 'Section Features:'}
+              </h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-semibold">
+                {(language === 'ar'
+                  ? [
+                      'مقالات متخصصة باللغة العربية',
+                      'أسلوب واضح وسهل القراءة',
+                      'موضوعات متنوعة ومفيدة',
+                      'محتوى متجدد باستمرار',
+                      'تركيز على التطبيق العملي',
+                      'مناسب لمختلف القراء',
+                    ]
+                  : [
+                      'Specialized Arabic & English articles',
+                      'Clear and readable style',
+                      'Diverse & practical topics',
+                      'Continuously updated content',
+                      'Focus on real-life application',
+                      'Accessible for all readers',
+                    ]
+                ).map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-1.5">
+                    <span className="text-emerald-500 font-bold">✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div
+              className={`p-4 rounded-2xl border space-y-2 ${
+                isLight ? 'bg-white/90 border-slate-200' : 'bg-slate-950/60 border-white/10'
+              }`}
+            >
+              <h3 className="text-xs sm:text-sm font-black font-['Alexandria'] text-indigo-600 dark:text-indigo-300">
+                {language === 'ar' ? 'ماذا ستجد في هذا القسم؟' : 'What You Will Find Here:'}
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {(language === 'ar'
+                  ? [
+                      'مقالات تحليل الشخصية',
+                      'مقالات العلاقات الإنسانية',
+                      'مقالات التوافق الزواجي والعاطفي',
+                      'مقالات التطوير الذاتي',
+                      'مهارات التواصل',
+                      'الذكاء العاطفي',
+                      'نصائح وإرشادات عملية',
+                    ]
+                  : [
+                      'Personality Analysis Articles',
+                      'Human Relationships',
+                      'Marital & Emotional Compatibility',
+                      'Self-Development',
+                      'Communication Skills',
+                      'Emotional Intelligence',
+                      'Practical Guidance',
+                    ]
+                ).map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border ${
+                      isLight
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-800'
+                        : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-200'
+                    }`}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Dual Track Selector Cards — Track 1: Academic Research FIRST */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">

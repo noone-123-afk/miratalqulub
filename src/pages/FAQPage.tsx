@@ -19,6 +19,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { AdSenseBanner } from '../components/AdSenseBanner';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
   onBackToHome: () => void;
@@ -188,9 +189,11 @@ export const FAQPage: React.FC<Props> = ({
         {/* Hero Title */}
         <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-blue-950/40 via-slate-900/80 to-purple-950/40 border border-blue-500/30 shadow-2xl backdrop-blur-xl">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400">
-              <HelpCircle className="w-6 h-6" />
-            </div>
+            <img
+              src={OFFICIAL_LOGO_URL}
+              alt="شعار مرآة القلوب الرسمي"
+              className="w-12 h-12 rounded-2xl object-cover border border-blue-500/40 shadow-lg shrink-0"
+            />
             <div>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[11px] font-bold">
                 <Sparkles className="w-3 h-3" />

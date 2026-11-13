@@ -26,6 +26,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
   onSelectNovel: (novelId: string) => void;
@@ -220,29 +221,122 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
               : 'bg-gradient-to-b from-slate-900/90 via-slate-900/50 to-slate-950 border-slate-800/80'
           }`}
         >
-          <div className="relative z-10 max-w-4xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 border border-rose-500/30 text-rose-500">
-              <Compass className="w-3.5 h-3.5" />
-              <span>
-                {language === 'ar'
-                  ? 'قسم الروايات الأدبية: رومانسية • تحقيقات جنائية • خيال علمي • أكشن'
-                  : 'Multi-Genre Literary Novels: Romance • Forensic Crime • Sci-Fi • Action'}
-              </span>
+          <div className="relative z-10 max-w-4xl space-y-5">
+            <div className="flex items-center gap-3.5">
+              <div className="w-14 h-14 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-lg shadow-rose-500/25 shrink-0 overflow-hidden">
+                <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
+                  <img
+                    src={OFFICIAL_LOGO_URL}
+                    alt={language === 'ar' ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                    className="w-full h-full object-cover rounded-[14px]"
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 border border-rose-500/30 text-rose-500 mb-1.5">
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>
+                    {language === 'ar'
+                      ? 'قسم الروايات والقصص: رومانسية • تحقيقات جنائية • خيال علمي • أكشن'
+                      : 'Novels & Stories Section: Romance • Forensic Crime • Sci-Fi • Action'}
+                  </span>
+                </div>
+                <h1
+                  className={`text-2xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {language === 'ar'
+                    ? 'قصص إنسانية تحمل المعنى والتجربة'
+                    : 'Human Stories Carrying Meaning & Experience'}
+                </h1>
+              </div>
             </div>
-            <h1
-              className={`text-3xl sm:text-5xl font-black tracking-tight leading-tight ${
-                isLight ? 'text-slate-900' : 'text-white'
-              }`}
-            >
-              {language === 'ar'
-                ? 'مكتبة الروايات والسرد القصصي في مرآة القلوب'
-                : 'Mirror of Hearts Multi-Genre Novels Library'}
-            </h1>
+
             <p className={`text-base sm:text-lg leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
               {language === 'ar'
-                ? 'عش تجربة قراءة روائية متكاملة مع تحديد دقيق لبيئة المكان والزمان، وهوامش أدبية وملاحق علمية موثقة، ولوحة أدلة ومشتبه بهم، ودعم كامل للوضع الليلي والنهاري والتعليقات التفاعلية.'
-                : 'Experience full-length novels complete with Time & Place setting cards, literary and scientific appendices, forensic evidence boards, Dark/Light reader modes, and community discussions.'}
+                ? 'يضم قسم الروايات والقصص أعمالاً سردية وإنسانية تعبر عن المشاعر والتجارب والمواقف الحياتية المختلفة، بأسلوب أدبي يجمع بين المتعة والفائدة والتأمل في العلاقات الإنسانية.'
+                : 'The Novels & Stories section features narrative and humanistic works expressing emotions, life experiences, and complex dilemmas in a literary style uniting enjoyment with deep reflection.'}
             </p>
+
+            {/* مميزات القسم + ماذا ستجد في هذا القسم */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <div
+                className={`p-4 rounded-2xl border space-y-2 ${
+                  isLight ? 'bg-white/90 border-slate-200' : 'bg-slate-950/60 border-white/10'
+                }`}
+              >
+                <h3 className="text-xs sm:text-sm font-black font-['Alexandria'] text-rose-500">
+                  {language === 'ar' ? 'مميزات القسم:' : 'Section Features:'}
+                </h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-semibold">
+                  {(language === 'ar'
+                    ? [
+                        'قصص وروايات باللغة العربية',
+                        'أسلوب سردي جذاب',
+                        'موضوعات إنسانية واجتماعية',
+                        'شخصيات قريبة من الواقع',
+                        'رسائل ومعانٍ هادفة',
+                        'محتوى متجدد',
+                      ]
+                    : [
+                        'Original Arabic & English stories',
+                        'Engaging narrative style',
+                        'Human & social themes',
+                        'Relatable, realistic characters',
+                        'Meaningful insights & lessons',
+                        'Continuously updated library',
+                      ]
+                  ).map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-1.5">
+                      <span className="text-emerald-500 font-bold">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div
+                className={`p-4 rounded-2xl border space-y-2 ${
+                  isLight ? 'bg-white/90 border-slate-200' : 'bg-slate-950/60 border-white/10'
+                }`}
+              >
+                <h3 className="text-xs sm:text-sm font-black font-['Alexandria'] text-amber-500">
+                  {language === 'ar' ? 'ماذا ستجد في هذا القسم؟' : 'What You Will Find Here:'}
+                </h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {(language === 'ar'
+                    ? [
+                        'الروايات الاجتماعية',
+                        'القصص الإنسانية',
+                        'القصص النفسية والتأملية',
+                        'قصص العلاقات والتجارب الحياتية',
+                        'القصص القصيرة',
+                        'السلاسل القصصية المتتابعة',
+                      ]
+                    : [
+                        'Social Novels',
+                        'Humanistic Stories',
+                        'Psychological & Reflective Tales',
+                        'Relationship Experiences',
+                        'Short Stories',
+                        'Serialized Story Collections',
+                      ]
+                  ).map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border ${
+                        isLight
+                          ? 'bg-amber-50 border-amber-200 text-amber-900'
+                          : 'bg-amber-500/15 border-amber-500/30 text-amber-200'
+                      }`}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </header>
 

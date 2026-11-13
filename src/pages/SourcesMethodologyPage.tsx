@@ -22,6 +22,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { PageSEO } from '../components/PageSEO';
 import { AdSenseBanner } from '../components/AdSenseBanner';
+import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
   onBackToHome: () => void;
@@ -232,15 +233,15 @@ export const SourcesMethodologyPage: React.FC<Props> = ({
               : 'bg-gradient-to-r from-indigo-950/40 via-slate-900/80 to-purple-950/40 border-indigo-500/30 shadow-2xl backdrop-blur-xl'
           }`}
         >
-          <div className="flex items-center gap-3 mb-4">
-            <div
-              className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
-                isLight
-                  ? 'bg-indigo-50 border border-indigo-200 text-indigo-600'
-                  : 'bg-indigo-500/20 border border-indigo-500/40 text-indigo-400'
-              }`}
-            >
-              <BookOpen className="w-6 h-6" />
+          <div className="flex items-center gap-3.5 mb-4">
+            <div className="w-14 h-14 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-lg shadow-rose-500/25 shrink-0 overflow-hidden">
+              <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
+                <img
+                  src={OFFICIAL_LOGO_URL}
+                  alt={isAr ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                  className="w-full h-full object-cover rounded-[14px]"
+                />
+              </div>
             </div>
             <div>
               <div

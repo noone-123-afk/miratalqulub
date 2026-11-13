@@ -281,8 +281,8 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         {/* ========================================================
-            7. التذييل: المجموعات الثلاث المحددة
-            (روابط الموقع • معلومات المنصة • القانونية)
+            التذييل الموحد (بدون تكرار للأقسام):
+            (روابط الموقع • معلومات المنصة • القانونية والخصوصية)
         ======================================================== */}
         <div
           className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 ${
@@ -338,16 +338,25 @@ export const Footer: React.FC<FooterProps> = ({
                     type="button"
                     onClick={() => {
                       soundManager.playTap();
-                      if (currentPage !== 'home') {
-                        onNavigatePage('home');
-                        setTimeout(() => {
-                          const elem = document.getElementById('site-sections-directory');
-                          if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                      } else {
-                        const elem = document.getElementById('site-sections-directory');
-                        if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-                      }
+                      onNavigatePage('personality-tests');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'personality-tests'
+                        ? 'text-indigo-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-indigo-600'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'قسم تحليل الشخصية' : 'Personality Analysis'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onOpenIntelligenceTests();
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       isLight
@@ -355,7 +364,7 @@ export const Footer: React.FC<FooterProps> = ({
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
-                    <span>{isAr ? 'الأقسام' : 'Sections'}</span>
+                    <span>{isAr ? 'قسم اختبارات الذكاء' : 'Intelligence Tests'}</span>
                   </button>
                 </li>
                 <li>
@@ -373,7 +382,7 @@ export const Footer: React.FC<FooterProps> = ({
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
-                    <span>{isAr ? 'المقالات' : 'Articles & Research'}</span>
+                    <span>{isAr ? 'قسم المقالات المعرفية والأبحاث' : 'Articles & Research'}</span>
                   </button>
                 </li>
                 <li>
@@ -381,15 +390,17 @@ export const Footer: React.FC<FooterProps> = ({
                     type="button"
                     onClick={() => {
                       soundManager.playTap();
-                      onNavigatePage('community');
+                      onNavigatePage('novels');
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
-                      isLight
+                      currentPage === 'novels'
+                        ? 'text-indigo-600'
+                        : isLight
                         ? 'text-slate-700 hover:text-indigo-600'
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
-                    <span>{isAr ? 'المجتمع وصالون كتاب الأسبوع' : 'Community & Book Salon'}</span>
+                    <span>{isAr ? 'قسم الروايات والقصص' : 'Novels & Stories'}</span>
                   </button>
                 </li>
               </ul>
@@ -432,7 +443,61 @@ export const Footer: React.FC<FooterProps> = ({
                         : 'text-slate-200 hover:text-purple-300'
                     }`}
                   >
-                    <span>{isAr ? 'من نحن' : 'About Us'}</span>
+                    <span>{isAr ? 'من نحن (About Us)' : 'About Us'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('methodology');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'methodology'
+                        ? 'text-purple-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-purple-600'
+                        : 'text-slate-200 hover:text-purple-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'المنهجية العلمية والمصادر (APA)' : 'Scientific Methodology & APA Sources'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('how-it-works');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'how-it-works'
+                        ? 'text-purple-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-purple-600'
+                        : 'text-slate-200 hover:text-purple-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'كيف تعمل خوارزمية التوافق؟' : 'How the Compatibility Engine Works'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('faq');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'faq'
+                        ? 'text-purple-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-purple-600'
+                        : 'text-slate-200 hover:text-purple-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'الأسئلة الشائعة (FAQ)' : 'Frequently Asked Questions'}</span>
                   </button>
                 </li>
                 <li>
@@ -450,13 +515,14 @@ export const Footer: React.FC<FooterProps> = ({
                         : 'text-slate-200 hover:text-purple-300'
                     }`}
                   >
-                    <span>{isAr ? 'اتصل بنا' : 'Contact Us'}</span>
+                    <Mail className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                    <span>{isAr ? 'اتصل بنا (Contact Us)' : 'Contact Us'}</span>
                   </button>
                 </li>
               </ul>
             </div>
 
-            {/* 3. القانونية */}
+            {/* 3. القانونية والخصوصية */}
             <div className="space-y-3.5">
               <div className="flex items-center gap-2">
                 <div
@@ -473,7 +539,7 @@ export const Footer: React.FC<FooterProps> = ({
                     isLight ? 'text-slate-900' : 'text-white'
                   }`}
                 >
-                  {isAr ? 'القانونية' : 'Legal'}
+                  {isAr ? 'القانونية والخصوصية' : 'Legal & Privacy'}
                 </h4>
               </div>
 
@@ -493,7 +559,7 @@ export const Footer: React.FC<FooterProps> = ({
                         : 'text-slate-200 hover:text-emerald-300'
                     }`}
                   >
-                    <span>{isAr ? 'سياسة الخصوصية الحالية' : 'Current Privacy Policy'}</span>
+                    <span>{isAr ? 'سياسة الخصوصية (Privacy Policy)' : 'Privacy Policy'}</span>
                   </button>
                 </li>
                 <li>
@@ -511,467 +577,43 @@ export const Footer: React.FC<FooterProps> = ({
                         : 'text-slate-200 hover:text-emerald-300'
                     }`}
                   >
-                    <span>{isAr ? 'شروط الاستخدام الحالية' : 'Current Terms of Service'}</span>
+                    <span>{isAr ? 'شروط الاستخدام (Terms of Service)' : 'Terms of Service'}</span>
                   </button>
                 </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Main 4-Column Grid: The 3 Primary Pathways + Essential Legal & Governance Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-start">
-          {/* COLUMN 1 — المسار الأول: استكشف ذاتك (Explore Yourself) */}
-          <div className="space-y-3.5">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight
-                    ? 'bg-purple-50 border-purple-200 text-purple-700'
-                    : 'bg-purple-500/15 border-purple-500/30 text-purple-300'
-                }`}
-              >
-                <Brain className="w-4 h-4" />
-              </div>
-              <h4
-                className={`font-black text-sm font-['Alexandria'] ${
-                  isLight ? 'text-slate-900' : 'text-white'
-                }`}
-              >
-                {isAr ? '١. استكشف ذاتك' : '1. Explore Yourself'}
-              </h4>
-            </div>
-            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              {isAr
-                ? 'مقاييس الشخصية المعتمدة وبطاريات الذكاءات المتعددة والقدرات المعرفية الموثقة بمراجع APA.'
-                : 'Validated personality inventories and multi-modal intelligence batteries documented with APA citations.'}
-            </p>
-            <ul className="space-y-2.5 text-xs">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('personality-tests')}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    currentPage === 'personality-tests'
-                      ? 'text-purple-500'
-                      : isLight
-                      ? 'text-slate-700 hover:text-purple-600'
-                      : 'text-slate-200 hover:text-purple-300'
-                  }`}
-                >
-                  <Brain className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'مختبر مقاييس الشخصية (MBTI & Big Five)'
-                      : 'Personality Lab (MBTI & Big Five)'}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    onOpenIntelligenceTests();
-                  }}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    isLight
-                      ? 'text-slate-700 hover:text-cyan-600'
-                      : 'text-slate-200 hover:text-cyan-300'
-                  }`}
-                >
-                  <Cpu className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'مختبر اختبارات الذكاء (Gardner & Raven IQ)'
-                      : 'Intelligence Batteries (Gardner & Raven IQ)'}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    onOpenPsychologyTests();
-                  }}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    isLight
-                      ? 'text-slate-700 hover:text-indigo-600'
-                      : 'text-slate-200 hover:text-indigo-300'
-                  }`}
-                >
-                  <Compass className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'المقاييس المتخصصة (16PF • آيزنك • التعلق)'
-                      : 'Specialized Scales (16PF • Eysenck • ECR-R)'}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    onOpenHistory();
-                  }}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    isLight
-                      ? 'text-slate-600 hover:text-violet-600'
-                      : 'text-slate-300 hover:text-violet-300'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5 text-violet-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'سجل وتطور اختباراتي وتصدير PDF'
-                      : 'Longitudinal Test History & PDF Export'}
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* COLUMN 2 — المسار الثاني: اكتشف التوافق (Discover Compatibility) */}
-          <div className="space-y-3.5">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight
-                    ? 'bg-rose-50 border-rose-200 text-rose-700'
-                    : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
-                }`}
-              >
-                <Heart className="w-4 h-4" />
-              </div>
-              <h4
-                className={`font-black text-sm font-['Alexandria'] ${
-                  isLight ? 'text-slate-900' : 'text-white'
-                }`}
-              >
-                {isAr ? '٢. اكتشف التوافق' : '2. Discover Compatibility'}
-              </h4>
-            </div>
-            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              {isAr
-                ? 'كاشف التوافق الفكري والعاطفي وتجربة اللقاء الأعمى التفاعلي (The Blind Date) خلف الستار.'
-                : 'Psychometric partner compatibility calculator and progressive curtain-drop dialogue in The Blind Date.'}
-            </p>
-            <ul className="space-y-2.5 text-xs">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    onNavigatePage('home');
-                    onResetHome();
-                  }}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    currentPage === 'home'
-                      ? 'text-rose-500'
-                      : isLight
-                      ? 'text-slate-700 hover:text-rose-600'
-                      : 'text-slate-200 hover:text-rose-300'
-                  }`}
-                >
-                  <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'كاشف التوافق وحاسبة الشريك المثالي'
-                      : 'Partner Compatibility Detector'}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundManager.playTap();
-                    onOpenBlindDate();
-                  }}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    isLight
-                      ? 'text-slate-700 hover:text-pink-600'
-                      : 'text-slate-200 hover:text-pink-300'
-                  }`}
-                >
-                  <MessageCircle className="w-3.5 h-3.5 text-pink-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'تجربة اللقاء الأعمى (The Blind Date)'
-                      : 'The Blind Date Interactive Stage'}
-                  </span>
-                </button>
-              </li>
-              {onOpenCoupleInvite && (
                 <li>
                   <button
                     type="button"
                     onClick={() => {
                       soundManager.playTap();
-                      onOpenCoupleInvite();
+                      onNavigatePage('disclaimer');
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
-                      isLight
-                        ? 'text-slate-600 hover:text-emerald-600'
-                        : 'text-slate-300 hover:text-emerald-300'
+                      currentPage === 'disclaimer'
+                        ? 'text-amber-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-amber-600'
+                        : 'text-slate-200 hover:text-amber-300'
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span>
-                      {isAr
-                        ? 'اختبار التوافق المزدوج مع الشريك'
-                        : 'Dual Couple Compatibility Invite'}
-                    </span>
+                    <span>{isAr ? 'إخلاء المسؤولية العلمي والقانوني' : 'Clinical & Legal Disclaimer'}</span>
                   </button>
                 </li>
-              )}
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('how-it-works')}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    currentPage === 'how-it-works'
-                      ? 'text-sky-500 font-bold'
-                      : isLight
-                      ? 'text-slate-600 hover:text-sky-600'
-                      : 'text-slate-300 hover:text-sky-300'
-                  }`}
-                >
-                  <Info className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'كيف تعمل خوارزمية التوافق؟'
-                      : 'How the Compatibility Engine Works'}
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* COLUMN 3 — المسار الثالث: هدية الواحة المعرفية والمقالات والروايات */}
-          <div className="space-y-3.5">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                    : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-              </div>
-              <h4
-                className={`font-black text-sm font-['Alexandria'] ${
-                  isLight ? 'text-slate-900' : 'text-white'
-                }`}
-              >
-                {isAr
-                  ? '٣. هدية الواحة المعرفية والمقالات والروايات'
-                  : '3. Knowledge Oasis: Articles & Novels'}
-              </h4>
+                {isOwner && (
+                  <li className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => onNavigatePage('admin-cms')}
+                      className="text-amber-500 hover:text-amber-400 font-bold transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>🛡️ {isAr ? 'مركز إدارة المحتوى و AdSense' : 'CMS & AdSense Center'}</span>
+                    </button>
+                  </li>
+                )}
+              </ul>
             </div>
-            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              {isAr
-                ? 'موسوعة المقالات الإكلينيكية والأبحاث المحكّمة، ومكتبة الروايات الأدبية والتحقيقات والخيال العلمي.'
-                : 'Clinical psychology encyclopedia, peer-reviewed research papers, and multi-genre literary novels.'}
-            </p>
-            <ul className="space-y-2.5 text-xs">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('articles')}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    currentPage === 'articles'
-                      ? 'text-emerald-500'
-                      : isLight
-                      ? 'text-slate-700 hover:text-emerald-600'
-                      : 'text-slate-200 hover:text-emerald-300'
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'موسوعة المقالات والأبحاث المحكّمة'
-                      : 'Articles & Peer-Reviewed Research'}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('novels')}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    currentPage === 'novels' ||
-                    currentPage === 'novel-detail' ||
-                    currentPage === 'chapter-reader'
-                      ? 'text-amber-500'
-                      : isLight
-                      ? 'text-slate-700 hover:text-amber-600'
-                      : 'text-slate-200 hover:text-amber-300'
-                  }`}
-                >
-                  <Feather className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'مكتبة الروايات الأدبية والتحقيقات'
-                      : 'Novels & Forensic Thrillers Library'}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('methodology')}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    currentPage === 'methodology'
-                      ? 'text-indigo-500 font-bold'
-                      : isLight
-                      ? 'text-slate-600 hover:text-indigo-600'
-                      : 'text-slate-300 hover:text-indigo-300'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                  <span>
-                    {isAr
-                      ? 'المنهجية العلمية والمصادر (APA)'
-                      : 'Scientific Methodology & APA Sources'}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('faq')}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    currentPage === 'faq'
-                      ? 'text-purple-500 font-bold'
-                      : isLight
-                      ? 'text-slate-600 hover:text-purple-600'
-                      : 'text-slate-300 hover:text-purple-300'
-                  }`}
-                >
-                  <HelpCircle className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                  <span>
-                    {isAr ? 'الأسئلة الشائعة (FAQ)' : 'Frequently Asked Questions (FAQ)'}
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* COLUMN 4 — الصفحات القانونية، الخصوصية، والتواصل */}
-          <div className="space-y-3.5">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight
-                    ? 'bg-sky-50 border-sky-200 text-sky-700'
-                    : 'bg-sky-500/15 border-sky-500/30 text-sky-300'
-                }`}
-              >
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <h4
-                className={`font-black text-sm font-['Alexandria'] ${
-                  isLight ? 'text-slate-900' : 'text-white'
-                }`}
-              >
-                {isAr ? 'الحوكمة والصفحات القانونية' : 'Governance & Legal Pages'}
-              </h4>
-            </div>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('about')}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    currentPage === 'about'
-                      ? 'text-purple-500 font-bold'
-                      : isLight
-                      ? 'text-slate-700 hover:text-slate-900'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <span>{isAr ? 'من نحن (About Us)' : 'About Us'}</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('privacy')}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    currentPage === 'privacy'
-                      ? 'text-emerald-500 font-bold'
-                      : isLight
-                      ? 'text-slate-700 hover:text-slate-900'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <span>{isAr ? 'سياسة الخصوصية (Privacy Policy)' : 'Privacy Policy'}</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('terms')}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    currentPage === 'terms'
-                      ? 'text-cyan-500 font-bold'
-                      : isLight
-                      ? 'text-slate-700 hover:text-slate-900'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <span>{isAr ? 'شروط الاستخدام (Terms of Service)' : 'Terms of Service'}</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('disclaimer')}
-                  className={`transition cursor-pointer flex items-center gap-2 ${
-                    currentPage === 'disclaimer'
-                      ? 'text-amber-500 font-bold'
-                      : isLight
-                      ? 'text-slate-700 hover:text-slate-900'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  <span>{isAr ? 'إخلاء المسؤولية القانوني والعلمي' : 'Legal & Clinical Disclaimer'}</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onNavigatePage('contact')}
-                  className={`transition cursor-pointer flex items-center gap-2 font-bold ${
-                    currentPage === 'contact'
-                      ? 'text-sky-500'
-                      : isLight
-                      ? 'text-sky-700 hover:text-sky-900'
-                      : 'text-sky-300 hover:text-sky-200'
-                  }`}
-                >
-                  <Mail className="w-3.5 h-3.5 shrink-0" />
-                  <span>{isAr ? 'اتصل بنا (Contact Us)' : 'Contact Us'}</span>
-                </button>
-              </li>
-              {isOwner && (
-                <li className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => onNavigatePage('admin-cms')}
-                    className="text-amber-500 hover:text-amber-400 font-bold transition cursor-pointer flex items-center gap-1.5"
-                  >
-                    <span>🛡️ {isAr ? 'مركز إدارة المحتوى و AdSense' : 'CMS & AdSense Center'}</span>
-                  </button>
-                </li>
-              )}
-            </ul>
           </div>
         </div>
+
 
         {/* Mandatory Legal & Scientific Disclaimer Banner */}
         <div
