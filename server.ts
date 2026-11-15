@@ -8,6 +8,11 @@ import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { WebSocketServer, WebSocket } from 'ws';
 import { calculateRealCompatibility, calculateRealVoiceSynergy } from './src/utils/realScoringEngine';
+import {
+  NATIONALITY_DATABASE,
+  getNationalityEntryByCountry,
+  DetectedNationalityProfile,
+} from './src/utils/locationNationalityDetector';
 
 dotenv.config();
 
@@ -45,12 +50,22 @@ let activeHostingConfig = {
   activatedAt: new Date().toISOString(),
 };
 
-// Direct Binary Logo Serving & Download Endpoints (PNG & JPG)
+// Direct Binary Logo Serving & Download Endpoints (WebP, PNG & JPG)
+app.get('/logo.webp', (_req: Request, res: Response) => {
+  const filePath = path.resolve('public', 'logo.webp');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'image/webp');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.sendFile(filePath);
+  }
+  res.status(404).end();
+});
+
 app.get('/logo.jpg', (_req: Request, res: Response) => {
   const filePath = path.resolve('public', 'logo.jpg');
   if (fs.existsSync(filePath)) {
     res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     return res.sendFile(filePath);
   }
   res.status(404).end();
@@ -66,10 +81,50 @@ app.get('/logo.png', (_req: Request, res: Response) => {
   res.status(404).end();
 });
 
+// Agentic Browsing Endpoints: /llms.txt and /ard.json & /.well-known/ard.json
+app.get(['/llms.txt', '/llms-full.txt'], (_req: Request, res: Response) => {
+  const llmsPath = path.resolve('public', 'llms.txt');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (fs.existsSync(llmsPath)) {
+    return res.sendFile(llmsPath);
+  }
+  return res.send(
+    `# مِـرآة القـلوب | Mirror of Hearts (miratalqulub.com)\n\n> منصة عربية معرفية وتفاعلية متخصصة في تحليل الشخصية والتوافق النفسي والعاطفي والفكري.\n\n## الأقسام الرئيسية\n- [الصفحة الرئيسية](https://miratalqulub.com/)\n- [تحليل الشخصية](https://miratalqulub.com/#/personality-tests)\n- [كاشف شريك الحياة](https://miratalqulub.com/#/compatibility)\n- [المقالات المعرفية](https://miratalqulub.com/#/articles)\n- [الروايات والقصص](https://miratalqulub.com/#/novels)\n- [من نحن](https://miratalqulub.com/#/about)\n- [المنهجية العلمية](https://miratalqulub.com/#/methodology)\n- [سياسة الخصوصية](https://miratalqulub.com/#/privacy)\n`
+  );
+});
+
+app.get(['/ard.json', '/.well-known/ard.json'], (_req: Request, res: Response) => {
+  const ardPath = path.resolve('public', 'ard.json');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (fs.existsSync(ardPath)) {
+    try {
+      const raw = fs.readFileSync(ardPath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return res.json(parsed);
+    } catch {
+      // Fallback below
+    }
+  }
+  return res.json({
+    ard_version: '1.0.0',
+    name: 'مِـرآة القـلوب | Mirror of Hearts',
+    canonical_url: 'https://miratalqulub.com',
+    documentation: {
+      llms_txt: 'https://miratalqulub.com/llms.txt',
+      sitemap_xml: 'https://miratalqulub.com/sitemap.xml',
+    },
+  });
+});
+
 app.get('/api/download-logo', (req: Request, res: Response) => {
   const format = String(req.query.format || 'png').toLowerCase() === 'jpg' ? 'jpg' : 'png';
   const fileName = `mirat-al-qulub-official-logo.${format}`;
-  const filePath = path.resolve('public', `logo.${format}`);
+  const fullPath = path.resolve('public', `logo-full.${format}`);
+  const filePath = fs.existsSync(fullPath) ? fullPath : path.resolve('public', `logo.${format}`);
   if (fs.existsSync(filePath)) {
     res.setHeader('Content-Type', format === 'png' ? 'image/png' : 'image/jpeg');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
@@ -318,8 +373,91 @@ app.post('/api/verify-domain', async (req: Request, res: Response) => {
   }
 });
 
-// Helper: Pure Node.js standard ZIP archive generator for dist/ directory
-function buildZipFromDirectory(dirPath: string): Buffer {
+const OWNER_EMAIL_ADDRESS = 'one497303@gmail.com';
+
+function getFirebaseApiKey(): string {
+  try {
+    const cfgPath = path.resolve('firebase-applet-config.json');
+    if (fs.existsSync(cfgPath)) {
+      const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
+      if (cfg && cfg.apiKey) return String(cfg.apiKey);
+    }
+  } catch {
+    // ignore
+  }
+  return process.env.VITE_FIREBASE_API_KEY || '';
+}
+
+// Middleware: Strictly verifies that the caller holds a valid, email-verified Firebase ID token for the owner account
+async function requireOwnerAuth(req: Request, res: Response, next: express.NextFunction) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: Owner authentication required.',
+      });
+    }
+    const idToken = authHeader.slice(7).trim();
+    if (!idToken) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: Missing authentication token.',
+      });
+    }
+
+    const firebaseApiKey = getFirebaseApiKey();
+    if (!firebaseApiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'Server configuration error: Firebase API key unavailable.',
+      });
+    }
+
+    const verifyRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      }
+    );
+
+    if (!verifyRes.ok) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: Invalid or expired authentication token.',
+      });
+    }
+
+    const verifyJson = (await verifyRes.json()) as {
+      users?: Array<{ email?: string; emailVerified?: boolean }>;
+    };
+    const account = verifyJson?.users?.[0];
+
+    if (
+      !account ||
+      !account.email ||
+      account.email.toLowerCase() !== OWNER_EMAIL_ADDRESS.toLowerCase() ||
+      account.emailVerified !== true
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: Only the verified platform owner can access these files.',
+      });
+    }
+
+    return next();
+  } catch {
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden: Verification failed.',
+    });
+  }
+}
+
+// Helper: Pure Node.js standard ZIP archive generator
+function buildZipFromDirectory(dirPath: string, excludedDirs?: Set<string>): Buffer {
   const crcTable = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
     let c = n;
@@ -340,13 +478,16 @@ function buildZipFromDirectory(dirPath: string): Buffer {
   const walk = (currentDir: string, baseDir: string) => {
     if (!fs.existsSync(currentDir)) return;
     for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+      if (excludedDirs && excludedDirs.has(entry.name)) continue;
+      if (entry.name.startsWith('.env') && entry.name !== '.env.example') continue;
       const fullPath = path.join(currentDir, entry.name);
       const rel = path.relative(baseDir, fullPath).replace(/\\/g, '/');
       if (entry.isDirectory()) {
         // Skip large raw media attachments if any
-        if (rel.startsWith('assets/aistudio')) continue;
+        if (rel.startsWith('assets/aistudio') || rel.startsWith('public/assets/aistudio')) continue;
         walk(fullPath, baseDir);
       } else if (entry.isFile()) {
+        if (entry.name.endsWith('.zip')) continue;
         files.push({ relPath: rel, data: fs.readFileSync(fullPath) });
       }
     }
@@ -420,8 +561,8 @@ function buildZipFromDirectory(dirPath: string): Buffer {
   return Buffer.concat([...localHeaders, centralDirBuf, eocd]);
 }
 
-// Endpoint: Download ready-to-upload Cloudflare Pages / Hosting Production ZIP
-app.get('/api/download-cloudflare-zip', (_req: Request, res: Response) => {
+// Endpoint: Download ready-to-upload Cloudflare Pages / Hosting Production ZIP (OWNER ONLY)
+app.get('/api/download-cloudflare-zip', requireOwnerAuth, (_req: Request, res: Response) => {
   try {
     const distDir = path.resolve('dist');
     if (!fs.existsSync(distDir)) {
@@ -431,6 +572,29 @@ app.get('/api/download-cloudflare-zip', (_req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', 'attachment; filename="miratalqulub-cloudflare-ready.zip"');
     res.setHeader('Content-Length', String(zipBuffer.length));
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(zipBuffer);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Endpoint: Download Full Source Code ZIP (OWNER ONLY)
+app.get('/api/download-source-zip', requireOwnerAuth, (_req: Request, res: Response) => {
+  try {
+    const rootDir = path.resolve('.');
+    const excludedDirs = new Set([
+      'node_modules',
+      'dist',
+      '.git',
+      '.aistudio',
+      '.vite',
+    ]);
+    const zipBuffer = buildZipFromDirectory(rootDir, excludedDirs);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="miratalqulub-full-source.zip"');
+    res.setHeader('Content-Length', String(zipBuffer.length));
+    res.setHeader('Cache-Control', 'no-store');
     return res.send(zipBuffer);
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -609,38 +773,54 @@ app.get('/api/feedback/list', (_req: Request, res: Response) => {
   });
 });
 
-// Endpoint 3: Track Visitor & Usage Events
-app.post('/api/analytics/track', (req: Request, res: Response) => {
+// Endpoint 3: Track Visitor & Usage Events (Supports GET, POST, OPTIONS to prevent 405 Method Not Allowed)
+app.all('/api/analytics/track', (req: Request, res: Response) => {
+  if (req.method === 'OPTIONS' || req.method === 'HEAD') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
+    return res.status(200).end();
+  }
   try {
-    const { type, testKey, action, device, today } = req.body;
+    const payload = req.method === 'GET' ? req.query : req.body || {};
+    const { type, testKey, action, device, today } = payload as Record<string, string>;
 
     if (type === 'visit') {
       serverAnalyticsStore.totalVisitors += 1;
       serverAnalyticsStore.todayVisitors += 1;
       serverAnalyticsStore.monthVisitors += 1;
       serverAnalyticsStore.pageViews += 1;
-      if (device && serverAnalyticsStore.deviceBreakdown[device as keyof typeof serverAnalyticsStore.deviceBreakdown] !== undefined) {
-        serverAnalyticsStore.deviceBreakdown[device as keyof typeof serverAnalyticsStore.deviceBreakdown] += 1;
+      if (
+        device &&
+        serverAnalyticsStore.deviceBreakdown[
+          device as keyof typeof serverAnalyticsStore.deviceBreakdown
+        ] !== undefined
+      ) {
+        serverAnalyticsStore.deviceBreakdown[
+          device as keyof typeof serverAnalyticsStore.deviceBreakdown
+        ] += 1;
       }
       if (today) {
-        serverAnalyticsStore.dailyRecords[today] = (serverAnalyticsStore.dailyRecords[today] || 0) + 1;
+        serverAnalyticsStore.dailyRecords[today] =
+          (serverAnalyticsStore.dailyRecords[today] || 0) + 1;
       }
     } else if (type === 'test_event' && testKey) {
       if (!serverAnalyticsStore.testCounts[testKey]) {
         serverAnalyticsStore.testCounts[testKey] = { started: 0, completed: 0, views: 0 };
       }
       if (action === 'viewed') {
-        serverAnalyticsStore.testCounts[testKey].views = (serverAnalyticsStore.testCounts[testKey].views || 0) + 1;
+        serverAnalyticsStore.testCounts[testKey].views =
+          (serverAnalyticsStore.testCounts[testKey].views || 0) + 1;
       } else if (action === 'started') {
-        serverAnalyticsStore.testCounts[testKey].started = (serverAnalyticsStore.testCounts[testKey].started || 0) + 1;
+        serverAnalyticsStore.testCounts[testKey].started =
+          (serverAnalyticsStore.testCounts[testKey].started || 0) + 1;
       } else if (action === 'completed') {
-        serverAnalyticsStore.testCounts[testKey].completed = (serverAnalyticsStore.testCounts[testKey].completed || 0) + 1;
+        serverAnalyticsStore.testCounts[testKey].completed =
+          (serverAnalyticsStore.testCounts[testKey].completed || 0) + 1;
       }
     }
 
-    return res.json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
+    return res.status(200).json({ success: false, error: err.message });
   }
 });
 
@@ -758,11 +938,10 @@ ${contextText ? `الفحوى المنطوقة: "${contextText}"` : ''}
         }
 
         const response = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
+          model: 'gemini-4-hydrogen',
           contents: contentsPayload,
           config: {
             responseMimeType: 'application/json',
-            temperature: 0.7,
           },
         });
 
@@ -863,7 +1042,7 @@ app.post('/api/analyze-chat-cadence', async (req: Request, res: Response) => {
 `;
 
         const response = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
+          model: 'gemini-4-hydrogen',
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
@@ -1031,9 +1210,113 @@ app.post('/api/submit-test', async (req: Request, res: Response) => {
   }
 });
 
+// ============================================================================
+// Endpoint: Auto-Detect User Location & Nationality (Privacy-Preserving)
+// ============================================================================
+const SERVER_TIMEZONE_MAP: Record<string, string> = {
+  'Asia/Riyadh': 'SA',
+  'Asia/Dubai': 'AE',
+  'Asia/Muscat': 'OM',
+  'Asia/Kuwait': 'KW',
+  'Asia/Qatar': 'QA',
+  'Asia/Bahrain': 'BH',
+  'Asia/Amman': 'JO',
+  'Asia/Jerusalem': 'PS',
+  'Asia/Gaza': 'PS',
+  'Asia/Hebron': 'PS',
+  'Asia/Beirut': 'LB',
+  'Asia/Damascus': 'SY',
+  'Africa/Cairo': 'EG',
+  'Asia/Baghdad': 'IQ',
+  'Africa/Casablanca': 'MA',
+  'Africa/El_Aaiun': 'MA',
+  'Africa/Algiers': 'DZ',
+  'Africa/Tunis': 'TN',
+  'Africa/Tripoli': 'LY',
+  'Africa/Khartoum': 'SD',
+  'Asia/Aden': 'YE',
+  'Europe/Istanbul': 'TR',
+};
+
+app.get('/api/detect-location', (req: Request, res: Response) => {
+  try {
+    const tz = String(req.query.tz || '').trim();
+    const lang = String(req.query.lang || req.headers['accept-language'] || '').trim();
+    const partnerGender: 'male' | 'female' =
+      String(req.query.gender || 'female') === 'male' ? 'male' : 'female';
+
+    // 1. Check Cloud Run / CDN edge country headers (no raw IP stored, GDPR/Data-Minimization compliant)
+    const headerCountry = String(
+      req.headers['x-appengine-country'] ||
+        req.headers['cf-ipcountry'] ||
+        req.headers['x-vercel-ip-country'] ||
+        req.headers['x-country-code'] ||
+        ''
+    )
+      .toUpperCase()
+      .trim();
+
+    // 2. Check timezone mapping from client browser
+    const tzCountry = tz ? SERVER_TIMEZONE_MAP[tz] : undefined;
+
+    // 3. Check Accept-Language / navigator.language regional tag (e.g. ar-JO, ar-SA, ar-EG)
+    let localeCountry: string | undefined;
+    const langTokens = lang.split(',')[0]?.replace('_', '-').split('-') || [];
+    if (langTokens.length >= 2) {
+      const candidate = langTokens[1].toUpperCase();
+      if (NATIONALITY_DATABASE[candidate]) {
+        localeCountry = candidate;
+      }
+    }
+
+    // Prefer specific Arab timezone / locale if headerCountry is generic US/EU proxy or ZZ
+    let resolvedCode = 'SA';
+    let detectionSource: DetectedNationalityProfile['detectionSource'] = 'timezone_locale';
+
+    if (headerCountry && NATIONALITY_DATABASE[headerCountry]) {
+      resolvedCode = headerCountry;
+      detectionSource = 'ip_And_timezone';
+    } else if (tzCountry && NATIONALITY_DATABASE[tzCountry]) {
+      resolvedCode = tzCountry;
+      detectionSource = 'ip_And_timezone';
+    } else if (localeCountry && NATIONALITY_DATABASE[localeCountry]) {
+      resolvedCode = localeCountry;
+      detectionSource = 'timezone_locale';
+    } else if (tz.startsWith('Europe/') || tz.startsWith('America/')) {
+      // Arabic diaspora user or default Jordan/Saudi
+      resolvedCode = localeCountry || 'JO';
+      detectionSource = 'timezone_locale';
+    }
+
+    const entry = NATIONALITY_DATABASE[resolvedCode] || NATIONALITY_DATABASE.SA;
+    const detected: DetectedNationalityProfile = {
+      countryCode: entry.code,
+      countryNameAr: entry.nameAr,
+      countryNameEn: entry.nameEn,
+      nationalityAr: entry.nationalityAr,
+      nationalityEn: entry.nationalityEn,
+      ethnicityTag: entry.ethnicityTag,
+      flag: entry.flag,
+      cityOrRegion: tz ? tz.split('/')[1]?.replace(/_/g, ' ') : undefined,
+      timezone: tz || undefined,
+      ethnicFacialTraitsPromptEn:
+        partnerGender === 'female' ? entry.femalePromptEn : entry.malePromptEn,
+      ethnicFacialTraitsDescriptionAr: entry.traitsDescriptionAr,
+      detectionSource,
+      confidence: detectionSource === 'ip_And_timezone' ? 98 : 94,
+      detectedAt: new Date().toISOString(),
+    };
+
+    return res.json({ success: true, detected });
+  } catch (err: any) {
+    const fallback = getNationalityEntryByCountry('SA', 'female');
+    return res.json({ success: true, detected: fallback, error: err?.message });
+  }
+});
+
 /**
  * Helper: Builds a hyper-realistic, anthropologically and geographically accurate
- * portrait prompt tailored to the partner's exact age, ethnicity, country, and background.
+ * portrait prompt tailored to the partner's exact age, detected nationality, ethnicity, country, and background.
  */
 function buildDetailedPartnerImagePrompt(params: {
   partnerGender: string;
@@ -1044,6 +1327,10 @@ function buildDetailedPartnerImagePrompt(params: {
   lifestyleOutlook?: string;
   partnerFeaturesPreference?: string;
   customBasePrompt?: string;
+  detectedCountryCode?: string;
+  detectedNationalityAr?: string;
+  detectedNationalityEn?: string;
+  detectedEthnicTraitsPrompt?: string;
 }): string {
   const {
     partnerGender,
@@ -1054,11 +1341,20 @@ function buildDetailedPartnerImagePrompt(params: {
     lifestyleOutlook = '',
     partnerFeaturesPreference = '',
     customBasePrompt = '',
+    detectedCountryCode = '',
+    detectedNationalityEn = '',
+    detectedEthnicTraitsPrompt = '',
   } = params;
 
   const age = Math.max(18, Math.min(75, Number(userAge) || 26));
   const isFemale = partnerGender === 'female';
   const norm = `${ethnicity} ${country}`.toLowerCase();
+
+  // Resolve exact nationality profile from NATIONALITY_DATABASE
+  const resolvedNat = getNationalityEntryByCountry(
+    detectedCountryCode || country,
+    isFemale ? 'female' : 'male'
+  );
 
   // 1. Age-specific anatomical & micro-skin realism across all age brackets
   let ageDescriptor = '';
@@ -1078,84 +1374,61 @@ function buildDetailedPartnerImagePrompt(params: {
     ageDescriptor = `dignified senior ${isFemale ? 'woman' : 'man'} aged ${age} in fifties/sixties, authentic silver-gray hair highlights, deep warm wise eyes with genuine laugh lines, natural mature skin texture with rich character and warmth`;
   }
 
-  // 2. Fine facial features based on Ethnicity & Geography
-  let ethnicGeoFeatures = '';
-  if (
-    norm.includes('خليج') ||
-    norm.includes('سعود') ||
-    norm.includes('إمارات') ||
-    norm.includes('كويت') ||
-    norm.includes('قطر') ||
-    norm.includes('بحرين') ||
-    norm.includes('عمان') ||
-    norm.includes('يمن')
-  ) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic Arabian Peninsula Gulf woman from ${country}, warm honey-olive undertone complexion, large expressive dark kohl-rimmed almond eyes with long natural eyelashes, well-defined arched eyebrows, symmetrical nose bridge, modest high-end contemporary Khaleeji elegance`
-      : `authentic Arabian Peninsula Gulf man from ${country}, warm olive-bronze complexion, deep expressive dark brown almond eyes, strong jawline with neatly tailored traditional Arabian beard, noble high cheekbones, wearing refined contemporary Gulf attire`;
-  } else if (
-    norm.includes('شام') ||
-    norm.includes('أردن') ||
-    norm.includes('سور') ||
-    norm.includes('لبنان') ||
-    norm.includes('فلسطين')
-  ) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic Levantine Mediterranean Arab woman from ${country}, fair-olive luminous complexion with warm undertones, captivating hazel-brown or olive-green almond eyes, sculpted cheekbones, soft dark brown waves, refined contemporary Levantine elegance`
-      : `authentic Levantine Mediterranean Arab man from ${country}, fair-olive skin tone, expressive chestnut-hazel eyes, classic Levantine straight nose bridge, well-groomed beard and hair, sophisticated smart-casual attire`;
-  } else if (norm.includes('مصر')) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic Egyptian woman from ${country}, warm sun-kissed golden-wheat Nile Valley complexion, soulful dark almond eyes, naturally full eyebrows, radiant heartwarming smile, classic Cairo sophistication`
-      : `authentic Egyptian man from ${country}, warm bronze-wheat Nile complexion, kind expressive dark eyes, charismatic warm smile, neatly styled dark hair and trimmed beard, smart modern attire`;
-  } else if (
-    norm.includes('مغرب') ||
-    norm.includes('جزائر') ||
-    norm.includes('تونس') ||
-    norm.includes('ليبيا') ||
-    norm.includes('أمازيغ')
-  ) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic North African Maghrebi Arab-Amazigh woman from ${country}, warm Mediterranean olive-tan skin, striking deep almond eyes, high sculpted cheekbones, graceful facial symmetry, refined Maghrebi elegance`
-      : `authentic North African Maghrebi Arab-Amazigh man from ${country}, olive-bronze Mediterranean complexion, sharp defined cheekbones, deep thoughtful dark eyes, neat facial hair, modern tailored attire`;
-  } else if (
-    norm.includes('سودان') ||
-    norm.includes('نوب') ||
-    norm.includes('أفريق') ||
-    norm.includes('أسمر')
-  ) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic Nubian-Sudanese woman from ${country}, rich velvety dark melanin complexion with warm golden subsurface scattering, luminous expressive almond eyes, noble high cheekbones, radiant graceful smile`
-      : `authentic Nubian-Sudanese man from ${country}, rich deep ebony-bronze melanin skin with natural texture, noble symmetrical bone structure, warm compassionate dark eyes, dignified charismatic smile`;
-  } else if (norm.includes('عراق') || norm.includes('رافد')) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic Mesopotamian Iraqi woman from ${country}, warm wheat-olive skin, wide expressive dark kohl eyes, thick defined eyebrows, poised Baghdadi grace`
-      : `authentic Mesopotamian Iraqi man from ${country}, warm olive complexion, bold dark eyebrows, deep soulful brown eyes, strong jawline with full groomed beard`;
-  } else if (norm.includes('ترك') || norm.includes('آسي') || norm.includes('أوراس')) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic Anatolian Eurasian woman (${ethnicity}), fair-olive luminous complexion, high cheekbones, expressive almond hazel eyes, graceful natural beauty`
-      : `authentic Anatolian Eurasian man (${ethnicity}), olive complexion, defined high cheekbones, warm hazel-brown eyes, refined modern style`;
-  } else if (norm.includes('أوروب') || norm.includes('قوقاز')) {
-    ethnicGeoFeatures = isFemale
-      ? `authentic European Caucasian woman (${ethnicity}), natural fair skin with subtle warm undertones, expressive bright eyes, soft natural hair, warm approachable smile`
-      : `authentic European Caucasian man (${ethnicity}), natural fair complexion with realistic skin texture, expressive eyes, classic tailored attire`;
-  } else {
-    ethnicGeoFeatures = `authentic ${ethnicity} ${isFemale ? 'woman' : 'man'} from ${country}, regionally accurate bone structure, warm expressive eyes, natural complexion`;
+  // 2. Fine facial features based on Auto-Detected Nationality, Ethnicity & Geography
+  let ethnicGeoFeatures =
+    detectedEthnicTraitsPrompt || resolvedNat.ethnicFacialTraitsPromptEn || '';
+
+  if (!ethnicGeoFeatures) {
+    if (
+      norm.includes('خليج') ||
+      norm.includes('سعود') ||
+      norm.includes('إمارات') ||
+      norm.includes('كويت') ||
+      norm.includes('قطر') ||
+      norm.includes('بحرين') ||
+      norm.includes('عمان') ||
+      norm.includes('يمن')
+    ) {
+      ethnicGeoFeatures = isFemale
+        ? `authentic Arabian Peninsula Gulf woman from ${country}, warm honey-olive undertone complexion, large expressive dark kohl-rimmed almond eyes with long natural eyelashes, well-defined arched eyebrows, symmetrical nose bridge, modest high-end contemporary Khaleeji elegance`
+        : `authentic Arabian Peninsula Gulf man from ${country}, warm olive-bronze complexion, deep expressive dark brown almond eyes, strong jawline with neatly tailored traditional Arabian beard, noble high cheekbones, wearing refined contemporary Gulf attire`;
+    } else if (
+      norm.includes('شام') ||
+      norm.includes('أردن') ||
+      norm.includes('سور') ||
+      norm.includes('لبنان') ||
+      norm.includes('فلسطين')
+    ) {
+      ethnicGeoFeatures = isFemale
+        ? `authentic Levantine Mediterranean Arab woman from ${country}, fair-olive luminous complexion with warm undertones, captivating hazel-brown or olive-green almond eyes, sculpted cheekbones, soft dark brown waves, refined contemporary Levantine elegance`
+        : `authentic Levantine Mediterranean Arab man from ${country}, fair-olive skin tone, expressive chestnut-hazel eyes, classic Levantine straight nose bridge, well-groomed beard and hair, sophisticated smart-casual attire`;
+    } else if (norm.includes('مصر')) {
+      ethnicGeoFeatures = isFemale
+        ? `authentic Egyptian woman from ${country}, warm sun-kissed golden-wheat Nile Valley complexion, soulful dark almond eyes, naturally full eyebrows, radiant heartwarming smile, classic Cairo sophistication`
+        : `authentic Egyptian man from ${country}, warm bronze-wheat Nile complexion, kind expressive dark eyes, charismatic warm smile, neatly styled dark hair and trimmed beard, smart modern attire`;
+    } else {
+      ethnicGeoFeatures = `authentic ${ethnicity} ${isFemale ? 'woman' : 'man'} from ${country}, regionally accurate bone structure, warm expressive eyes, natural complexion`;
+    }
   }
 
   // 3. Background, education & lifestyle styling cues
-  const backgroundCue = educationLevel || lifestyleOutlook
-    ? `reflecting an educated intellectual background (${educationLevel || 'university educated'}) and balanced lifestyle (${lifestyleOutlook || 'refined family-oriented'}),`
-    : '';
+  const backgroundCue =
+    educationLevel || lifestyleOutlook
+      ? `reflecting an educated intellectual background (${educationLevel || 'university educated'}) and balanced lifestyle (${lifestyleOutlook || 'refined family-oriented'}),`
+      : '';
 
   // 4. User custom facial feature preferences
   const customFeaturesCue = partnerFeaturesPreference
-    ? `Specific requested facial traits: ${partnerFeaturesPreference}.`
+    ? `Specific compatibility context: ${partnerFeaturesPreference}.`
     : '';
 
+  const nationalityTagEn = detectedNationalityEn || resolvedNat.nationalityEn || country;
+
   return [
-    customBasePrompt || `Award-winning National Geographic and Vogue editorial portrait photography of a real human ${isFemale ? 'woman' : 'man'}.`,
+    customBasePrompt ||
+      `Award-winning National Geographic and Vogue editorial portrait photography of a real human ${isFemale ? 'woman' : 'man'} of ${nationalityTagEn} nationality from ${country}.`,
     `Age & Maturity: ${ageDescriptor}.`,
-    `Ethnic & Geographic Anthropology: ${ethnicGeoFeatures}.`,
+    `Detected Nationality & Authentic Ethnic Facial Features: ${ethnicGeoFeatures}.`,
     backgroundCue,
     customFeaturesCue,
     `Optical & Skin Realism: Shot on Hasselblad H6D-100c with 85mm f/1.4 prime portrait lens, ultra-detailed realistic human skin texture showing natural micro-pores, subtle subsurface scattering, genuine catchlights in the iris, natural hair strands, soft golden-hour directional rim lighting, shallow depth of field with soft culturally harmonious background bokeh, zero plastic airbrushing, 8k RAW photo.`,
@@ -1177,11 +1450,26 @@ app.post('/api/analyze-partner', async (req: Request, res: Response) => {
       educationLevel,
       lifestyleOutlook,
       partnerFeaturesPreference,
+      detectedCountryCode,
+      detectedNationalityAr,
+      detectedNationalityEn,
+      detectedEthnicTraitsPrompt,
+      detectedEthnicTraitsAr,
       answers,
     } = req.body;
 
     const targetGenderArabic = partnerGender === 'male' ? 'رجل / شاب' : 'فتاة / امرأة';
     const userGenderArabic = userGender === 'male' ? 'شاب' : 'فتاة';
+
+    const resolvedNat = getNationalityEntryByCountry(
+      detectedCountryCode || country,
+      partnerGender === 'male' ? 'male' : 'female'
+    );
+    const effectiveNationalityAr = detectedNationalityAr || resolvedNat.nationalityAr;
+    const effectiveEthnicTraitsAr =
+      detectedEthnicTraitsAr || resolvedNat.ethnicFacialTraitsDescriptionAr;
+    const effectiveEthnicPromptEn =
+      detectedEthnicTraitsPrompt || resolvedNat.ethnicFacialTraitsPromptEn;
 
     // Calculate genuine, mathematically verified scores from actual user answers
     const realScoring = calculateRealCompatibility(
@@ -1207,16 +1495,22 @@ app.post('/api/analyze-partner', async (req: Request, res: Response) => {
       educationLevel,
       lifestyleOutlook,
       partnerFeaturesPreference,
+      detectedCountryCode: detectedCountryCode || resolvedNat.countryCode,
+      detectedNationalityAr: effectiveNationalityAr,
+      detectedNationalityEn: detectedNationalityEn || resolvedNat.nationalityEn,
+      detectedEthnicTraitsPrompt: effectiveEthnicPromptEn,
     });
 
     const prompt = `
 أنت مستشار علاقات زوجية معتمد وخبير في علم النفس الاجتماعي (Sociology & Social Psychology) والأنثروبولوجيا الثقافية وتوافق الشخصيات وفق نظرية السمات الخمس الكبرى (Big Five) ونظرية التعلق الآمن (Attachment Theory).
-معطيات المستخدم:
+معطيات المستخدم (شاملة الموقع الجغرافي والجنسية المكتشفة تلقائياً أثناء الإجابة على الأسئلة):
 - الاسم أو اللقب: ${userName || 'غير محدد'}
 - الجنس: ${userGenderArabic}
 - العمر: ${userAge} عاماً
-- البلد والجنسية والموقع الجغرافي: ${country}
+- البلد والموقع الجغرافي المكتشف: ${country}
+- الجنسية المكتشفة لتوجيه ملامح الشريك: ${effectiveNationalityAr}
 - العرق والأصول الثقافية: ${ethnicity}
+- الملامح العرقية الواقعية الموافقة لجنسية المستخدم: ${effectiveEthnicTraitsAr}
 - المستوى التعليمي والفكري: ${educationLevel || 'تعليم جامعي عالي'}
 - نمط التطلعات الاجتماعية والبيئة الأسرية: ${lifestyleOutlook || 'عائلة متماسكة تجمع بين الأصالة والحرص على التطور'}
 - الجنس المطلوب لشريك الحياة: ${targetGenderArabic}
@@ -1240,11 +1534,11 @@ ${JSON.stringify(answers, null, 2)}
 يجب عليك الالتزام التام والكامل بهذه الأرقام والنسب الحقيقية المحسوبة في رد JSON أدناه دون أي تحريف أو تخمين أرقام عشوائية.
 
 المطلوب:
-إجراء دراسة توافق معمقة، علمية واجتماعية راقية تكشف أبعاد التوافق الفكري والاجتماعي مع اقتراح "اسم مناسب وجذاب وأصيل" لشريك الحياة يتناسب مع بلده وثقافته، وتقديم وصف دقيق جداً للملامح الواقعية الدقيقة (Fine Facial Features) المناسبة لعمره (${userAge} سنة) وعرقه (${ethnicity}) وجغرافيته (${country}).
+إجراء دراسة توافق معمقة، علمية واجتماعية راقية تكشف أبعاد التوافق الفكري والاجتماعي مع اقتراح "اسم مناسب وجذاب وأصيل" لشريك الحياة يتناسب مع جنسيته المكتشفة (${effectiveNationalityAr}) في (${country})، وتقديم وصف دقيق جداً للملامح العرقية الواقعية الدقيقة (Fine Facial Features) المناسبة لعمره (${userAge} سنة) وجنسيته (${effectiveNationalityAr}) وعرقه (${ethnicity}).
 
 أرجع النتيجة بصيغة JSON حصراً بهذا المخطط:
 {
-  "proposedPartnerName": "اسم علم عربي راقٍ وأصيل مناسب للبلد (${country}) ولجنس الشريك (${targetGenderArabic})، مثل: فيصل، عبد العزيز، سعود، عمر، كريم، فارس / سارة، نورة، مريم، لؤلؤة، سيرين، ياسمين",
+  "proposedPartnerName": "اسم علم عربي راقٍ وأصيل مناسب للبلد (${country}) ولجنسية (${effectiveNationalityAr}) ولجنس الشريك (${targetGenderArabic})",
   "nameMeaning": "المعنى اللغوي والبعد النفسي والاجتماعي للاسم ولماذا يناسب شخصية شريكك وتطلعاتك",
   "personalityArchetype": "النمط السيكولوجي لشخصية المستخدم (مثل: الروح القيادية الملهمة والوعي المتزن)",
   "partnerArchetype": "النمط السيكولوجي والاجتماعي لشريك الحياة المتوافق معه (مثل: السند الحكيم والشخصية المتوازنة فكرياً)",
@@ -1259,7 +1553,7 @@ ${JSON.stringify(answers, null, 2)}
   "attachmentStyle": "نمط الارتباط العاطفي (مثل: ارتباط آمن وداعم ومستقر)",
   "partnerTraits": ${JSON.stringify(realScoring.partnerTraits)},
   "loveLanguage": "لغة الحب الأساسية المشتركة بينكما",
-  "visualDescription": "وصف دقيق وواقعي جداً للملامح الدقيقة (Fine Facial Features) لشريك الحياة في عمر (${userAge} سنة): شكل العينين ولونهما، تقاسيم الوجه والفك والوجنتين، درجة لون البشرة الطبيعية لمنطقة (${country}) وعرق (${ethnicity})، تعابير النضج والابتسامة، والأناقة التي تعكس خلفيته (${educationLevel || 'الجامعية'})",
+  "visualDescription": "وصف دقيق وواقعي جداً للملامح العرقية الدقيقة (Fine Facial Features) لشريك الحياة في عمر (${userAge} سنة) بما يتناسب مع الجنسية المكتشفة (${effectiveNationalityAr} - ${country}): ${effectiveEthnicTraitsAr}",
   "romanticAdvice": "نصيحة ذهبية قائمة على أسس علم النفس الإيجابي لاستدامة الحب والمودة في الحياة الزوجية",
   "partnerVibeQuote": "اقتباس راقٍ ودافئ يعبر عن رؤيته للحب والشراكة معك",
   "imagePrompt": ${JSON.stringify(detailedImagePrompt)}
@@ -1268,11 +1562,10 @@ ${JSON.stringify(answers, null, 2)}
 
     if (process.env.GEMINI_API_KEY) {
       const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model: 'gemini-4-hydrogen',
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
-          temperature: 0.75,
         },
       });
 
@@ -1288,6 +1581,8 @@ ${JSON.stringify(answers, null, 2)}
         parsed.scoringBreakdown = realScoring;
         parsed.isRealCalculated = true;
         parsed.partnerTraits = realScoring.partnerTraits;
+        parsed.detectedNationalityAr = effectiveNationalityAr;
+        parsed.detectedEthnicTraitsAr = effectiveEthnicTraitsAr;
         parsed.imagePrompt = buildDetailedPartnerImagePrompt({
           partnerGender,
           userAge: Number(userAge) || 26,
@@ -1297,6 +1592,10 @@ ${JSON.stringify(answers, null, 2)}
           lifestyleOutlook,
           partnerFeaturesPreference,
           customBasePrompt: parsed.imagePrompt,
+          detectedCountryCode: detectedCountryCode || resolvedNat.countryCode,
+          detectedNationalityAr: effectiveNationalityAr,
+          detectedNationalityEn: detectedNationalityEn || resolvedNat.nationalityEn,
+          detectedEthnicTraitsPrompt: effectiveEthnicPromptEn,
         });
 
         return res.json({ success: true, data: parsed });
@@ -1306,7 +1605,7 @@ ${JSON.stringify(answers, null, 2)}
     }
 
     // Smart fallback with complete scientific scores and cultural names
-    const fallbackData = generateScientificFallback(
+    const fallbackData: any = generateScientificFallback(
       userGender,
       partnerGender,
       userAge,
@@ -1317,10 +1616,12 @@ ${JSON.stringify(answers, null, 2)}
       answers,
       partnerFeaturesPreference
     );
+    fallbackData.detectedNationalityAr = effectiveNationalityAr;
+    fallbackData.detectedEthnicTraitsAr = effectiveEthnicTraitsAr;
     return res.json({ success: true, data: fallbackData, isFallback: true });
   } catch (err: any) {
     console.error('Error analyzing partner:', err);
-    const fallbackData = generateScientificFallback(
+    const fallbackData: any = generateScientificFallback(
       req.body.userGender || 'male',
       req.body.partnerGender || 'female',
       req.body.userAge || 26,
@@ -1331,6 +1632,14 @@ ${JSON.stringify(answers, null, 2)}
       req.body.answers,
       req.body.partnerFeaturesPreference
     );
+    const resolvedNat = getNationalityEntryByCountry(
+      req.body.detectedCountryCode || req.body.country || 'SA',
+      req.body.partnerGender === 'male' ? 'male' : 'female'
+    );
+    fallbackData.detectedNationalityAr =
+      req.body.detectedNationalityAr || resolvedNat.nationalityAr;
+    fallbackData.detectedEthnicTraitsAr =
+      req.body.detectedEthnicTraitsAr || resolvedNat.ethnicFacialTraitsDescriptionAr;
     return res.json({ success: true, data: fallbackData, isFallback: true });
   }
 });
@@ -1347,6 +1656,10 @@ const handleGeneratePartnerImage = async (req: Request, res: Response) => {
       educationLevel,
       lifestyleOutlook,
       partnerFeaturesPreference,
+      detectedCountryCode,
+      detectedNationalityAr,
+      detectedNationalityEn,
+      detectedEthnicTraitsPrompt,
     } = req.body;
 
     const enrichedPrompt = buildDetailedPartnerImagePrompt({
@@ -1358,6 +1671,10 @@ const handleGeneratePartnerImage = async (req: Request, res: Response) => {
       lifestyleOutlook,
       partnerFeaturesPreference,
       customBasePrompt: prompt,
+      detectedCountryCode,
+      detectedNationalityAr,
+      detectedNationalityEn,
+      detectedEthnicTraitsPrompt,
     });
 
     if (!process.env.GEMINI_API_KEY) {

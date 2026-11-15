@@ -39,6 +39,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import { downloadOwnerProtectedZip } from '../utils/ownerDownload';
 
 export interface NavbarProps {
   onReset?: () => void;
@@ -201,6 +202,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <img
                   src={OFFICIAL_LOGO_URL}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Official Logo'}
+                  width={44}
+                  height={44}
+                  decoding="async"
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover rounded-[13px]"
                 />
@@ -431,12 +435,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                         : 'Pathway 2: Compatibility Detector & The Blind Date'}
                     </div>
 
-                    {/* Item 1: Compatibility Detector (Home Calculator) */}
+                    {/* Item 1: Compatibility Detector */}
                     <button
                       type="button"
                       onClick={() =>
                         handleNavAction(() => {
-                          if (onNavigatePage) onNavigatePage('home');
+                          if (onNavigatePage) onNavigatePage('compatibility');
                           if (onReset) onReset();
                         })
                       }
@@ -983,12 +987,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </button>
 
-            {/* Owner Admin Control Dropdown (Visible when owner/applicable) */}
+            {/* Owner-Only Admin & Website Files Download Dropdown (Strictly hidden from visitors & regular users) */}
             {isOwner && (
               <div className="relative hidden sm:block">
                 <button
                   type="button"
                   onClick={() => toggleDropdown('owner')}
+                  aria-label={isAr ? 'قائمة إدارة المنصة وتحميل الملفات' : 'Platform Admin & Files Menu'}
+                  title={isAr ? 'قائمة إدارة المنصة وتحميل الملفات' : 'Platform Admin & Files Menu'}
                   className={`flex items-center gap-1 px-2.5 py-1.5 sm:py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
                     isLight
                       ? 'bg-amber-50 border-amber-300 text-amber-900'
@@ -1005,7 +1011,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       initial={{ opacity: 0, scale: 0.95, y: 6 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: 6 }}
-                      className={`absolute top-full mt-2 w-64 p-2 rounded-2xl border shadow-2xl z-50 space-y-1 ${
+                      className={`absolute top-full mt-2 w-72 p-2.5 rounded-2xl border shadow-2xl z-50 space-y-1.5 ${
                         isAr ? 'left-0 text-right' : 'right-0 text-left'
                       } ${
                         isLight
@@ -1013,6 +1019,46 @@ export const Navbar: React.FC<NavbarProps> = ({
                           : 'bg-slate-950 border-amber-500/40 text-slate-100'
                       }`}
                     >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleNavAction(() => {
+                            downloadOwnerProtectedZip(
+                              '/api/download-cloudflare-zip',
+                              'miratalqulub-cloudflare-ready.zip',
+                              user
+                            ).catch(() => {});
+                          })
+                        }
+                        className="w-full p-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-400 flex items-center gap-2 text-xs font-extrabold cursor-pointer text-start"
+                      >
+                        <span>📦</span>
+                        <span>
+                          {isAr
+                            ? 'تحميل ملفات الموقع للنشر (ZIP)'
+                            : 'Download Ready Website (ZIP)'}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleNavAction(() => {
+                            downloadOwnerProtectedZip(
+                              '/api/download-source-zip',
+                              'miratalqulub-full-source.zip',
+                              user
+                            ).catch(() => {});
+                          })
+                        }
+                        className="w-full p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 flex items-center gap-2 text-xs font-bold cursor-pointer text-start"
+                      >
+                        <span>💻</span>
+                        <span>
+                          {isAr
+                            ? 'تحميل الكود المصدري الكامل (ZIP)'
+                            : 'Download Full Source Code (ZIP)'}
+                        </span>
+                      </button>
                       {onNavigatePage && (
                         <button
                           type="button"
@@ -1030,7 +1076,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           className="w-full p-2 rounded-xl hover:bg-blue-500/15 text-blue-500 flex items-center gap-2 text-xs font-bold cursor-pointer"
                         >
                           <Cloud className="w-4 h-4 shrink-0" />
-                          <span>{isAr ? 'الاستضافة والدومين' : 'Hosting & Domain'}</span>
+                          <span>{isAr ? 'الاستضافة والدومين وتحميل الحزمة' : 'Hosting & Domain'}</span>
                         </button>
                       )}
                       {onOpenAdSense && (
@@ -1205,7 +1251,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     type="button"
                     onClick={() =>
                       handleNavAction(() => {
-                        if (onNavigatePage) onNavigatePage('home');
+                        if (onNavigatePage) onNavigatePage('compatibility');
                         if (onReset) onReset();
                       })
                     }

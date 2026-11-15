@@ -115,6 +115,10 @@ export const Footer: React.FC<FooterProps> = ({
                 <img
                   src={OFFICIAL_LOGO_URL}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Logo'}
+                  width={44}
+                  height={44}
+                  loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover rounded-[14px]"
                 />
@@ -163,6 +167,8 @@ export const Footer: React.FC<FooterProps> = ({
                     soundManager.playTap();
                     toggleLanguage();
                   }}
+                  aria-label={isAr ? 'تغيير اللغة إلى الإنجليزية' : 'Switch language to Arabic'}
+                  title={isAr ? 'تغيير اللغة إلى الإنجليزية' : 'Switch language to Arabic'}
                   className={`px-2 py-1 rounded-lg border text-[11px] font-bold cursor-pointer flex items-center gap-1 ${
                     isLight
                       ? 'bg-white border-slate-200 text-sky-700'
@@ -178,6 +184,24 @@ export const Footer: React.FC<FooterProps> = ({
                     soundManager.playTap();
                     toggleTheme();
                   }}
+                  aria-label={
+                    theme === 'dark'
+                      ? isAr
+                        ? 'تفعيل الوضع النهاري'
+                        : 'Switch to Light Mode'
+                      : isAr
+                      ? 'تفعيل الوضع الليلي'
+                      : 'Switch to Dark Mode'
+                  }
+                  title={
+                    theme === 'dark'
+                      ? isAr
+                        ? 'تفعيل الوضع النهاري'
+                        : 'Switch to Light Mode'
+                      : isAr
+                      ? 'تفعيل الوضع الليلي'
+                      : 'Switch to Dark Mode'
+                  }
                   className={`px-2 py-1 rounded-lg border text-[11px] font-bold cursor-pointer flex items-center gap-1 ${
                     isLight
                       ? 'bg-white border-slate-200 text-amber-700'
@@ -349,6 +373,24 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'قسم تحليل الشخصية' : 'Personality Analysis'}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
+                      onNavigatePage('compatibility');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'compatibility'
+                        ? 'text-indigo-600'
+                        : isLight
+                        ? 'text-slate-700 hover:text-indigo-600'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'قسم كاشف شريك الحياة' : 'Partner Compatibility Detector'}</span>
                   </button>
                 </li>
                 <li>
@@ -605,7 +647,7 @@ export const Footer: React.FC<FooterProps> = ({
                       onClick={() => onNavigatePage('admin-cms')}
                       className="text-amber-500 hover:text-amber-400 font-bold transition cursor-pointer flex items-center gap-1.5"
                     >
-                      <span>🛡️ {isAr ? 'مركز إدارة المحتوى و AdSense' : 'CMS & AdSense Center'}</span>
+                      <span>🛡️ {isAr ? 'مركز إدارة المحتوى وتحميل ملفات الموقع' : 'CMS & Website Files Download'}</span>
                     </button>
                   </li>
                 )}

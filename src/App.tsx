@@ -1,40 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { ProfileStep } from './components/ProfileStep';
-import { QuizStep } from './components/QuizStep';
-import { AnalyzingStep } from './components/AnalyzingStep';
-import { ResultStep } from './components/ResultStep';
-import { PrivacyLockScreen } from './components/PrivacyLockScreen';
-import { LiveChatModal } from './components/LiveChatModal';
-import { BlindDateShowModal } from './components/BlindDateShowModal';
-import { DomainHostingModal } from './components/DomainHostingModal';
-import { WebsiteSectionsModal, WebsiteTabKey } from './components/WebsiteSectionsModal';
-import { AdSenseModal } from './components/AdSenseModal';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
+import { HomePage } from './pages/HomePage';
 import { UserProfile, PartnerAnalysisResult } from './types';
-import { QUIZ_QUESTIONS } from './data/questions';
-import { getRealisticPortrait } from './data/portraits';
+import type { WebsiteTabKey } from './components/WebsiteSectionsModal';
+import type { DashboardTabKey } from './components/UserProfileDashboard';
+import type { OnboardingGoal } from './components/OnboardingWizardModal';
+import type { DetectedNationalityProfile } from './utils/locationNationalityDetector';
 import { soundManager } from './utils/sound';
 import { isPinLockEnabled } from './utils/privacyLock';
-import { calculateRealCompatibility } from './utils/realScoringEngine';
 import { useAppTheme } from './utils/theme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { AuthModal } from './components/AuthModal';
-import { SavedResultsHistoryModal } from './components/SavedResultsHistoryModal';
-import { PsychologyTestsModal } from './components/PsychologyTestsModal';
-import { UserProfileDashboard, DashboardTabKey } from './components/UserProfileDashboard';
-import { CoupleInviteModal } from './components/CoupleInviteModal';
-import { ArticlesSectionModal } from './components/ArticlesSectionModal';
-import { NovelsSectionModal } from './components/NovelsSectionModal';
-import { IntelligenceTestModal } from './components/IntelligenceTestModal';
-import { OnboardingWizardModal, OnboardingGoal } from './components/OnboardingWizardModal';
-import { CookieConsentBanner } from './components/CookieConsentBanner';
-import { LegalModal } from './components/LegalModal';
-import { ContactFeedbackModal } from './components/ContactFeedbackModal';
-import { AnalyticsDashboardModal } from './components/AnalyticsDashboardModal';
-import { BookClubCommunityModal } from './components/BookClubCommunityModal';
 import { trackSiteVisit } from './services/analyticsService';
 import {
   loadPersistentUserSession,
@@ -43,21 +22,128 @@ import {
   fetchUserSavedResults,
   fetchUnifiedTestHistory,
 } from './services/userHistoryService';
-import { AboutUsPage } from './pages/AboutUsPage';
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
-import { TermsOfServicePage } from './pages/TermsOfServicePage';
-import { ContactUsPage } from './pages/ContactUsPage';
-import { HowItWorksPage } from './pages/HowItWorksPage';
-import { FAQPage } from './pages/FAQPage';
-import { SourcesMethodologyPage } from './pages/SourcesMethodologyPage';
-import { DisclaimerPage } from './pages/DisclaimerPage';
-import { NovelsDirectoryPage } from './pages/NovelsDirectoryPage';
-import { NovelDetailPage } from './pages/NovelDetailPage';
-import { ChapterReaderPage } from './pages/ChapterReaderPage';
-import { AdminCMSPage } from './pages/AdminCMSPage';
-import { PersonalityTestsPage } from './pages/PersonalityTestsPage';
-import { ArticlesEncyclopediaPage } from './pages/ArticlesEncyclopediaPage';
-import { HomePage } from './pages/HomePage';
+
+// Code-Split Lazy Loaded Pages & Compatibility Flow Steps (Reduces main JS bundle payload & Main Thread work)
+const ProfileStep = lazy(() =>
+  import('./components/ProfileStep').then((m) => ({ default: m.ProfileStep }))
+);
+const QuizStep = lazy(() =>
+  import('./components/QuizStep').then((m) => ({ default: m.QuizStep }))
+);
+const AnalyzingStep = lazy(() =>
+  import('./components/AnalyzingStep').then((m) => ({ default: m.AnalyzingStep }))
+);
+const ResultStep = lazy(() =>
+  import('./components/ResultStep').then((m) => ({ default: m.ResultStep }))
+);
+const PrivacyLockScreen = lazy(() =>
+  import('./components/PrivacyLockScreen').then((m) => ({ default: m.PrivacyLockScreen }))
+);
+
+const AboutUsPage = lazy(() =>
+  import('./pages/AboutUsPage').then((m) => ({ default: m.AboutUsPage }))
+);
+const PrivacyPolicyPage = lazy(() =>
+  import('./pages/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage }))
+);
+const TermsOfServicePage = lazy(() =>
+  import('./pages/TermsOfServicePage').then((m) => ({ default: m.TermsOfServicePage }))
+);
+const ContactUsPage = lazy(() =>
+  import('./pages/ContactUsPage').then((m) => ({ default: m.ContactUsPage }))
+);
+const HowItWorksPage = lazy(() =>
+  import('./pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage }))
+);
+const FAQPage = lazy(() =>
+  import('./pages/FAQPage').then((m) => ({ default: m.FAQPage }))
+);
+const SourcesMethodologyPage = lazy(() =>
+  import('./pages/SourcesMethodologyPage').then((m) => ({ default: m.SourcesMethodologyPage }))
+);
+const DisclaimerPage = lazy(() =>
+  import('./pages/DisclaimerPage').then((m) => ({ default: m.DisclaimerPage }))
+);
+const NovelsDirectoryPage = lazy(() =>
+  import('./pages/NovelsDirectoryPage').then((m) => ({ default: m.NovelsDirectoryPage }))
+);
+const NovelDetailPage = lazy(() =>
+  import('./pages/NovelDetailPage').then((m) => ({ default: m.NovelDetailPage }))
+);
+const ChapterReaderPage = lazy(() =>
+  import('./pages/ChapterReaderPage').then((m) => ({ default: m.ChapterReaderPage }))
+);
+const AdminCMSPage = lazy(() =>
+  import('./pages/AdminCMSPage').then((m) => ({ default: m.AdminCMSPage }))
+);
+const PersonalityTestsPage = lazy(() =>
+  import('./pages/PersonalityTestsPage').then((m) => ({ default: m.PersonalityTestsPage }))
+);
+const ArticlesEncyclopediaPage = lazy(() =>
+  import('./pages/ArticlesEncyclopediaPage').then((m) => ({ default: m.ArticlesEncyclopediaPage }))
+);
+
+// Code-Split Lazy Loaded Modals (Mounted only when opened)
+const LiveChatModal = lazy(() =>
+  import('./components/LiveChatModal').then((m) => ({ default: m.LiveChatModal }))
+);
+const BlindDateShowModal = lazy(() =>
+  import('./components/BlindDateShowModal').then((m) => ({ default: m.BlindDateShowModal }))
+);
+const DomainHostingModal = lazy(() =>
+  import('./components/DomainHostingModal').then((m) => ({ default: m.DomainHostingModal }))
+);
+const WebsiteSectionsModal = lazy(() =>
+  import('./components/WebsiteSectionsModal').then((m) => ({ default: m.WebsiteSectionsModal }))
+);
+const AdSenseModal = lazy(() =>
+  import('./components/AdSenseModal').then((m) => ({ default: m.AdSenseModal }))
+);
+const AuthModal = lazy(() =>
+  import('./components/AuthModal').then((m) => ({ default: m.AuthModal }))
+);
+const SavedResultsHistoryModal = lazy(() =>
+  import('./components/SavedResultsHistoryModal').then((m) => ({
+    default: m.SavedResultsHistoryModal,
+  }))
+);
+const PsychologyTestsModal = lazy(() =>
+  import('./components/PsychologyTestsModal').then((m) => ({ default: m.PsychologyTestsModal }))
+);
+const UserProfileDashboard = lazy(() =>
+  import('./components/UserProfileDashboard').then((m) => ({ default: m.UserProfileDashboard }))
+);
+const CoupleInviteModal = lazy(() =>
+  import('./components/CoupleInviteModal').then((m) => ({ default: m.CoupleInviteModal }))
+);
+const ArticlesSectionModal = lazy(() =>
+  import('./components/ArticlesSectionModal').then((m) => ({ default: m.ArticlesSectionModal }))
+);
+const NovelsSectionModal = lazy(() =>
+  import('./components/NovelsSectionModal').then((m) => ({ default: m.NovelsSectionModal }))
+);
+const IntelligenceTestModal = lazy(() =>
+  import('./components/IntelligenceTestModal').then((m) => ({ default: m.IntelligenceTestModal }))
+);
+const OnboardingWizardModal = lazy(() =>
+  import('./components/OnboardingWizardModal').then((m) => ({ default: m.OnboardingWizardModal }))
+);
+const LegalModal = lazy(() =>
+  import('./components/LegalModal').then((m) => ({ default: m.LegalModal }))
+);
+const ContactFeedbackModal = lazy(() =>
+  import('./components/ContactFeedbackModal').then((m) => ({ default: m.ContactFeedbackModal }))
+);
+const AnalyticsDashboardModal = lazy(() =>
+  import('./components/AnalyticsDashboardModal').then((m) => ({
+    default: m.AnalyticsDashboardModal,
+  }))
+);
+const BookClubCommunityModal = lazy(() =>
+  import('./components/BookClubCommunityModal').then((m) => ({
+    default: m.BookClubCommunityModal,
+  }))
+);
 
 export type SitePage =
   | 'home'
@@ -74,7 +160,8 @@ export type SitePage =
   | 'chapter-reader'
   | 'admin-cms'
   | 'personality-tests'
-  | 'articles';
+  | 'articles'
+  | 'compatibility';
 type AppStep = 'profile' | 'quiz' | 'analyzing' | 'result';
 
 // Smooth springy page variants for step transitions
@@ -104,13 +191,23 @@ const pageVariants = {
   },
 };
 
+function SectionLoadingFallback() {
+  return (
+    <div className="w-full py-16 flex flex-col items-center justify-center gap-3 text-center">
+      <div className="w-10 h-10 rounded-full border-3 border-rose-500/30 border-t-rose-500 animate-spin" />
+      <span className="text-xs font-bold text-slate-400">جاري تحميل القسم...</span>
+    </div>
+  );
+}
+
 function AppContent() {
-  const { direction, isRTL, language, t } = useLanguage();
+  const { direction, isRTL } = useLanguage();
   const { user, isOwner } = useAuth();
   const [theme] = useAppTheme();
   const [step, setStep] = useState<AppStep>('profile');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [result, setResult] = useState<PartnerAnalysisResult | null>(null);
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
   const [isResultUnlocked, setIsResultUnlocked] = useState(false);
@@ -182,6 +279,12 @@ function AppContent() {
         section === 'big-five'
       ) {
         setCurrentPage('personality-tests');
+      } else if (
+        section === 'compatibility' ||
+        section === 'partner-detector' ||
+        section === 'partner'
+      ) {
+        setCurrentPage('compatibility');
       } else if (section === 'novels') {
         if (parts[1]) {
           setActiveNovelId(parts[1]);
@@ -209,6 +312,15 @@ function AppContent() {
     };
   }, []);
 
+  // Load quiz questions dynamically when entering compatibility section
+  useEffect(() => {
+    if (currentPage === 'compatibility' && quizQuestions.length === 0) {
+      import('./data/questions').then((m) => {
+        setQuizQuestions(m.QUIZ_QUESTIONS);
+      });
+    }
+  }, [currentPage, quizQuestions.length]);
+
   const handleNavigatePage = (page: string) => {
     soundManager.playTap();
     const validPages: SitePage[] = [
@@ -224,6 +336,7 @@ function AppContent() {
       'admin-cms',
       'personality-tests',
       'articles',
+      'compatibility',
     ];
 
     if (page === 'community' || page === 'book-club' || page === 'salon') {
@@ -260,31 +373,34 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Automatically track site visit once per session
-  useEffect(() => {
-    trackSiteVisit();
-  }, []);
-
-  // Load persistent visitor or authenticated user session from Cloud Database + LocalStorage
+  // Defer site analytics tracking & session loading to idle time to keep Main Thread fast on initial load
   useEffect(() => {
     let isMounted = true;
-    Promise.all([
-      loadPersistentUserSession(user),
-      fetchUserSavedResults(user),
-      fetchUnifiedTestHistory(user),
-    ]).then(([session, savedResults, unifiedHistory]) => {
+    const timer = setTimeout(() => {
       if (!isMounted) return;
-      if (session.profile && !profile) {
-        setProfile(session.profile);
-      }
-      const totalSaved = Math.max(
-        savedResults?.length || 0,
-        unifiedHistory?.length || 0
-      );
-      setSavedTestsCount(totalSaved);
-    });
+      trackSiteVisit();
+      Promise.all([
+        loadPersistentUserSession(user),
+        fetchUserSavedResults(user),
+        fetchUnifiedTestHistory(user),
+      ])
+        .then(([session, savedResults, unifiedHistory]) => {
+          if (!isMounted) return;
+          if (session.profile) {
+            setProfile((prev) => prev || session.profile);
+          }
+          const totalSaved = Math.max(
+            savedResults?.length || 0,
+            unifiedHistory?.length || 0
+          );
+          setSavedTestsCount(totalSaved);
+        })
+        .catch(() => {});
+    }, 900);
+
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
   }, [user]);
 
@@ -333,10 +449,9 @@ function AppContent() {
   const handleOnboardingSelectDestination = (goal: OnboardingGoal) => {
     setIsOnboardingWizardOpen(false);
     if (goal === 'partner_compatibility') {
+      handleNavigatePage('compatibility');
       if (step !== 'profile') {
         handleReset();
-      } else {
-        window.scrollTo({ top: 450, behavior: 'smooth' });
       }
     } else if (goal === 'intelligence_test') {
       setIsIntelligenceModalOpen(true);
@@ -363,6 +478,8 @@ function AppContent() {
     setResult(savedResult);
     setIsResultUnlocked(true);
     setStep('result');
+    setCurrentPage('compatibility');
+    window.location.hash = '#/compatibility';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -373,16 +490,23 @@ function AppContent() {
   };
 
   // Start Quiz with Profile
-  const handleStart = (userProfile: UserProfile) => {
+  const handleStart = async (userProfile: UserProfile) => {
     soundManager.playPageTransition();
     setProfile(userProfile);
     savePersistentUserProfile(userProfile, user);
+    if (quizQuestions.length === 0) {
+      const m = await import('./data/questions');
+      setQuizQuestions(m.QUIZ_QUESTIONS);
+    }
     setStep('quiz');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Complete Quiz -> Trigger AI Analysis & Image Generation
-  const handleQuizComplete = async (quizAnswers: Record<number, string>) => {
+  // Complete Quiz -> Trigger AI Analysis & Image Generation with Auto-Detected Location & Nationality
+  const handleQuizComplete = async (
+    quizAnswers: Record<number, string>,
+    quizDetectedLocation?: DetectedNationalityProfile
+  ) => {
     if (!profile) return;
     soundManager.playPageTransition();
     setAnswers(quizAnswers);
@@ -391,33 +515,73 @@ function AppContent() {
 
     const startTime = Date.now();
 
+    const [
+      { detectUserLocationAndNationality, getNationalityEntryByCountry },
+      { getRealisticPortrait },
+      { calculateRealCompatibility },
+    ] = await Promise.all([
+      import('./utils/locationNationalityDetector'),
+      import('./data/portraits'),
+      import('./utils/realScoringEngine'),
+    ]);
+
+    // Ensure location and nationality are detected and refined with the user's quiz answers
+    const resolvedLocation =
+      quizDetectedLocation ||
+      (await detectUserLocationAndNationality({
+        partnerGender: profile.partnerGender,
+        fallbackCountry: profile.country,
+        answers: quizAnswers,
+      })) ||
+      getNationalityEntryByCountry(profile.country, profile.partnerGender);
+
+    const activeProfile: UserProfile = {
+      ...profile,
+      country: resolvedLocation.countryNameAr || profile.country,
+      ethnicity: resolvedLocation.ethnicityTag || profile.ethnicity,
+      detectedCountryCode: resolvedLocation.countryCode,
+      detectedNationalityAr: resolvedLocation.nationalityAr,
+      detectedNationalityEn: resolvedLocation.nationalityEn,
+      detectedEthnicTraitsPrompt: resolvedLocation.ethnicFacialTraitsPromptEn,
+      detectedEthnicTraitsAr: resolvedLocation.ethnicFacialTraitsDescriptionAr,
+      isLocationAutoDetected: true,
+    };
+
+    setProfile(activeProfile);
+    savePersistentUserProfile(activeProfile, user);
+
     // 1. Pick authentic curated photorealistic portrait for this ethnicity, gender, age & geography
     const curated = getRealisticPortrait(
-      profile.ethnicity,
-      profile.partnerGender,
-      profile.userAge,
-      profile.country
+      activeProfile.ethnicity,
+      activeProfile.partnerGender,
+      activeProfile.userAge,
+      activeProfile.country
     );
     let finalImageUrl = curated.url;
 
     // Compute real psychometric and mathematical compatibility deterministically from actual answers
-    const calculatedScoring = calculateRealCompatibility(profile, quizAnswers);
+    const calculatedScoring = calculateRealCompatibility(activeProfile, quizAnswers);
 
     try {
-      // 2. Call server-side Gemini analysis endpoint
+      // 2. Call server-side Gemini analysis endpoint with detected nationality & ethnic traits
       const response = await fetch('/api/analyze-partner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userGender: profile.userGender,
-          partnerGender: profile.partnerGender,
-          userAge: profile.userAge,
-          userName: profile.userName,
-          country: profile.country,
-          ethnicity: profile.ethnicity,
-          educationLevel: profile.educationLevel,
-          lifestyleOutlook: profile.lifestyleOutlook,
-          partnerFeaturesPreference: profile.partnerFeaturesPreference,
+          userGender: activeProfile.userGender,
+          partnerGender: activeProfile.partnerGender,
+          userAge: activeProfile.userAge,
+          userName: activeProfile.userName,
+          country: activeProfile.country,
+          ethnicity: activeProfile.ethnicity,
+          educationLevel: activeProfile.educationLevel,
+          lifestyleOutlook: activeProfile.lifestyleOutlook,
+          partnerFeaturesPreference: activeProfile.partnerFeaturesPreference,
+          detectedCountryCode: activeProfile.detectedCountryCode,
+          detectedNationalityAr: activeProfile.detectedNationalityAr,
+          detectedNationalityEn: activeProfile.detectedNationalityEn,
+          detectedEthnicTraitsPrompt: activeProfile.detectedEthnicTraitsPrompt,
+          detectedEthnicTraitsAr: activeProfile.detectedEthnicTraitsAr,
           answers: quizAnswers,
         }),
       });
@@ -436,24 +600,32 @@ function AppContent() {
         analysisData.partnerTraits = calculatedScoring.partnerTraits;
         analysisData.scoringBreakdown = json.data.scoringBreakdown || calculatedScoring;
         analysisData.isRealCalculated = true;
+        analysisData.detectedNationalityAr =
+          analysisData.detectedNationalityAr || activeProfile.detectedNationalityAr;
+        analysisData.detectedEthnicTraitsAr =
+          analysisData.detectedEthnicTraitsAr || activeProfile.detectedEthnicTraitsAr;
       } else {
         throw new Error('Analysis payload empty');
       }
 
-      // 3. Attempt Gemini image generation via server endpoint with full demographic & ethnic details
+      // 3. Attempt Gemini image generation via server endpoint guided by detected nationality & ethnic traits
       try {
         const imgRes = await fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             prompt: analysisData.imagePrompt,
-            partnerGender: profile.partnerGender,
-            userAge: profile.userAge,
-            country: profile.country,
-            ethnicity: profile.ethnicity,
-            educationLevel: profile.educationLevel,
-            lifestyleOutlook: profile.lifestyleOutlook,
-            partnerFeaturesPreference: profile.partnerFeaturesPreference,
+            partnerGender: activeProfile.partnerGender,
+            userAge: activeProfile.userAge,
+            country: activeProfile.country,
+            ethnicity: activeProfile.ethnicity,
+            educationLevel: activeProfile.educationLevel,
+            lifestyleOutlook: activeProfile.lifestyleOutlook,
+            partnerFeaturesPreference: activeProfile.partnerFeaturesPreference,
+            detectedCountryCode: activeProfile.detectedCountryCode,
+            detectedNationalityAr: activeProfile.detectedNationalityAr,
+            detectedNationalityEn: activeProfile.detectedNationalityEn,
+            detectedEthnicTraitsPrompt: activeProfile.detectedEthnicTraitsPrompt,
           }),
         });
         const imgJson = await imgRes.json();
@@ -467,7 +639,7 @@ function AppContent() {
       analysisData.imageUrl = finalImageUrl;
 
       // Persist result automatically to database for returning visitor/user
-      saveTestResultToHistory(user, profile, analysisData).then(() => {
+      saveTestResultToHistory(user, activeProfile, analysisData).then(() => {
         setSavedTestsCount((prev) => prev + 1);
       });
 
@@ -485,9 +657,9 @@ function AppContent() {
     } catch (err) {
       console.error('Quiz analysis error:', err);
       // Fallback result with REAL calculated scores and proposed name
-      const defaultName = profile.partnerGender === 'female' ? 'نـورة' : 'فيـصل';
+      const defaultName = activeProfile.partnerGender === 'female' ? 'نـورة' : 'فيـصل';
       const defaultMeaning =
-        profile.partnerGender === 'female'
+        activeProfile.partnerGender === 'female'
           ? 'مشتق من النور والضياء؛ يعبر عن شخصية تجمع بين الرزانة الأصيلة، الإشراق، والذكاء الاجتماعي المحبوب.'
           : 'السيف القاطع الصارم في الحق؛ يعبر عن الشهامة، الوقار والقدرة على حماية واحتواء شريكته بحكمة.';
 
@@ -496,7 +668,7 @@ function AppContent() {
         nameMeaning: defaultMeaning,
         personalityArchetype: 'الروح الواعية والمفكر الاجتماعي المتزن',
         partnerArchetype:
-          profile.partnerGender === 'female'
+          activeProfile.partnerGender === 'female'
             ? 'سيدة الرقي والهدوء الفكري الملهم'
             : 'السند الحكيم والقيادي النبيل',
         compatibilityScore: calculatedScoring.compatibilityScore,
@@ -504,26 +676,30 @@ function AppContent() {
         sociologicalScore: calculatedScoring.sociologicalScore,
         emotionalScore: calculatedScoring.emotionalScore,
         lifestyleScore: calculatedScoring.lifestyleScore,
-        detailedMatchReason: `بناءً على مقاييس التوافق الفكري والاجتماعي المحسوبة رياضياً بدقة خوارزمية (${calculatedScoring.compatibilityScore}%)، شخصيتك تمنحه الأمان والشغف، وشخصيته القادمة من أصول (${profile.ethnicity}) في (${profile.country}) تمنحك الدفء والاحتواء الصادق في كل تفصيلة.`,
+        detailedMatchReason: `بناءً على مقاييس التوافق الفكري والاجتماعي المحسوبة رياضياً بدقة خوارزمية (${calculatedScoring.compatibilityScore}%)، شخصيتك تمنحه الأمان والشغف، وشخصيته القادمة من أصول (${activeProfile.detectedNationalityAr || activeProfile.ethnicity}) في (${activeProfile.country}) تمنحك الدفء والاحتواء الصادق في كل تفصيلة.`,
         intellectualSynergy: `تتميز العلاقة بتناغم ذهني بنسبة (${calculatedScoring.intellectualScore}%)؛ حيث يتشارك الطرفان أسلوب التفكير العقلاني وتبادل الآراء بإصغاء ناضج مع رؤية مشتركة لبناء المستقبل.`,
-        socialHarmony: `تحظى العلاقة بركيزة أسرية متينة بنسبة (${calculatedScoring.sociologicalScore}%) تتوافق مع عادات وتقاليد (${profile.country}) الأصيلة، مع صيانة تامة لخصوصية واستقلال البيت الزوجي.`,
+        socialHarmony: `تحظى العلاقة بركيزة أسرية متينة بنسبة (${calculatedScoring.sociologicalScore}%) تتوافق مع عادات وتقاليد (${activeProfile.country}) الأصيلة، مع صيانة تامة لخصوصية واستقلال البيت الزوجي.`,
         attachmentStyle: 'ارتباط آمن وتشاركي (Secure Attachment)',
         partnerTraits: calculatedScoring.partnerTraits,
         loveLanguage: 'الوقت النوعي الخاص وكلمات التقدير المتبادلة',
-        visualDescription: `ملامح أصيلة ووسيمة تعكس سحر (${profile.ethnicity}) في (${profile.country})، عينان دافئتان تنطقان بالصدق وابتسامة مريحة تلامس الروح.`,
+        visualDescription:
+          activeProfile.detectedEthnicTraitsAr ||
+          `ملامح أصيلة ووسيمة تعكس سحر (${activeProfile.ethnicity}) في (${activeProfile.country})، عينان دافئتان تنطقان بالصدق وابتسامة مريحة تلامس الروح.`,
         romanticAdvice:
           'التناغم الفكري بينكما كنز؛ حافظا دائماً على جلسات الحوار الهادئ دون هواتف وشاركا القرارات اليومية بروح الفريق.',
         partnerVibeQuote:
-          profile.partnerGender === 'female'
+          activeProfile.partnerGender === 'female'
             ? '«في عينيكِ وجدتُ وطناً وسكينة تغنيني عن العالم أجمع»'
             : '«معك فقط، أشعر أن الحياة تسير في اتجاهها الصحيح وأن قلبي في أمان تام»',
         imageUrl: finalImageUrl,
         scoringBreakdown: calculatedScoring,
         isRealCalculated: true,
+        detectedNationalityAr: activeProfile.detectedNationalityAr,
+        detectedEthnicTraitsAr: activeProfile.detectedEthnicTraitsAr,
       };
 
       // Persist fallback result automatically to database for returning visitor/user
-      saveTestResultToHistory(user, profile, fallbackResult).then(() => {
+      saveTestResultToHistory(user, activeProfile, fallbackResult).then(() => {
         setSavedTestsCount((prev) => prev + 1);
       });
 
@@ -537,12 +713,13 @@ function AppContent() {
     }
   };
 
-  // Regenerate image variation with demographic & geographic fidelity
+  // Regenerate image variation with demographic, nationality & geographic fidelity
   const handleRegenerateImage = async () => {
     if (!profile || !result) return;
     setIsRegeneratingImage(true);
 
     try {
+      const { getRealisticPortrait } = await import('./data/portraits');
       const curated = getRealisticPortrait(
         profile.ethnicity,
         profile.partnerGender,
@@ -563,6 +740,10 @@ function AppContent() {
           educationLevel: profile.educationLevel,
           lifestyleOutlook: profile.lifestyleOutlook,
           partnerFeaturesPreference: profile.partnerFeaturesPreference,
+          detectedCountryCode: profile.detectedCountryCode,
+          detectedNationalityAr: profile.detectedNationalityAr,
+          detectedNationalityEn: profile.detectedNationalityEn,
+          detectedEthnicTraitsPrompt: profile.detectedEthnicTraitsPrompt,
         }),
       });
       const json = await res.json();
@@ -605,13 +786,9 @@ function AppContent() {
         showReset={step !== 'profile'}
         onOpenLiveChat={() => setIsLiveChatOpen(true)}
         onOpenBlindDate={() => setIsBlindDateOpen(true)}
-        onOpenDomainHosting={() => {
-          if (isOwner) setIsDomainHostingOpen(true);
-        }}
+        onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
         onOpenWebsiteSection={handleOpenWebsiteSection}
-        onOpenAdSense={() => {
-          if (isOwner) setIsAdSenseOpen(true);
-        }}
+        onOpenAdSense={isOwner ? () => setIsAdSenseOpen(true) : undefined}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenHistory={() => handleOpenUserDashboard('history')}
         onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
@@ -630,384 +807,466 @@ function AppContent() {
 
       {/* Main Game Screen or Dedicated Full Pages with Smooth Framer Motion Transitions */}
       <main className="flex-1 flex flex-col justify-center py-4 relative">
-        {currentPage === 'about' && (
-          <AboutUsPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-            onStartQuiz={() => {
-              handleNavigatePage('home');
-              handleReset();
+        {currentPage === 'home' && (
+          <HomePage
+            onStart={(prof) => {
+              handleStart(prof);
+              setCurrentPage('compatibility');
+              window.location.hash = '#/compatibility';
             }}
+            initialProfile={profile}
+            savedTestsCount={savedTestsCount}
+            onOpenSavedHistory={() => setIsHistoryModalOpen(true)}
+            onOpenBlindDate={() => setIsBlindDateOpen(true)}
+            onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
+            onOpenWebsiteSection={handleOpenWebsiteSection}
             onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
             onOpenIntelligenceTests={handleOpenIntelligenceTests}
+            onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
             onOpenArticles={handleOpenArticles}
             onOpenNovels={handleOpenNovels}
-          />
-        )}
-
-        {currentPage === 'how-it-works' && (
-          <HowItWorksPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-            onStartQuiz={() => {
-              handleNavigatePage('home');
-              handleReset();
-            }}
-            onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
-            onOpenIntelligenceTests={handleOpenIntelligenceTests}
-          />
-        )}
-
-        {currentPage === 'privacy' && (
-          <PrivacyPolicyPage
-            onBackToHome={() => handleNavigatePage('home')}
+            onOpenContactFeedback={handleOpenContactFeedback}
+            onOpenCommunity={() => setIsBookClubOpen(true)}
             onNavigatePage={handleNavigatePage}
           />
         )}
 
-        {currentPage === 'terms' && (
-          <TermsOfServicePage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-          />
-        )}
-
-        {currentPage === 'contact' && (
-          <ContactUsPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-          />
-        )}
-
-        {currentPage === 'faq' && (
-          <FAQPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-          />
-        )}
-
-        {currentPage === 'methodology' && (
-          <SourcesMethodologyPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-          />
-        )}
-
-        {currentPage === 'disclaimer' && (
-          <DisclaimerPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-          />
-        )}
-
-        {currentPage === 'novels' && (
-          <NovelsDirectoryPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onSelectNovel={handleSelectNovel}
-            onReadChapter={handleReadChapter}
-          />
-        )}
-
-        {currentPage === 'novel-detail' && (
-          <NovelDetailPage
-            novelId={activeNovelId}
-            onBackToDirectory={() => handleNavigatePage('novels')}
-            onReadChapter={handleReadChapter}
-          />
-        )}
-
-        {currentPage === 'chapter-reader' && (
-          <ChapterReaderPage
-            novelId={activeNovelId}
-            chapterIndex={activeChapterIndex}
-            onBackToNovel={() => handleSelectNovel(activeNovelId)}
-            onNavigateChapter={(idx) => handleReadChapter(activeNovelId, idx)}
-          />
-        )}
-
-        {currentPage === 'admin-cms' && (
-          <AdminCMSPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onOpenAnalyticsModal={handleOpenAnalytics}
-          />
-        )}
-
-        {currentPage === 'personality-tests' && (
-          <PersonalityTestsPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-          />
-        )}
-
-        {currentPage === 'articles' && (
-          <ArticlesEncyclopediaPage
-            onBackToHome={() => handleNavigatePage('home')}
-            onNavigatePage={handleNavigatePage}
-          />
-        )}
-
-        {currentPage === 'home' && (
-          <AnimatePresence mode="wait">
-            {step === 'profile' && (
-            <motion.div
-              key="profile"
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="w-full"
-            >
-              <HomePage
-                onStart={handleStart}
-                initialProfile={profile}
-                savedTestsCount={savedTestsCount}
-                onOpenSavedHistory={() => setIsHistoryModalOpen(true)}
-                onOpenBlindDate={() => setIsBlindDateOpen(true)}
-                onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
-                onOpenWebsiteSection={handleOpenWebsiteSection}
+        {currentPage !== 'home' && (
+          <Suspense fallback={<SectionLoadingFallback />}>
+            {currentPage === 'about' && (
+              <AboutUsPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+                onStartQuiz={() => {
+                  handleReset();
+                  handleNavigatePage('compatibility');
+                }}
                 onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
                 onOpenIntelligenceTests={handleOpenIntelligenceTests}
-                onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
                 onOpenArticles={handleOpenArticles}
                 onOpenNovels={handleOpenNovels}
-                onOpenContactFeedback={handleOpenContactFeedback}
-                onOpenCommunity={() => setIsBookClubOpen(true)}
+              />
+            )}
+
+            {currentPage === 'how-it-works' && (
+              <HowItWorksPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+                onStartQuiz={() => {
+                  handleReset();
+                  handleNavigatePage('compatibility');
+                }}
+                onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+                onOpenIntelligenceTests={handleOpenIntelligenceTests}
+              />
+            )}
+
+            {currentPage === 'privacy' && (
+              <PrivacyPolicyPage
+                onBackToHome={() => handleNavigatePage('home')}
                 onNavigatePage={handleNavigatePage}
               />
-            </motion.div>
-          )}
+            )}
 
-          {step === 'quiz' && (
-            <motion.div
-              key="quiz"
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="w-full"
-            >
-              <QuizStep
-                questions={QUIZ_QUESTIONS}
-                onComplete={handleQuizComplete}
-                onBackToProfile={() => setStep('profile')}
+            {currentPage === 'terms' && (
+              <TermsOfServicePage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
               />
-            </motion.div>
-          )}
+            )}
 
-          {step === 'analyzing' && profile && (
-            <motion.div
-              key="analyzing"
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="w-full"
-            >
-              <AnalyzingStep profile={profile} />
-            </motion.div>
-          )}
+            {currentPage === 'contact' && (
+              <ContactUsPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+              />
+            )}
 
-          {step === 'result' && result && profile && (
-            <motion.div
-              key={!isResultUnlocked && isPinLockEnabled() ? 'result-locked' : 'result-unlocked'}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="w-full"
-            >
-              {!isResultUnlocked && isPinLockEnabled() ? (
-                <PrivacyLockScreen
-                  onUnlock={() => {
-                    setIsResultUnlocked(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  onBackToHome={handleReset}
+            {currentPage === 'faq' && (
+              <FAQPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+              />
+            )}
+
+            {currentPage === 'methodology' && (
+              <SourcesMethodologyPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+              />
+            )}
+
+            {currentPage === 'disclaimer' && (
+              <DisclaimerPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+              />
+            )}
+
+            {currentPage === 'novels' && (
+              <NovelsDirectoryPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onSelectNovel={handleSelectNovel}
+                onReadChapter={handleReadChapter}
+              />
+            )}
+
+            {currentPage === 'novel-detail' && (
+              <NovelDetailPage
+                novelId={activeNovelId}
+                onBackToDirectory={() => handleNavigatePage('novels')}
+                onReadChapter={handleReadChapter}
+              />
+            )}
+
+            {currentPage === 'chapter-reader' && (
+              <ChapterReaderPage
+                novelId={activeNovelId}
+                chapterIndex={activeChapterIndex}
+                onBackToNovel={() => handleSelectNovel(activeNovelId)}
+                onNavigateChapter={(idx) => handleReadChapter(activeNovelId, idx)}
+              />
+            )}
+
+            {currentPage === 'admin-cms' &&
+              (isOwner ? (
+                <AdminCMSPage
+                  onBackToHome={() => handleNavigatePage('home')}
+                  onOpenAnalyticsModal={handleOpenAnalytics}
                 />
               ) : (
-                <ResultStep
-                  result={result}
-                  profile={profile}
-                  onRestart={handleReset}
-                  onRegenerateImage={handleRegenerateImage}
-                  isRegeneratingImage={isRegeneratingImage}
-                  onOpenLiveChat={() => setIsLiveChatOpen(true)}
-                  onOpenBlindDate={() => setIsBlindDateOpen(true)}
-                  onOpenAuth={() => setIsAuthModalOpen(true)}
-                  onOpenHistory={() => setIsHistoryModalOpen(true)}
-                  onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
-                  onOpenIntelligenceTests={handleOpenIntelligenceTests}
-                  onOpenArticles={handleOpenArticles}
-                  onOpenNovels={handleOpenNovels}
-                  onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
-                  onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
-                  onLockResult={() => {
-                    setIsResultUnlocked(false);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
+                <div className="max-w-lg mx-auto my-12 p-8 rounded-3xl border border-amber-500/30 bg-slate-900/90 text-white text-center space-y-4 shadow-2xl">
+                  <div className="text-3xl">🔒</div>
+                  <h2 className="text-xl font-black font-['Alexandria']">
+                    صفحة مخصصة لمالك الموقع فقط
+                  </h2>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    هذا القسم مقيد بحساب مالك منصة مرآة القلوب الموثق فقط ولا يظهر للزوار أو المستخدمين.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs cursor-pointer"
+                    >
+                      تسجيل دخول المالك (Google)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigatePage('home')}
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer"
+                    >
+                      العودة للرئيسية
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+            {currentPage === 'personality-tests' && (
+              <PersonalityTestsPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+              />
+            )}
+
+            {currentPage === 'articles' && (
+              <ArticlesEncyclopediaPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+              />
+            )}
+
+            {currentPage === 'compatibility' && (
+              <AnimatePresence mode="wait">
+                {step === 'profile' && (
+                  <motion.div
+                    key="profile"
+                    variants={pageVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="w-full"
+                  >
+                    <ProfileStep
+                      onStart={handleStart}
+                      initialProfile={profile}
+                      savedTestsCount={savedTestsCount}
+                      onOpenSavedHistory={() => setIsHistoryModalOpen(true)}
+                      onOpenBlindDate={() => setIsBlindDateOpen(true)}
+                      onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
+                      onOpenWebsiteSection={handleOpenWebsiteSection}
+                      onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+                      onOpenIntelligenceTests={handleOpenIntelligenceTests}
+                      onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
+                      onOpenArticles={handleOpenArticles}
+                      onOpenNovels={handleOpenNovels}
+                      onOpenContactFeedback={handleOpenContactFeedback}
+                      onBackToHome={() => handleNavigatePage('home')}
+                    />
+                  </motion.div>
+                )}
+
+                {step === 'quiz' && quizQuestions.length > 0 && (
+                  <motion.div
+                    key="quiz"
+                    variants={pageVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="w-full"
+                  >
+                    <QuizStep
+                      questions={quizQuestions}
+                      profile={profile}
+                      onComplete={handleQuizComplete}
+                      onBackToProfile={() => setStep('profile')}
+                    />
+                  </motion.div>
+                )}
+
+                {step === 'analyzing' && profile && (
+                  <motion.div
+                    key="analyzing"
+                    variants={pageVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="w-full"
+                  >
+                    <AnalyzingStep profile={profile} />
+                  </motion.div>
+                )}
+
+                {step === 'result' && result && profile && (
+                  <motion.div
+                    key={
+                      !isResultUnlocked && isPinLockEnabled()
+                        ? 'result-locked'
+                        : 'result-unlocked'
+                    }
+                    variants={pageVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="w-full"
+                  >
+                    {!isResultUnlocked && isPinLockEnabled() ? (
+                      <PrivacyLockScreen
+                        onUnlock={() => {
+                          setIsResultUnlocked(true);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        onBackToHome={handleReset}
+                      />
+                    ) : (
+                      <ResultStep
+                        result={result}
+                        profile={profile}
+                        onRestart={handleReset}
+                        onRegenerateImage={handleRegenerateImage}
+                        isRegeneratingImage={isRegeneratingImage}
+                        onOpenLiveChat={() => setIsLiveChatOpen(true)}
+                        onOpenBlindDate={() => setIsBlindDateOpen(true)}
+                        onOpenAuth={() => setIsAuthModalOpen(true)}
+                        onOpenHistory={() => setIsHistoryModalOpen(true)}
+                        onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+                        onOpenIntelligenceTests={handleOpenIntelligenceTests}
+                        onOpenArticles={handleOpenArticles}
+                        onOpenNovels={handleOpenNovels}
+                        onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
+                        onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
+                        onLockResult={() => {
+                          setIsResultUnlocked(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                      />
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
+          </Suspense>
+        )}
       </main>
 
-      {/* Live Chat Modal for Real-Time Compatible Users */}
-      <LiveChatModal
-        isOpen={isLiveChatOpen}
-        onClose={() => setIsLiveChatOpen(false)}
-        profile={profile}
-        onOpenBlindDate={() => setIsBlindDateOpen(true)}
-      />
+      {/* Lazy-Loaded Modals (Only mounted when opened to keep initial DOM & Main Thread fast) */}
+      <Suspense fallback={null}>
+        {isLiveChatOpen && (
+          <LiveChatModal
+            isOpen={isLiveChatOpen}
+            onClose={() => setIsLiveChatOpen(false)}
+            profile={profile}
+            onOpenBlindDate={() => setIsBlindDateOpen(true)}
+          />
+        )}
 
-      {/* The Blind Date Modal (Reciprocal Stages, Rating, Curtain Drop & Open Chat) */}
-      <BlindDateShowModal
-        isOpen={isBlindDateOpen}
-        onClose={() => setIsBlindDateOpen(false)}
-        profile={profile}
-        result={result}
-      />
+        {isBlindDateOpen && (
+          <BlindDateShowModal
+            isOpen={isBlindDateOpen}
+            onClose={() => setIsBlindDateOpen(false)}
+            profile={profile}
+            result={result}
+          />
+        )}
 
-      {/* Applied Psychology & Relational Articles Modal */}
-      <ArticlesSectionModal
-        isOpen={isArticlesModalOpen}
-        onClose={() => setIsArticlesModalOpen(false)}
-        onOpenStandalonePage={() => handleNavigatePage('articles')}
-      />
+        {isArticlesModalOpen && (
+          <ArticlesSectionModal
+            isOpen={isArticlesModalOpen}
+            onClose={() => setIsArticlesModalOpen(false)}
+            onOpenStandalonePage={() => handleNavigatePage('articles')}
+          />
+        )}
 
-      {/* Suspense, Crime, Action & Sci-Fi Novels Modal */}
-      <NovelsSectionModal
-        isOpen={isNovelsModalOpen}
-        onClose={() => setIsNovelsModalOpen(false)}
-      />
+        {isNovelsModalOpen && (
+          <NovelsSectionModal
+            isOpen={isNovelsModalOpen}
+            onClose={() => setIsNovelsModalOpen(false)}
+          />
+        )}
 
-      {/* Google Cloud, Hosting Purchase, Custom Domain & AdSense Management Modals */}
-      <DomainHostingModal
-        isOpen={isDomainHostingOpen}
-        onClose={() => setIsDomainHostingOpen(false)}
-        onOpenAdSense={() => setIsAdSenseOpen(true)}
-      />
-      <AdSenseModal
-        isOpen={isAdSenseOpen}
-        onClose={() => setIsAdSenseOpen(false)}
-        onOpenDomainHosting={() => setIsDomainHostingOpen(true)}
-      />
+        {isOwner && isDomainHostingOpen && (
+          <DomainHostingModal
+            isOpen={isDomainHostingOpen}
+            onClose={() => setIsDomainHostingOpen(false)}
+            onOpenAdSense={() => setIsAdSenseOpen(true)}
+          />
+        )}
 
-      {/* Website Sections Modal (About, How It Works, Testimonials, Articles, FAQ, Privacy) */}
-      <WebsiteSectionsModal
-        isOpen={isWebsiteSectionsOpen}
-        onClose={() => setIsWebsiteSectionsOpen(false)}
-        initialTab={websiteSectionTab}
-        onOpenBlindDate={() => {
-          setIsWebsiteSectionsOpen(false);
-          setIsBlindDateOpen(true);
-        }}
-        onStartQuiz={() => {
-          setIsWebsiteSectionsOpen(false);
-          handleReset();
-        }}
-      />
+        {isOwner && isAdSenseOpen && (
+          <AdSenseModal
+            isOpen={isAdSenseOpen}
+            onClose={() => setIsAdSenseOpen(false)}
+            onOpenDomainHosting={() => setIsDomainHostingOpen(true)}
+          />
+        )}
 
-      {/* Firebase Auth Modal (Login / Sign Up / Guest) */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
+        {isWebsiteSectionsOpen && (
+          <WebsiteSectionsModal
+            isOpen={isWebsiteSectionsOpen}
+            onClose={() => setIsWebsiteSectionsOpen(false)}
+            initialTab={websiteSectionTab}
+            onOpenBlindDate={() => {
+              setIsWebsiteSectionsOpen(false);
+              setIsBlindDateOpen(true);
+            }}
+            onStartQuiz={() => {
+              setIsWebsiteSectionsOpen(false);
+              handleReset();
+            }}
+          />
+        )}
 
-      {/* Saved Results History Modal (Visitors & Logged-in Users) */}
-      <SavedResultsHistoryModal
-        isOpen={isHistoryModalOpen}
-        onClose={() => setIsHistoryModalOpen(false)}
-        onOpenAuth={() => {
-          setIsHistoryModalOpen(false);
-          setIsAuthModalOpen(true);
-        }}
-        onLoadHistoricalResult={handleLoadHistoricalResult}
-      />
+        {isAuthModalOpen && (
+          <AuthModal
+            isOpen={isAuthModalOpen}
+            onClose={() => setIsAuthModalOpen(false)}
+          />
+        )}
 
-      {/* Psychology Assessment Suite Modal (User Request) */}
-      <PsychologyTestsModal
-        isOpen={isPsychologyTestsOpen}
-        onClose={() => setIsPsychologyTestsOpen(false)}
-        userName={profile?.userName}
-        onOpenDashboard={(tab) => {
-          setIsPsychologyTestsOpen(false);
-          handleOpenUserDashboard(tab || 'overview');
-        }}
-      />
+        {isHistoryModalOpen && (
+          <SavedResultsHistoryModal
+            isOpen={isHistoryModalOpen}
+            onClose={() => setIsHistoryModalOpen(false)}
+            onOpenAuth={() => {
+              setIsHistoryModalOpen(false);
+              setIsAuthModalOpen(true);
+            }}
+            onLoadHistoricalResult={handleLoadHistoricalResult}
+          />
+        )}
 
-      {/* User Profile Dashboard & Matches Explorer (User Request) */}
-      <UserProfileDashboard
-        isOpen={isUserProfileOpen}
-        onClose={() => setIsUserProfileOpen(false)}
-        profile={profile}
-        result={result}
-        initialTab={userProfileDashboardTab}
-        onProfileUpdated={(newProf) => setProfile(newProf)}
-        onOpenPsychologyTests={() => {
-          setIsUserProfileOpen(false);
-          setIsPsychologyTestsOpen(true);
-        }}
-        onOpenIntelligenceTest={() => {
-          setIsUserProfileOpen(false);
-          setIsIntelligenceModalOpen(true);
-        }}
-        onOpenCoupleInvite={() => {
-          setIsUserProfileOpen(false);
-          setIsCoupleInviteOpen(true);
-        }}
-        onOpenLiveChat={() => {
-          setIsUserProfileOpen(false);
-          setIsLiveChatOpen(true);
-        }}
-      />
+        {isPsychologyTestsOpen && (
+          <PsychologyTestsModal
+            isOpen={isPsychologyTestsOpen}
+            onClose={() => setIsPsychologyTestsOpen(false)}
+            userName={profile?.userName}
+            onOpenDashboard={(tab) => {
+              setIsPsychologyTestsOpen(false);
+              handleOpenUserDashboard(tab || 'overview');
+            }}
+          />
+        )}
 
-      {/* Couple Real Compatibility Invite Modal */}
-      <CoupleInviteModal
-        isOpen={isCoupleInviteOpen}
-        onClose={() => setIsCoupleInviteOpen(false)}
-        profile={profile}
-        result={result}
-      />
+        {isUserProfileOpen && (
+          <UserProfileDashboard
+            isOpen={isUserProfileOpen}
+            onClose={() => setIsUserProfileOpen(false)}
+            profile={profile}
+            result={result}
+            initialTab={userProfileDashboardTab}
+            onProfileUpdated={(newProf) => setProfile(newProf)}
+            onOpenPsychologyTests={() => {
+              setIsUserProfileOpen(false);
+              setIsPsychologyTestsOpen(true);
+            }}
+            onOpenIntelligenceTest={() => {
+              setIsUserProfileOpen(false);
+              setIsIntelligenceModalOpen(true);
+            }}
+            onOpenCoupleInvite={() => {
+              setIsUserProfileOpen(false);
+              setIsCoupleInviteOpen(true);
+            }}
+            onOpenLiveChat={() => {
+              setIsUserProfileOpen(false);
+              setIsLiveChatOpen(true);
+            }}
+          />
+        )}
 
-      {/* Multiple Intelligences Assessment Suite (Gardner & McKenzie) */}
-      <IntelligenceTestModal
-        isOpen={isIntelligenceModalOpen}
-        onClose={() => setIsIntelligenceModalOpen(false)}
-      />
+        {isCoupleInviteOpen && (
+          <CoupleInviteModal
+            isOpen={isCoupleInviteOpen}
+            onClose={() => setIsCoupleInviteOpen(false)}
+            profile={profile}
+            result={result}
+          />
+        )}
 
-      {/* Interactive Human Onboarding Wizard (2-Step Guide) */}
-      <OnboardingWizardModal
-        isOpen={isOnboardingWizardOpen}
-        onClose={() => setIsOnboardingWizardOpen(false)}
-        onSelectDestination={handleOnboardingSelectDestination}
-      />
+        {isIntelligenceModalOpen && (
+          <IntelligenceTestModal
+            isOpen={isIntelligenceModalOpen}
+            onClose={() => setIsIntelligenceModalOpen(false)}
+          />
+        )}
 
-      {/* Legal & Compliance Modal (Google AdSense & GDPR Ready) */}
-      <LegalModal
-        isOpen={isLegalModalOpen}
-        onClose={() => setIsLegalModalOpen(false)}
-        initialTab={legalModalTab}
-      />
+        {isOnboardingWizardOpen && (
+          <OnboardingWizardModal
+            isOpen={isOnboardingWizardOpen}
+            onClose={() => setIsOnboardingWizardOpen(false)}
+            onSelectDestination={handleOnboardingSelectDestination}
+          />
+        )}
 
-      {/* Visitor Contact & Feedback to Email Modal */}
-      <ContactFeedbackModal
-        isOpen={isContactFeedbackOpen}
-        onClose={() => setIsContactFeedbackOpen(false)}
-      />
+        {isLegalModalOpen && (
+          <LegalModal
+            isOpen={isLegalModalOpen}
+            onClose={() => setIsLegalModalOpen(false)}
+            initialTab={legalModalTab}
+          />
+        )}
 
-      {/* Visitor Analytics & Usage Tracking Dashboard */}
-      <AnalyticsDashboardModal
-        isOpen={isAnalyticsOpen}
-        onClose={() => setIsAnalyticsOpen(false)}
-      />
+        {isContactFeedbackOpen && (
+          <ContactFeedbackModal
+            isOpen={isContactFeedbackOpen}
+            onClose={() => setIsContactFeedbackOpen(false)}
+          />
+        )}
 
-      {/* Community & Weekly Book Discussion Salon Modal */}
-      <BookClubCommunityModal
-        isOpen={isBookClubOpen}
-        onClose={() => setIsBookClubOpen(false)}
-      />
+        {isAnalyticsOpen && (
+          <AnalyticsDashboardModal
+            isOpen={isAnalyticsOpen}
+            onClose={() => setIsAnalyticsOpen(false)}
+          />
+        )}
+
+        {isBookClubOpen && (
+          <BookClubCommunityModal
+            isOpen={isBookClubOpen}
+            onClose={() => setIsBookClubOpen(false)}
+          />
+        )}
+      </Suspense>
 
       {/* Global GDPR & AdSense Cookie Consent Banner */}
       <CookieConsentBanner

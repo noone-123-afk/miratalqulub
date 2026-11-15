@@ -755,12 +755,29 @@ export const ResultStep: React.FC<Props> = ({
               </span>
             </motion.div>
 
-            {/* Origin & Attachment & Love Language Details */}
-            <motion.div variants={cardItemVariants} className="space-y-1 text-xs text-gray-300">
-              <div className="flex items-center justify-center sm:justify-start gap-1.5">
-                <span className="text-rose-400 font-bold">{language === 'ar' ? 'الأصل والمجتمع:' : 'Origin & Culture:'}</span>
-                <span className="text-white font-medium">{profile.country} ({profile.ethnicity})</span>
+            {/* Origin & Auto-Detected Nationality & Ethnic Realism Details */}
+            <motion.div variants={cardItemVariants} className="space-y-1.5 text-xs text-gray-300">
+              <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
+                <span className="text-rose-400 font-bold">
+                  {language === 'ar' ? 'الموقع والجنسية المكتشفة:' : 'Detected Location & Nationality:'}
+                </span>
+                <span className="text-white font-bold">
+                  {profile.country} ({result.detectedNationalityAr || profile.detectedNationalityAr || profile.ethnicity})
+                </span>
+                {profile.isLocationAutoDetected && (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-[10px] font-bold text-emerald-300">
+                    {language === 'ar' ? '✓ توجيه عرقي واقعي بالذكاء الاصطناعي' : '✓ AI Ethnic Realism Matched'}
+                  </span>
+                )}
               </div>
+              {(result.detectedEthnicTraitsAr || profile.detectedEthnicTraitsAr) && (
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-emerald-200/90 leading-relaxed">
+                  <strong className="text-emerald-300">
+                    {language === 'ar' ? 'الملامح العرقية المولّدة للصورة:' : 'Generated Ethnic Features:'}
+                  </strong>{' '}
+                  {result.detectedEthnicTraitsAr || profile.detectedEthnicTraitsAr}
+                </div>
+              )}
               <div className="flex items-center justify-center sm:justify-start gap-1.5">
                 <span className="text-violet-400 font-bold">{language === 'ar' ? 'نمط الارتباط:' : 'Attachment Style:'}</span>
                 <span className="text-gray-200">{translateText(result.attachmentStyle || 'ارتباط آمن وتشاركي')}</span>

@@ -11,7 +11,16 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+        includeAssets: [
+          'icon.svg',
+          'logo.webp',
+          'logo.jpg',
+          'llms.txt',
+          'ard.json',
+          'apple-touch-icon.png',
+          'pwa-192x192.png',
+          'pwa-512x512.png',
+        ],
         manifest: {
           id: '/',
           name: 'مرآة القلوب | كاشف شريك الحياة والتحليل السيكومتري',
@@ -46,6 +55,16 @@ export default defineConfig(() => {
         },
         workbox: {
           maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
+          navigateFallbackDenylist: [
+            /^\/llms\.txt$/,
+            /^\/llms-full\.txt$/,
+            /^\/ard\.json$/,
+            /^\/\.well-known\/ard\.json$/,
+            /^\/api\//,
+            /^\/ads\.txt$/,
+            /^\/robots\.txt$/,
+            /^\/sitemap\.xml$/,
+          ],
         },
         devOptions: {
           enabled: false,
@@ -53,6 +72,33 @@ export default defineConfig(() => {
         },
       }),
     ],
+    build: {
+      target: 'es2020',
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('firebase') || id.includes('@firebase')) {
+                return 'vendor-firebase';
+              }
+              if (id.includes('framer-motion') || id.includes('motion')) {
+                return 'vendor-motion';
+              }
+              if (id.includes('lucide-react')) {
+                return 'vendor-icons';
+              }
+              if (id.includes('recharts') || id.includes('d3-')) {
+                return 'vendor-charts';
+              }
+              if (id.includes('react-dom') || id.includes('react/')) {
+                return 'vendor-react';
+              }
+            }
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname || '.', '.'),

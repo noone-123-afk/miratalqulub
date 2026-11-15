@@ -16,6 +16,12 @@ export interface UserProfile {
   communicationAndConflictStyle?: string;
   financialAndFamilyVision?: string;
   privacyConsentAccepted?: boolean;
+  detectedCountryCode?: string;
+  detectedNationalityAr?: string;
+  detectedNationalityEn?: string;
+  detectedEthnicTraitsPrompt?: string;
+  detectedEthnicTraitsAr?: string;
+  isLocationAutoDetected?: boolean;
 }
 
 export interface SocioculturalDimension {
@@ -124,6 +130,8 @@ export interface PartnerAnalysisResult {
   anniversaryActivities?: AnniversaryActivity[];
   scoringBreakdown?: RealScoringBreakdown;
   isRealCalculated?: boolean;
+  detectedNationalityAr?: string;
+  detectedEthnicTraitsAr?: string;
 }
 
 export interface DimensionCalculationDetail {

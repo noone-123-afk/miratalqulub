@@ -90,6 +90,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signUpWithEmailHandler = async (email: string, pass: string, displayName?: string) => {
     setAuthError(null);
+    if (email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+      const msg = 'هذا البريد محجوز لإدارة المنصة، يرجى تسجيل الدخول عبر Google.';
+      setAuthError(msg);
+      throw new Error(msg);
+    }
     try {
       soundManager.playTap();
       await createUserWithEmailAndPassword(auth, email.trim(), pass);
@@ -120,7 +125,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const isOwner = Boolean(
-    user && user.email && user.email.toLowerCase() === OWNER_EMAIL.toLowerCase()
+    user &&
+      user.email &&
+      user.email.toLowerCase() === OWNER_EMAIL.toLowerCase() &&
+      user.emailVerified === true
   );
 
   return (

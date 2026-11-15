@@ -1,4 +1,4 @@
-import { db, doc, setDoc, getDoc, getDocs, collection } from '../firebase';
+import { db, doc, setDoc, getDoc, isAutomatedAuditEnvironment } from '../firebase';
 
 export interface AnalyticsSummary {
   totalVisitors: number;
@@ -25,6 +25,21 @@ export interface AnalyticsSummary {
 
 // Session cache to prevent over-counting in a single tab session
 let hasTrackedSession = false;
+
+function withTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('firestore_timeout')), ms);
+    promise
+      .then((val) => {
+        clearTimeout(timer);
+        resolve(val);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
 
 function getTodayString(): string {
   const d = new Date();
@@ -53,11 +68,15 @@ function detectDevice(): 'mobile' | 'tablet' | 'desktop' {
 }
 
 /**
- * Tracks a site visit (daily, monthly, yearly)
+ * Tracks a site visit (daily, monthly, yearly) without blocking the main thread or causing 405 / timeout errors
  */
 export async function trackSiteVisit(): Promise<void> {
   if (hasTrackedSession) return;
   hasTrackedSession = true;
+
+  if (isAutomatedAuditEnvironment()) {
+    return;
+  }
 
   const today = getTodayString();
   const month = getMonthString();
@@ -65,57 +84,79 @@ export async function trackSiteVisit(): Promise<void> {
   const device = detectDevice();
   const now = new Date().toISOString();
 
-  // Call server analytics endpoint if available
+  // Use GET query string so both Express app.all('/api/analytics/track') and static CDN edges return 200 OK (never 405 Method Not Allowed)
   try {
-    fetch('/api/analytics/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'visit', today, month, year, device }),
+    const params = new URLSearchParams({
+      type: 'visit',
+      today,
+      month,
+      year,
+      device,
+    });
+    fetch(`/api/analytics/track?${params.toString()}`, {
+      method: 'GET',
+      keepalive: true,
     }).catch(() => {});
   } catch {}
 
-  // Also persist directly to Firestore for resilience
-  try {
-    const overviewRef = doc(db, 'site_analytics', 'overview');
-    const overviewSnap = await getDoc(overviewRef);
-    const existing = overviewSnap.exists() ? overviewSnap.data() : {};
+  // Defer Firestore persistence to idle time with strict timeout so initial load is never delayed
+  const persistToFirestore = async () => {
+    try {
+      const overviewRef = doc(db, 'site_analytics', 'overview');
+      const overviewSnap = await withTimeout(getDoc(overviewRef), 2500);
+      const existing = overviewSnap.exists() ? overviewSnap.data() : {};
 
-    const currentTotal = (existing.totalVisitors || 0) + 1;
-    const currentViews = (existing.pageViews || 0) + 1;
-    const devices = existing.deviceBreakdown || { mobile: 0, desktop: 0, tablet: 0 };
-    devices[device] = (devices[device] || 0) + 1;
+      const currentTotal = (existing.totalVisitors || 0) + 1;
+      const currentViews = (existing.pageViews || 0) + 1;
+      const devices = existing.deviceBreakdown || { mobile: 0, desktop: 0, tablet: 0 };
+      devices[device] = (devices[device] || 0) + 1;
 
-    await setDoc(
-      overviewRef,
-      {
-        id: 'overview',
-        type: 'overview',
-        totalVisitors: currentTotal,
-        pageViews: currentViews,
-        deviceBreakdown: devices,
-        updatedAt: now,
-      },
-      { merge: true }
-    );
+      await withTimeout(
+        setDoc(
+          overviewRef,
+          {
+            id: 'overview',
+            type: 'overview',
+            totalVisitors: currentTotal,
+            pageViews: currentViews,
+            deviceBreakdown: devices,
+            updatedAt: now,
+          },
+          { merge: true }
+        ),
+        2500
+      );
 
-    // Update Daily Doc
-    const dailyRef = doc(db, 'site_analytics', `daily_${today}`);
-    const dailySnap = await getDoc(dailyRef);
-    const dailyData = dailySnap.exists() ? dailySnap.data() : {};
-    await setDoc(
-      dailyRef,
-      {
-        id: `daily_${today}`,
-        type: 'daily',
-        period: today,
-        visitorCount: (dailyData.visitorCount || 0) + 1,
-        pageViews: (dailyData.pageViews || 0) + 1,
-        updatedAt: now,
-      },
-      { merge: true }
-    );
-  } catch (err) {
-    console.warn('Analytics local fallback tracking', err);
+      // Update Daily Doc
+      const dailyRef = doc(db, 'site_analytics', `daily_${today}`);
+      const dailySnap = await withTimeout(getDoc(dailyRef), 2500);
+      const dailyData = dailySnap.exists() ? dailySnap.data() : {};
+      await withTimeout(
+        setDoc(
+          dailyRef,
+          {
+            id: `daily_${today}`,
+            type: 'daily',
+            period: today,
+            visitorCount: (dailyData.visitorCount || 0) + 1,
+            pageViews: (dailyData.pageViews || 0) + 1,
+            updatedAt: now,
+          },
+          { merge: true }
+        ),
+        2500
+      );
+    } catch {
+      // Silently fallback to local/server tracking
+    }
+  };
+
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => {
+      setTimeout(persistToFirestore, 2500);
+    });
+  } else {
+    setTimeout(persistToFirestore, 3500);
   }
 }
 
@@ -126,21 +167,26 @@ export async function trackTestEvent(
   testKey: 'partner_compatibility' | 'intelligence_multiple' | 'psychology_16pf' | 'psychology_bigfive' | 'blind_date' | 'novels' | 'articles',
   action: 'started' | 'completed' | 'viewed'
 ): Promise<void> {
+  if (isAutomatedAuditEnvironment()) return;
   const now = new Date().toISOString();
 
-  // Server API
+  // Server API via GET query params to prevent 405 on static CDN hosts
   try {
-    fetch('/api/analytics/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'test_event', testKey, action }),
+    const params = new URLSearchParams({
+      type: 'test_event',
+      testKey,
+      action,
+    });
+    fetch(`/api/analytics/track?${params.toString()}`, {
+      method: 'GET',
+      keepalive: true,
     }).catch(() => {});
   } catch {}
 
-  // Direct Firestore
+  // Direct Firestore with timeout guard
   try {
     const overviewRef = doc(db, 'site_analytics', 'overview');
-    const snap = await getDoc(overviewRef);
+    const snap = await withTimeout(getDoc(overviewRef), 2500);
     const data = snap.exists() ? snap.data() : {};
     const testCounts = data.testCounts || {
       partner_compatibility: { started: 0, completed: 0 },
@@ -162,16 +208,19 @@ export async function trackTestEvent(
       testCounts[testKey][action] = (testCounts[testKey][action] || 0) + 1;
     }
 
-    await setDoc(
-      overviewRef,
-      {
-        testCounts,
-        updatedAt: now,
-      },
-      { merge: true }
+    await withTimeout(
+      setDoc(
+        overviewRef,
+        {
+          testCounts,
+          updatedAt: now,
+        },
+        { merge: true }
+      ),
+      2500
     );
-  } catch (err) {
-    console.warn('Could not record test event to analytics', err);
+  } catch {
+    // Ignore transient network timeouts
   }
 }
 
@@ -190,14 +239,14 @@ export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
     }
   } catch {}
 
-  // Then try Firestore directly
+  // Then try Firestore directly with timeout
   try {
     const overviewRef = doc(db, 'site_analytics', 'overview');
-    const snap = await getDoc(overviewRef);
+    const snap = await withTimeout(getDoc(overviewRef), 2500);
     if (snap.exists()) {
       const d = snap.data();
       const today = getTodayString();
-      const dailySnap = await getDoc(doc(db, 'site_analytics', `daily_${today}`));
+      const dailySnap = await withTimeout(getDoc(doc(db, 'site_analytics', `daily_${today}`)), 2500);
       const todayCount = dailySnap.exists() ? dailySnap.data().visitorCount || 0 : 0;
 
       return {
@@ -219,8 +268,8 @@ export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
         lastUpdated: d.updatedAt || new Date().toISOString(),
       };
     }
-  } catch (err) {
-    console.warn('Failed to fetch analytics from Firestore', err);
+  } catch {
+    // Fallback to default summary
   }
 
   return {

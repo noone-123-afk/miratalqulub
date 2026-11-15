@@ -47,6 +47,8 @@ import {
   DEFAULT_GENERAL_SETTINGS,
 } from '../services/siteContentService';
 import { AddNovelModal } from '../components/AddNovelModal';
+import { useAuth } from '../context/AuthContext';
+import { downloadOwnerProtectedZip } from '../utils/ownerDownload';
 
 interface Props {
   onBackToHome: () => void;
@@ -57,7 +59,31 @@ type CMSTab = 'adsense' | 'novels' | 'content' | 'analytics';
 
 export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsModal }) => {
   const { language, isRTL } = useLanguage();
+  const { user, isOwner } = useAuth();
   const [activeTab, setActiveTab] = useState<CMSTab>('adsense');
+  const [downloadingType, setDownloadingType] = useState<'dist' | 'src' | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  if (!isOwner) {
+    return null;
+  }
+
+  const handleProtectedDownload = async (
+    endpoint: '/api/download-cloudflare-zip' | '/api/download-source-zip',
+    filename: string,
+    kind: 'dist' | 'src'
+  ) => {
+    soundManager.playTap();
+    setDownloadError(null);
+    setDownloadingType(kind);
+    try {
+      await downloadOwnerProtectedZip(endpoint, filename, user);
+    } catch (err: any) {
+      setDownloadError(err?.message || 'تعذر تحميل الملفات.');
+    } finally {
+      setDownloadingType(null);
+    }
+  };
 
   // AdSense Audit State
   const [auditItems, setAuditItems] = useState<AdSenseAuditItem[]>([]);
@@ -210,6 +236,70 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
               </button>
             )}
           </div>
+        </div>
+
+        {/* Direct Website Files Download Center (Production Build + Full Source Code) */}
+        <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-emerald-950/60 border border-amber-500/40 shadow-xl space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                📦 {language === 'ar' ? 'مركز تحميل ملفات الموقع المحدثة (مع جميع تحسينات PageSpeed Insights)' : 'Updated Website Files Download Center'}
+              </span>
+              <h2 className="text-lg sm:text-xl font-black text-white">
+                {language === 'ar'
+                  ? 'تحميل حزمة الموقع الجاهزة للنشر أو الكود المصدري الكامل'
+                  : 'Download Production Build Package or Full Source Code'}
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {language === 'ar'
+                  ? 'تتضمن الحزمة جميع التعديلات الأخيرة: تقسيم الكود (Code Splitting)، الشعار المضغوط بصيغة WebP، إصلاحات الوصول (Accessibility)، ومسارات التصفح الآلي (llms.txt و ard.json).'
+                  : 'Includes all latest PageSpeed optimizations: Code Splitting, WebP logo compression, Accessibility labels, and Agentic Browsing manifests (llms.txt & ard.json).'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <button
+                type="button"
+                disabled={downloadingType !== null}
+                onClick={() =>
+                  handleProtectedDownload(
+                    '/api/download-cloudflare-zip',
+                    'miratalqulub-cloudflare-ready.zip',
+                    'dist'
+                  )
+                }
+                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/25 transition cursor-pointer disabled:opacity-60"
+              >
+                <span>
+                  {downloadingType === 'dist'
+                    ? '⏳ جاري التحقق وتجهيز حزمة النشر...'
+                    : '📦 تحميل حزمة النشر الجاهزة (miratalqulub-cloudflare-ready.zip)'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={downloadingType !== null}
+                onClick={() =>
+                  handleProtectedDownload(
+                    '/api/download-source-zip',
+                    'miratalqulub-full-source.zip',
+                    'src'
+                  )
+                }
+                className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition cursor-pointer disabled:opacity-60"
+              >
+                <span>
+                  {downloadingType === 'src'
+                    ? '⏳ جاري التحقق وتجهيز الكود المصدري...'
+                    : '💻 تحميل الكود المصدري الكامل (miratalqulub-full-source.zip)'}
+                </span>
+              </button>
+            </div>
+          </div>
+          {downloadError && (
+            <p className="text-xs font-bold text-rose-400">{downloadError}</p>
+          )}
         </div>
 
         {/* Tab Navigation */}

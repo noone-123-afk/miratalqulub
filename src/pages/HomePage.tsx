@@ -6,13 +6,11 @@ import {
   BookOpen,
   BookMarked,
   Wand2,
-  Users,
   Sparkles,
   ArrowRight,
   Compass,
   CheckCircle2,
   HelpCircle,
-  ChevronDown,
   ShieldCheck,
   Lock,
   FileText,
@@ -23,7 +21,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
-import { ProfileStep } from '../components/ProfileStep';
 import { UserProfile } from '../types';
 import { WebsiteTabKey } from '../components/WebsiteSectionsModal';
 import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
@@ -54,16 +51,10 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
   const isLight = theme === 'light';
   const isAr = language === 'ar';
 
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isDownloadingLogo, setIsDownloadingLogo] = useState<'png' | 'jpg' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-
-  const toggleFaq = (index: number) => {
-    soundManager.playTap();
-    setActiveFaq(activeFaq === index ? null : index);
-  };
 
   const handleDownloadLogo = async (format: 'png' | 'jpg') => {
     soundManager.playTap();
@@ -89,11 +80,12 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
     }
   };
 
-  const scrollToCompatibility = () => {
+  const openCompatibilitySection = () => {
     soundManager.playTap();
-    const elem = document.getElementById('compatibility-detector-section');
-    if (elem) {
-      elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (props.onNavigatePage) {
+      props.onNavigatePage('compatibility');
+    } else {
+      window.location.hash = '#/compatibility';
     }
   };
 
@@ -105,7 +97,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
     }
   };
 
-  // 3. أقسام الموقع - بطاقات مختصرة فقط (تظهر مرة واحدة فقط دون أي تكرار)
+  // أقسام الموقع الـ 6 المعتمدة - كل قسم يفتح في صفحته أو مختبره المخصص
   const sectionCards = [
     {
       id: 'personality',
@@ -132,7 +124,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
       descEn: 'Explore psychological, emotional, and intellectual compatibility.',
       icon: Heart,
       color: 'from-rose-500 to-pink-600',
-      action: scrollToCompatibility,
+      action: openCompatibilitySection,
     },
     {
       id: 'intelligence',
@@ -200,7 +192,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
     },
   ];
 
-  // 4. لماذا مرآة القلوب؟ (النقاط الست المعتمدة)
+  // لماذا مرآة القلوب؟ (المميزات الـ 6 ضمن التعريف بالموقع)
   const whyPoints = [
     { titleAr: 'محتوى عربي متخصص', titleEn: 'Specialized Arabic Content' },
     { titleAr: 'أدوات تحليل تفاعلية', titleEn: 'Interactive Analytical Tools' },
@@ -210,57 +202,18 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
     { titleAr: 'متوافق مع جميع الأجهزة', titleEn: 'Compatible Across All Devices' },
   ];
 
-  // 6. الأسئلة الشائعة
-  const faqList = [
-    {
-      qAr: 'ما هي مرآة القلوب؟',
-      qEn: 'What is Mirror of Hearts?',
-      aAr: 'منصة عربية متخصصة في تحليل الشخصية والتوافق النفسي والعلاقات الإنسانية والتطوير الذاتي.',
-      aEn: 'An Arab platform specializing in personality analysis, psychological compatibility, human relationships, and self-development.',
-    },
-    {
-      qAr: 'هل الخدمات مجانية؟',
-      qEn: 'Are the services free?',
-      aAr: 'يتوفر عدد من الخدمات والمحتويات مجاناً، وقد تتوفر مستقبلاً خدمات أو مزايا إضافية متقدمة.',
-      aEn: 'A core selection of services and knowledge content is freely accessible, with potential advanced features in the future.',
-    },
-    {
-      qAr: 'هل بياناتي آمنة؟',
-      qEn: 'Is my data secure?',
-      aAr: 'نولي خصوصية المستخدم أهمية كبيرة ونعمل على حماية البيانات وفق السياسات المعتمدة بالموقع وتشفير TLS 1.3.',
-      aEn: 'We place utmost priority on user confidentiality and safeguard data in accordance with our strict privacy framework and TLS 1.3 encryption.',
-    },
-    {
-      qAr: 'هل يمكن حذف بياناتي؟',
-      qEn: 'Can I delete my data?',
-      aAr: 'نعم، يمكن التواصل معنا لطلب حذف البيانات وفق الإجراءات الموضحة في سياسة الخصوصية، كما يتوفر خيار الحذف الدائم الفوري في الصفحة الرئيسية وأسفل الموقع.',
-      aEn: 'Yes, users can contact us to request data erasure as outlined in the privacy policy, and an instant permanent deletion button is always available on the homepage and footer.',
-    },
-    {
-      qAr: 'هل تعتبر النتائج تشخيصاً نفسياً؟',
-      qEn: 'Are results considered a clinical diagnosis?',
-      aAr: 'لا، تهدف النتائج إلى التوعية والفهم الشخصي ولا تُعد بديلاً عن الاستشارات أو التشخيص المهني المتخصص.',
-      aEn: 'No. Results are designed for psychoeducational awareness and personal reflection; they never substitute licensed professional counseling or medical diagnosis.',
-    },
-    {
-      qAr: 'هل يمكن استخدام الموقع من الهاتف؟',
-      qEn: 'Can the platform be accessed on mobile?',
-      aAr: 'نعم، تم تصميم المنصة لتعمل بكفاءة وسلاسة تامة على الهواتف والأجهزة اللوحية وأجهزة الحاسوب.',
-      aEn: 'Yes, the platform is crafted to perform flawlessly across smartphones, tablets, and desktop computers.',
-    },
-  ];
-
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6 pb-8">
       {/* ========================================================
-          1. القسم الترحيبي (Hero) - بالشعار الرسمي المعتمد حصراً
+          أولاً: التعريف بالموقع (القسم الترحيبي Hero + نبذة عن مرآة القلوب)
       ======================================================== */}
       <section
         dir={isRTL ? 'rtl' : 'ltr'}
-        className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-8 text-center"
+        className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4 space-y-6"
       >
+        {/* 1. بطاقة الترحيب الرئيسية (Hero) بالشعار الرسمي حصراً */}
         <div
-          className={`relative p-8 sm:p-12 md:p-14 rounded-3xl border shadow-xl transition-all duration-300 ${
+          className={`relative p-8 sm:p-12 md:p-14 rounded-3xl border shadow-xl text-center transition-all duration-300 ${
             isLight
               ? 'bg-gradient-to-b from-indigo-50/70 via-white to-slate-50/80 border-indigo-100/80 text-slate-900 shadow-indigo-100/50'
               : 'bg-gradient-to-b from-slate-900/90 via-[#0d121f] to-slate-950 border-white/10 text-white shadow-black/60 backdrop-blur-xl'
@@ -273,6 +226,10 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                 <img
                   src={OFFICIAL_LOGO_URL}
                   alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Logo'}
+                  width={112}
+                  height={112}
+                  fetchPriority="high"
+                  decoding="async"
                   className="w-full h-full object-cover rounded-[22px]"
                 />
               </div>
@@ -368,7 +325,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
           <div className="flex flex-wrap items-center justify-center gap-3.5 sm:gap-4">
             <button
               type="button"
-              onClick={scrollToCompatibility}
+              onClick={openCompatibilitySection}
               className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-500/25 transition-all duration-200 cursor-pointer flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span>{isAr ? 'ابدأ الآن' : 'Start Now'}</span>
@@ -389,56 +346,88 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
             </button>
           </div>
         </div>
-      </section>
 
-      {/* ========================================================
-          2. نبذة عن مرآة القلوب
-      ======================================================== */}
-      <section
-        dir={isRTL ? 'rtl' : 'ltr'}
-        className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6"
-      >
+        {/* 2. بطاقة التعريف بالموقع (نبذة عن مرآة القلوب + مميزات المنصة + روابط الصفحات التعريفية) */}
         <div
-          className={`p-7 sm:p-10 rounded-3xl border transition-all duration-300 ${
+          className={`p-7 sm:p-10 rounded-3xl border transition-all duration-300 space-y-6 ${
             isLight
               ? 'bg-white border-slate-200/90 text-slate-800 shadow-sm'
               : 'bg-slate-900/70 border-white/10 text-slate-200 shadow-lg'
           }`}
         >
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shrink-0">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <h2
-                className={`text-xl sm:text-2xl md:text-3xl font-black font-['Alexandria'] ${
-                  isLight ? 'text-slate-900' : 'text-white'
-                }`}
-              >
-                {isAr ? 'ما هي مرآة القلوب؟' : 'What is Mirror of Hearts?'}
-              </h2>
+              <div>
+                <span className="text-[11px] font-extrabold text-indigo-500 uppercase tracking-wider block">
+                  {isAr ? 'نبذة عن الموقع' : 'About the Platform'}
+                </span>
+                <h2
+                  className={`text-xl sm:text-2xl md:text-3xl font-black font-['Alexandria'] ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isAr ? 'ما هي مرآة القلوب؟' : 'What is Mirror of Hearts?'}
+                </h2>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                soundManager.playTap();
-                if (props.onNavigatePage) props.onNavigatePage('about');
-              }}
-              className={`px-4 py-2 rounded-xl border text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
-                isLight
-                  ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700'
-                  : 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-400/30 text-indigo-300'
-              }`}
-            >
-              <span>{isAr ? 'صفحة من نحن الكاملة' : 'Full About Us Page'}</span>
-              <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playTap();
+                  if (props.onNavigatePage) props.onNavigatePage('about');
+                }}
+                className={`px-4 py-2 rounded-xl border text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                  isLight
+                    ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700'
+                    : 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-400/30 text-indigo-300'
+                }`}
+              >
+                <span>{isAr ? 'من نحن' : 'About Us'}</span>
+                <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playTap();
+                  if (props.onNavigatePage) props.onNavigatePage('methodology');
+                }}
+                className={`px-4 py-2 rounded-xl border text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                  isLight
+                    ? 'bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700'
+                    : 'bg-purple-500/15 hover:bg-purple-500/25 border-purple-400/30 text-purple-300'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>{isAr ? 'المنهجية العلمية' : 'Scientific Methodology'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playTap();
+                  if (props.onNavigatePage) props.onNavigatePage('faq');
+                }}
+                className={`px-4 py-2 rounded-xl border text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                  isLight
+                    ? 'bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-700'
+                    : 'bg-sky-500/15 hover:bg-sky-500/25 border-sky-400/30 text-sky-300'
+                }`}
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>{isAr ? 'الأسئلة الشائعة' : 'FAQ'}</span>
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <p
-              className={`text-base sm:text-lg leading-relaxed md:leading-loose ${
+              className={`text-sm sm:text-base leading-relaxed md:leading-loose ${
                 isLight ? 'text-slate-600' : 'text-slate-300'
               }`}
             >
@@ -448,27 +437,61 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
             </p>
 
             <p
-              className={`text-base sm:text-lg leading-relaxed md:leading-loose ${
+              className={`text-sm sm:text-base leading-relaxed md:leading-loose ${
                 isLight ? 'text-slate-600' : 'text-slate-300'
               }`}
             >
               {isAr
-                ? 'تجمع المنصة بين المعرفة النفسية والتقنيات الحديثة لتوفير أدوات ومصادر معرفية تدعم النمو الشخصي واتخاذ قرارات أكثر وعياً في مختلف جوانب الحياة.'
+                ? 'تجمع المنصة بين المعرفة النفسية والتقنيات الحديثة لتوفير أدوات ومصادر معرفية تدعم النمو الشخصي واتخاذ قرارات أكثر وعياً في مختلف جوانب الحياة، مع الاعتماد على نماذج علمية مدروسة والالتزام الصارم بمبادئ الخصوصية وأخلاقيات البيانات.'
                 : 'The platform fuses psychological expertise with modern technologies to provide knowledge resources and instruments supporting personal growth and mindful decision-making across all facets of life.'}
             </p>
+          </div>
+
+          {/* لماذا مرآة القلوب؟ مدمج بأناقة داخل بطاقة التعريف بالموقع */}
+          <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+            <h3
+              className={`text-xs sm:text-sm font-black font-['Alexandria'] mb-3 ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}
+            >
+              {isAr ? 'لماذا مرآة القلوب؟' : 'Why Mirror of Hearts?'}
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              {whyPoints.map((point, idx) => (
+                <div
+                  key={idx}
+                  className={`p-3 rounded-2xl border flex items-center gap-2 ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-200/90 text-slate-800'
+                      : 'bg-slate-950/60 border-white/10 text-slate-100'
+                  }`}
+                >
+                  <span className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold text-xs">
+                    ✓
+                  </span>
+                  <span className="text-xs font-bold leading-snug">
+                    {isAr ? point.titleAr : point.titleEn}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ========================================================
-          3. أقسام الموقع (بطاقات مختصرة فقط - بدون أي تكرار)
+          ثانياً: أقسام الموقع (بطاقات الأقسام الـ 6 المنظمة)
       ======================================================== */}
       <section
         id="site-sections-directory"
         dir={isRTL ? 'rtl' : 'ltr'}
-        className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8"
+        className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-4"
       >
-        <div className="text-center mb-8 space-y-2">
+        <div className="text-center mb-7 space-y-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold bg-indigo-500/10 border border-indigo-500/20 text-indigo-500">
+            <Compass className="w-3.5 h-3.5" />
+            <span>{isAr ? 'دليل أقسام المنصة' : 'Platform Sections Directory'}</span>
+          </div>
           <h2
             className={`text-2xl sm:text-3xl md:text-4xl font-black font-['Alexandria'] ${
               isLight ? 'text-slate-900' : 'text-white'
@@ -482,8 +505,8 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
             }`}
           >
             {isAr
-              ? 'اختر القسم الذي يناسب اهتمامك لاستكشاف الأدوات والمحتوى المتخصص'
-              : 'Choose the section that matches your interest to explore specialized tools and content'}
+              ? 'اختر القسم الذي يناسب اهتمامك للدخول مباشرة إلى أدواته ومحتواه المتخصص'
+              : 'Choose the section that matches your interest to enter its specialized tools and content'}
           </p>
         </div>
 
@@ -548,118 +571,13 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
       </section>
 
       {/* ========================================================
-          4. لماذا مرآة القلوب؟ (النقاط الست)
-      ======================================================== */}
-      <section
-        id="why-choose-us"
-        dir={isRTL ? 'rtl' : 'ltr'}
-        className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8"
-      >
-        <div className="text-center mb-8 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-indigo-500/10 border border-indigo-500/20 text-indigo-500">
-            <Sparkles className="w-4 h-4" />
-            <span>{isAr ? 'مميزات المنصة' : 'Platform Features'}</span>
-          </div>
-          <h2
-            className={`text-2xl sm:text-3xl md:text-4xl font-black font-['Alexandria'] ${
-              isLight ? 'text-slate-900' : 'text-white'
-            }`}
-          >
-            {isAr ? 'لماذا مرآة القلوب؟' : 'Why Mirror of Hearts?'}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {whyPoints.map((point, idx) => (
-            <div
-              key={idx}
-              className={`p-5 rounded-2xl border transition-all duration-200 flex items-center gap-3.5 ${
-                isLight
-                  ? 'bg-white border-slate-200/90 shadow-sm hover:border-indigo-300 hover:shadow-md'
-                  : 'bg-slate-900/70 border-white/10 shadow-md hover:border-indigo-400/40'
-              }`}
-            >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center shrink-0 shadow-sm font-bold text-sm">
-                ✓
-              </div>
-              <p
-                className={`text-xs sm:text-sm font-bold leading-snug ${
-                  isLight ? 'text-slate-800' : 'text-slate-100'
-                }`}
-              >
-                {isAr ? point.titleAr : point.titleEn}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ========================================================
-          5. المنهجية العلمية (مختصر في الرئيسية + زر للمقال الكامل)
-      ======================================================== */}
-      <section
-        id="scientific-methodology-summary"
-        dir={isRTL ? 'rtl' : 'ltr'}
-        className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6"
-      >
-        <div
-          className={`p-6 sm:p-9 rounded-3xl border text-center space-y-4 transition-all duration-300 ${
-            isLight
-              ? 'bg-gradient-to-br from-indigo-50/70 via-white to-slate-50 border-indigo-100 shadow-sm'
-              : 'bg-gradient-to-br from-indigo-950/20 via-slate-900/70 to-slate-950 border-white/10 shadow-md'
-          }`}
-        >
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 mx-auto">
-            <BookOpen className="w-6 h-6" />
-          </div>
-
-          <h2
-            className={`text-xl sm:text-2xl md:text-3xl font-black font-['Alexandria'] ${
-              isLight ? 'text-slate-900' : 'text-white'
-            }`}
-          >
-            {isAr ? 'المنهجية العلمية' : 'Scientific Methodology'}
-          </h2>
-
-          <p
-            className={`text-sm sm:text-base max-w-2xl mx-auto leading-relaxed md:leading-loose ${
-              isLight ? 'text-slate-600' : 'text-slate-300'
-            }`}
-          >
-            {isAr
-              ? 'تعتمد مرآة القلوب على مجموعة من المفاهيم والنماذج المستخدمة في دراسة الشخصية والعلاقات الإنسانية والتوافق النفسي، مع الالتزام بمبادئ الخصوصية وأخلاقيات استخدام البيانات.'
-              : 'Mirror of Hearts relies on established concepts and models in personality science, human relations, and psychological compatibility, with strict adherence to privacy principles and data ethics.'}
-          </p>
-
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                soundManager.playTap();
-                if (props.onNavigatePage) {
-                  props.onNavigatePage('methodology');
-                } else {
-                  window.location.hash = '#/methodology';
-                }
-              }}
-              className="px-7 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-indigo-500/20 transition-all duration-200 cursor-pointer inline-flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>{isAr ? 'اقرأ المنهجية العلمية' : 'Read Scientific Methodology'}</span>
-              <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================
-          6. سياسة الخصوصية، هندسة الخصوصية (TLS 1.3)، وإخلاء المسؤولية العلمي والعيادي والقانوني
-          (الجزئية الثابتة الإلزامية في الصفحة الأولى - ممنوع المساس بها أو حذفها مطلقاً)
+          ثالثاً (مثبّت في أسفل الصفحة الأولى):
+          قسم هندسة الخصوصية، سياسة الخصوصية، وإخلاء المسؤولية العلمي والعيادي والقانوني
       ======================================================== */}
       <section
         id="homepage-privacy-and-disclaimer"
         dir={isRTL ? 'rtl' : 'ltr'}
-        className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6"
+        className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4"
       >
         <div
           className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 shadow-sm space-y-5 ${
@@ -668,7 +586,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               : 'bg-slate-900/80 border-emerald-500/25 text-slate-100'
           }`}
         >
-          {/* Top Header + Quick Access to Full Privacy Policy & Terms */}
+          {/* Top Header + Quick Access to Full Privacy Policy & Terms & Disclaimer */}
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
             <div className="flex items-center gap-3">
               <div
@@ -919,111 +837,8 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
           </div>
         </div>
       </section>
-
-      {/* ========================================================
-          7. الأسئلة الشائعة (FAQ)
-      ======================================================== */}
-      <section
-        id="faq-section"
-        dir={isRTL ? 'rtl' : 'ltr'}
-        className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8"
-      >
-        <div className="text-center mb-8 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-purple-500/10 border border-purple-500/20 text-purple-500">
-            <HelpCircle className="w-4 h-4" />
-            <span>{isAr ? 'إجابات واضحة وموثوقة' : 'Transparent Answers'}</span>
-          </div>
-          <h2
-            className={`text-2xl sm:text-3xl md:text-4xl font-black font-['Alexandria'] ${
-              isLight ? 'text-slate-900' : 'text-white'
-            }`}
-          >
-            {isAr ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
-          </h2>
-          <p
-            className={`text-sm sm:text-base max-w-xl mx-auto leading-relaxed ${
-              isLight ? 'text-slate-500' : 'text-slate-400'
-            }`}
-          >
-            {isAr
-              ? 'إجابات صريحة ودقيقة حول أهداف المنصة، الخصوصية، والخدمات المتاحة'
-              : 'Honest, evidence-based answers regarding our mission, data privacy, and services'}
-          </p>
-        </div>
-
-        <div className="space-y-3.5">
-          {faqList.map((faq, index) => {
-            const isOpen = activeFaq === index;
-            return (
-              <div
-                key={index}
-                className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                  isLight
-                    ? 'bg-white border-slate-200/90 shadow-sm'
-                    : 'bg-slate-900/75 border-white/10 shadow-md'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => toggleFaq(index)}
-                  className={`w-full p-5 text-start flex items-center justify-between gap-4 cursor-pointer transition-colors ${
-                    isOpen
-                      ? isLight
-                        ? 'bg-slate-50'
-                        : 'bg-white/[0.04]'
-                      : 'hover:bg-slate-50/50'
-                  }`}
-                >
-                  <span
-                    className={`text-sm sm:text-base font-extrabold font-['Alexandria'] ${
-                      isOpen
-                        ? 'text-indigo-600'
-                        : isLight
-                        ? 'text-slate-900'
-                        : 'text-white'
-                    }`}
-                  >
-                    {isAr ? faq.qAr : faq.qEn}
-                  </span>
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-200 ${
-                      isOpen
-                        ? 'bg-indigo-500 text-white border-indigo-600 rotate-180'
-                        : isLight
-                        ? 'bg-slate-100 text-slate-600 border-slate-200'
-                        : 'bg-slate-800 text-slate-300 border-white/10'
-                    }`}
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
-                </button>
-
-                {isOpen && (
-                  <div
-                    className={`p-5 pt-2 border-t text-xs sm:text-sm leading-relaxed ${
-                      isLight
-                        ? 'border-slate-100 text-slate-600'
-                        : 'border-white/5 text-slate-300'
-                    }`}
-                  >
-                    <p>{isAr ? faq.aAr : faq.aEn}</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ========================================================
-          8. قسم كاشف شريك الحياة (المعالج المباشر من 4 خطوات بدون تكرار للأقسام)
-      ======================================================== */}
-      <section id="compatibility-detector-section" className="w-full pt-4">
-        <ProfileStep {...props} />
-      </section>
     </div>
   );
 };
 
 export default HomePage;
-

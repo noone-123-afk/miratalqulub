@@ -81,6 +81,14 @@ export const FAQPage: React.FC<Props> = ({
           q: 'ما هو مصدر المعلومات والمقاييس النفسية المستخدمة في الموقع؟',
           a: 'تستند المقاييس إلى مراجع علم النفس الأكاديمي المنشورة، ومنها: مقياس التعلق للراشدين (ECR-R لبولبي وفرالي)، ونظرية جون غوتمان للبيت العلائقي المتين، ونظرية ستيرنبرغ لمكونات الحب، ومقياس السمات الـ16 لريموند كاتل (16PF)، ونموذج العوامل الخمسة الكبرى (Big Five)، وبطاريات الذكاء المتعدد لهوارد جاردنر.',
         },
+        {
+          q: 'هل الخدمات مجانية؟',
+          a: 'يتوفر عدد من الخدمات والاختبارات والمحتويات المعرفية مجاناً للزوار، وقد تتوفر مستقبلاً خدمات أو مزايا إضافية متقدمة.',
+        },
+        {
+          q: 'هل يمكن استخدام الموقع من الهاتف؟',
+          a: 'نعم، تم تصميم المنصة لتعمل بكفاءة وسلاسة تامة على الهواتف الذكية والأجهزة اللوحية وأجهزة الحاسوب.',
+        },
       ]
     : [
         {
@@ -118,6 +126,14 @@ export const FAQPage: React.FC<Props> = ({
         {
           q: 'What is the academic source of the psychometric frameworks utilized?',
           a: 'Our tools draw upon peer-reviewed academic literature: Adult Attachment Theory (Bowlby & Fraley ECR-R), John Gottman’s Sound Relationship House, Robert Sternberg’s Triangular Theory of Love, Raymond Cattell’s 16 Personality Factors (16PF), the Big Five Traits (OCEAN), and Howard Gardner’s Multiple Intelligences.',
+        },
+        {
+          q: 'Are the services free?',
+          a: 'A core selection of services, assessments, and knowledge content is freely accessible, with potential advanced features in the future.',
+        },
+        {
+          q: 'Can the platform be accessed on mobile?',
+          a: 'Yes, the platform is crafted to perform flawlessly across smartphones, tablets, and desktop computers.',
         },
       ];
 

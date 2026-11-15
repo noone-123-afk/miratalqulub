@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QuizQuestion } from '../types';
+import { QuizQuestion, UserProfile } from '../types';
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { ScientificClinicalDisclaimerBanner } from './PsychometricAcademicFraming';
+import {
+  detectUserLocationAndNationality,
+  refineEthnicPromptWithQuizAnswers,
+  getNationalityEntryByCountry,
+  NATIONALITY_DATABASE,
+  DetectedNationalityProfile,
+} from '../utils/locationNationalityDetector';
 import {
   ArrowRight,
   Sparkles,
@@ -36,11 +43,13 @@ import {
   Heart,
   Leaf,
   Rocket,
+  MapPin,
 } from 'lucide-react';
 
 interface Props {
   questions: QuizQuestion[];
-  onComplete: (answers: Record<number, string>) => void;
+  profile?: UserProfile | null;
+  onComplete: (answers: Record<number, string>, detectedLocation?: DetectedNationalityProfile) => void;
   onBackToProfile: () => void;
 }
 
@@ -120,11 +129,18 @@ const optionItemVariants = {
 
 const PARTNER_QUIZ_AUTOSAVE_KEY = 'mirat_partner_quiz_autosave_v2';
 
-export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfile }) => {
+export const QuizStep: React.FC<Props> = ({
+  questions,
+  profile,
+  onComplete,
+  onBackToProfile,
+}) => {
   const { direction, language } = useLanguage();
   const [theme] = useAppTheme();
   const isAr = language === 'ar';
   const isLight = theme === 'light';
+  const partnerGender = profile?.partnerGender || 'female';
+
   const [currentIndex, setCurrentIndex] = useState<number>(() => {
     try {
       const saved = localStorage.getItem(PARTNER_QUIZ_AUTOSAVE_KEY);
@@ -155,10 +171,46 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
     return {};
   });
 
+  // Automatic Location & Nationality Detection State while answering questions
+  const [detectedLocation, setDetectedLocation] = useState<DetectedNationalityProfile>(() =>
+    getNationalityEntryByCountry(
+      profile?.detectedCountryCode || profile?.country || 'SA',
+      partnerGender
+    )
+  );
+  const [isDetectingLocation, setIsDetectingLocation] = useState<boolean>(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setIsDetectingLocation(true);
+    detectUserLocationAndNationality({
+      partnerGender,
+      fallbackCountry: profile?.country,
+      answers,
+    }).then((detected) => {
+      if (!mounted) return;
+      setDetectedLocation(detected);
+      setIsDetectingLocation(false);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [partnerGender, profile?.country]);
+
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
 
   const currentQ = questions[currentIndex] || questions[0];
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
+
+  const handleManualNationalityOverride = (countryCode: string) => {
+    soundManager.playTap();
+    const manualEntry = getNationalityEntryByCountry(countryCode, partnerGender);
+    const refined = refineEthnicPromptWithQuizAnswers(manualEntry, answers, partnerGender);
+    setDetectedLocation({
+      ...refined,
+      detectionSource: 'manual',
+    });
+  };
 
   const handleResetQuiz = () => {
     soundManager.playTap();
@@ -178,6 +230,14 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
 
     const updatedAnswers = { ...answers, [currentQ.id]: optionId };
     setAnswers(updatedAnswers);
+
+    // Dynamically refine the ethnic facial features AI prompt as the user answers each question
+    const refinedLocation = refineEthnicPromptWithQuizAnswers(
+      detectedLocation,
+      updatedAnswers,
+      partnerGender
+    );
+    setDetectedLocation(refinedLocation);
 
     // Auto advance after short tactile delay
     setTimeout(() => {
@@ -205,7 +265,7 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
         } catch {
           // ignore
         }
-        onComplete(updatedAnswers);
+        onComplete(updatedAnswers, refinedLocation);
       }
     }, 280);
   };
@@ -235,6 +295,73 @@ export const QuizStep: React.FC<Props> = ({ questions, onComplete, onBackToProfi
         testTitleEn="Partner Psychological & Values Compatibility Quiz"
         compact
       />
+
+      {/* Automatic Location & Nationality Detector Banner for Realistic Ethnic Portrait Guidance */}
+      <div
+        className={`mb-4 p-3.5 rounded-2xl border transition-colors ${
+          isLight
+            ? 'bg-emerald-50/80 border-emerald-200 text-slate-800 shadow-sm'
+            : 'bg-emerald-950/35 border-emerald-500/30 text-white'
+        }`}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-500 shrink-0">
+              <MapPin className="w-4 h-4" />
+            </span>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-300">
+                  {isAr
+                    ? 'اكتشاف تلقائي للموقع والجنسية لتوجيه ملامح صورة الشريك بالذكاء الاصطناعي:'
+                    : 'Auto-Detected Location & Nationality for AI Partner Ethnic Realism:'}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30">
+                  <span>{detectedLocation.flag}</span>
+                  <span>{detectedLocation.countryNameAr}</span>
+                  <span>•</span>
+                  <span>{detectedLocation.nationalityAr}</span>
+                </span>
+              </div>
+              <p
+                className={`text-[11px] mt-1 leading-relaxed ${
+                  isLight ? 'text-slate-600' : 'text-slate-300'
+                }`}
+              >
+                {isDetectingLocation
+                  ? isAr
+                    ? 'جاري معايرة الموقع الجغرافي والملامح العرقية الواقعية أثناء إجابتك...'
+                    : 'Calibrating location and realistic ethnic facial features...'
+                  : detectedLocation.ethnicFacialTraitsDescriptionAr}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 ms-auto">
+            <label htmlFor="quiz-nationality-select" className="text-[10px] font-bold opacity-75">
+              {isAr ? 'تعديل الجنسية:' : 'Change:'}
+            </label>
+            <select
+              id="quiz-nationality-select"
+              aria-label={isAr ? 'تعديل الجنسية المكتشفة' : 'Change Detected Nationality'}
+              title={isAr ? 'تعديل الجنسية المكتشفة' : 'Change Detected Nationality'}
+              value={detectedLocation.countryCode}
+              onChange={(e) => handleManualNationalityOverride(e.target.value)}
+              className={`px-2 py-1 rounded-lg border text-[11px] font-bold cursor-pointer ${
+                isLight
+                  ? 'bg-white border-emerald-300 text-slate-800'
+                  : 'bg-slate-900 border-emerald-500/40 text-white'
+              }`}
+            >
+              {Object.values(NATIONALITY_DATABASE).map((entry) => (
+                <option key={entry.code} value={entry.code}>
+                  {entry.flag} {entry.nameAr} ({entry.nationalityAr})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Top Progress & Navigation */}
       <div className="mb-6 space-y-2">

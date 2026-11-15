@@ -36,6 +36,11 @@ import { useAppTheme } from '../utils/theme';
 import { BehindTheScenesSection } from './BehindTheScenesSection';
 import { ScientificClinicalDisclaimerBanner } from './PsychometricAcademicFraming';
 import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
+import {
+  detectUserLocationAndNationality,
+  getNationalityEntryByCountry,
+  DetectedNationalityProfile,
+} from '../utils/locationNationalityDetector';
 
 interface Props {
   onStart: (profile: UserProfile) => void;
@@ -51,6 +56,7 @@ interface Props {
   onOpenArticles?: () => void;
   onOpenNovels?: () => void;
   onOpenContactFeedback?: () => void;
+  onBackToHome?: () => void;
 }
 
 const CULTURAL_REGIONAL_OPTIONS = [
@@ -235,6 +241,7 @@ export const ProfileStep: React.FC<Props> = ({
   onOpenArticles,
   onOpenNovels,
   onOpenContactFeedback,
+  onBackToHome,
 }) => {
   const { language, direction, isRTL, t } = useLanguage();
   const [theme] = useAppTheme();
@@ -284,6 +291,8 @@ export const ProfileStep: React.FC<Props> = ({
     initialProfile?.privacyConsentAccepted || false
   );
   const [consentError, setConsentError] = useState<boolean>(false);
+  const [autoDetectedLocation, setAutoDetectedLocation] =
+    useState<DetectedNationalityProfile | null>(null);
 
   // Hub tab state
   const [activeHubTab, setActiveHubTab] = useState<
@@ -338,6 +347,38 @@ export const ProfileStep: React.FC<Props> = ({
     }
   }, [initialProfile]);
 
+  useEffect(() => {
+    let mounted = true;
+    detectUserLocationAndNationality({
+      partnerGender,
+      fallbackCountry: initialProfile?.country || country,
+    }).then((detected) => {
+      if (!mounted) return;
+      setAutoDetectedLocation(detected);
+      if (!initialProfile?.country) {
+        const matchedInList = COUNTRIES_LIST.find(
+          (c) =>
+            c.code === detected.countryCode ||
+            c.name === detected.countryNameAr ||
+            c.name.includes(detected.countryNameAr) ||
+            detected.countryNameAr.includes(c.name)
+        );
+        if (matchedInList) {
+          setCountry(matchedInList.name);
+        }
+        const matchedCultural = CULTURAL_REGIONAL_OPTIONS.find((opt) =>
+          detected.ethnicityTag.includes(opt.tag)
+        );
+        if (matchedCultural) {
+          setEthnicity(matchedCultural.tag);
+        }
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [partnerGender]);
+
   const computedAge = Math.max(18, CURRENT_YEAR - birthYear);
   const syntheticBirthDate = `${birthYear}-01-01`;
   const previewCohort = getGenerationalCohort(syntheticBirthDate, computedAge);
@@ -351,6 +392,8 @@ export const ProfileStep: React.FC<Props> = ({
   const handleCountryChange = (countryName: string) => {
     soundManager.playTap();
     setCountry(countryName);
+    const manualDetected = getNationalityEntryByCountry(countryName, partnerGender);
+    setAutoDetectedLocation(manualDetected);
     const found = COUNTRIES_LIST.find((c) => c.name === countryName);
     if (found && found.defaultEthnicity) {
       const matchedCultural = CULTURAL_REGIONAL_OPTIONS.find((opt) =>
@@ -387,6 +430,8 @@ export const ProfileStep: React.FC<Props> = ({
     soundManager.playNext();
 
     const combinedCulturalSummary = `${coreValuesPriority} | ${communicationAndConflictStyle} | ${financialAndFamilyVision}`;
+    const resolvedNat =
+      autoDetectedLocation || getNationalityEntryByCountry(country, partnerGender);
 
     onStart({
       userGender,
@@ -404,6 +449,12 @@ export const ProfileStep: React.FC<Props> = ({
       communicationAndConflictStyle,
       financialAndFamilyVision,
       privacyConsentAccepted: true,
+      detectedCountryCode: resolvedNat.countryCode,
+      detectedNationalityAr: resolvedNat.nationalityAr,
+      detectedNationalityEn: resolvedNat.nationalityEn,
+      detectedEthnicTraitsPrompt: resolvedNat.ethnicFacialTraitsPromptEn,
+      detectedEthnicTraitsAr: resolvedNat.ethnicFacialTraitsDescriptionAr,
+      isLocationAutoDetected: true,
     });
   };
 
@@ -454,6 +505,42 @@ export const ProfileStep: React.FC<Props> = ({
       }`}
       dir={direction}
     >
+      {/* Breadcrumb and Back to Home Bar */}
+      {onBackToHome && (
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b ${
+            isLight ? 'border-slate-200' : 'border-white/10'
+          }`}
+        >
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="hover:text-rose-500 transition cursor-pointer flex items-center gap-1 font-bold"
+            >
+              <span>{isAr ? 'الرئيسية' : 'Home'}</span>
+            </button>
+            <span>/</span>
+            <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              {isAr ? 'قسم كاشف شريك الحياة' : 'Partner Compatibility Detector'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onBackToHome}
+            className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              isLight
+                ? 'bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700'
+                : 'bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40 text-rose-300'
+            }`}
+          >
+            {isRTL ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+            <span>{isAr ? 'العودة للرئيسية' : 'Back to Home'}</span>
+          </button>
+        </div>
+      )}
+
       {/* Engineering Oversight and Official Trust Banner */}
       <div
         className={`mb-6 p-3.5 sm:p-4 rounded-3xl border flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm ${
@@ -518,6 +605,9 @@ export const ProfileStep: React.FC<Props> = ({
                 <img
                   src={OFFICIAL_LOGO_URL}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Logo'}
+                  width={48}
+                  height={48}
+                  decoding="async"
                   className="w-full h-full object-cover rounded-[14px]"
                 />
               </div>
@@ -835,15 +925,20 @@ export const ProfileStep: React.FC<Props> = ({
 
                   {/* 1. Nickname / Alias */}
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold mb-1.5">
+                    <label
+                      htmlFor="user-alias-input"
+                      className="block text-xs sm:text-sm font-bold mb-1.5"
+                    >
                       {isAr
                         ? 'الاسم المستعار أو اللقب (لتخصيص التقرير دون الحاجة للاسم الكامل):'
                         : 'Nickname or Alias (to personalize your report without full legal name):'}
                     </label>
                     <input
+                      id="user-alias-input"
                       type="text"
                       value={userName}
                       onChange={(e) => setUserName(e.target.value)}
+                      aria-label={isAr ? 'الاسم المستعار أو اللقب' : 'Nickname or Alias'}
                       placeholder={
                         isAr ? 'مثال: أبو فيصل، سارة، طارق...' : 'e.g., Alex, Sara, Tariq...'
                       }
@@ -956,7 +1051,10 @@ export const ProfileStep: React.FC<Props> = ({
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <label className="text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                        <label
+                          htmlFor="birth-year-select"
+                          className="text-xs sm:text-sm font-bold flex items-center gap-1.5"
+                        >
                           <Calendar className="w-4 h-4 text-emerald-500" />
                           <span>
                             {isAr ? 'سنة الميلاد (بدون يوم أو شهر):' : 'Birth Year (Year Only):'}
@@ -969,6 +1067,9 @@ export const ProfileStep: React.FC<Props> = ({
 
                       <div className="relative">
                         <select
+                          id="birth-year-select"
+                          aria-label={isAr ? 'سنة الميلاد' : 'Select Birth Year'}
+                          title={isAr ? 'سنة الميلاد' : 'Select Birth Year'}
                           value={birthYear}
                           onChange={(e) => {
                             soundManager.playTap();
@@ -1003,12 +1104,27 @@ export const ProfileStep: React.FC<Props> = ({
                         isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-white/10'
                       }`}
                     >
-                      <label className="block text-xs sm:text-sm font-bold">
-                        {isAr ? 'البلد / الإقامة الحالية:' : 'Country / Current Residence:'}{' '}
-                        <span className="text-rose-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <label
+                          htmlFor="country-select"
+                          className="block text-xs sm:text-sm font-bold"
+                        >
+                          {isAr ? 'البلد والجنسية:' : 'Country & Nationality:'}{' '}
+                          <span className="text-rose-500">*</span>
+                        </label>
+                        {autoDetectedLocation && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                            {isAr
+                              ? `✓ اكتشاف تلقائي (${autoDetectedLocation.nationalityAr})`
+                              : `✓ Auto-detected (${autoDetectedLocation.nationalityEn})`}
+                          </span>
+                        )}
+                      </div>
                       <div className="relative">
                         <select
+                          id="country-select"
+                          aria-label={isAr ? 'البلد والجنسية' : 'Select Country and Nationality'}
+                          title={isAr ? 'البلد والجنسية' : 'Select Country and Nationality'}
                           value={country}
                           onChange={(e) => handleCountryChange(e.target.value)}
                           className={`w-full px-4 py-2.5 rounded-xl border text-sm font-bold appearance-none cursor-pointer ${
@@ -1027,8 +1143,8 @@ export const ProfileStep: React.FC<Props> = ({
                       </div>
                       <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                         {isAr
-                          ? 'يُستخدم لمواءمة السياق الثقافي والاجتماعي العام.'
-                          : 'Used to calibrate general sociocultural context.'}
+                          ? 'يُكتشف موقعك وجنسيتك تلقائياً لتوجيه نموذج الذكاء الاصطناعي لتوليد صورة شريك حياة بملامح عرقية واقعية متناسبة مع جنسيتك.'
+                          : 'Automatically detected to guide the AI model to generate a life partner portrait with realistic ethnic features matching your nationality.'}
                       </p>
                     </div>
                   </div>

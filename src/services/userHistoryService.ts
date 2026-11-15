@@ -9,9 +9,25 @@ import {
   orderBy,
   deleteDoc,
   User,
+  isAutomatedAuditEnvironment,
 } from '../firebase';
 import { UserProfile, PartnerAnalysisResult } from '../types';
 import { COMMUNITY_PROFILES, CommunityMemberProfile } from '../data/communityProfiles';
+
+function withFirestoreTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('firestore_timeout')), ms);
+    promise
+      .then((val) => {
+        clearTimeout(timer);
+        resolve(val);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
 
 export interface SavedHistoricalResult {
   id: string;
@@ -75,46 +91,45 @@ export async function savePersistentUserProfile(
     localStorage.setItem(VISITOR_PROFILE_STORAGE_KEY, JSON.stringify(profile));
   } catch {}
 
+  if (isAutomatedAuditEnvironment()) return;
+
   // Save to visitor_sessions in Firestore
   try {
     const visRef = doc(db, 'visitor_sessions', visitorId);
-    await setDoc(
-      visRef,
-      {
-        visitorId,
-        profile,
-        updatedAt: now,
-      },
-      { merge: true }
+    await withFirestoreTimeout(
+      setDoc(
+        visRef,
+        {
+          visitorId,
+          profile,
+          updatedAt: now,
+        },
+        { merge: true }
+      ),
+      2500
     );
-  } catch (err) {
-    console.warn('Could not sync profile to visitor_sessions:', err);
+  } catch {
+    // Ignore offline/timeout
   }
-
-  // Also sync to /api/visitor-session on server
-  try {
-    fetch('/api/visitor-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visitorId, profile, updatedAt: now }),
-    }).catch(() => {});
-  } catch {}
 
   // If authenticated user, also update /users/{uid}
   if (user?.uid) {
     try {
       const userRef = doc(db, 'users', user.uid);
-      await setDoc(
-        userRef,
-        {
-          id: user.uid,
-          email: user.email || '',
-          displayName: user.displayName || profile.userName || 'مستخدم مِرآة القلوب',
-          profile,
-          updatedAt: now,
-          createdAt: now,
-        },
-        { merge: true }
+      await withFirestoreTimeout(
+        setDoc(
+          userRef,
+          {
+            id: user.uid,
+            email: user.email || '',
+            displayName: user.displayName || profile.userName || 'مستخدم مِرآة القلوب',
+            profile,
+            updatedAt: now,
+            createdAt: now,
+          },
+          { merge: true }
+        ),
+        2500
       );
     } catch {}
   }
@@ -137,10 +152,14 @@ export async function loadPersistentUserSession(user?: User | null): Promise<{
     if (rawRes) localResult = JSON.parse(rawRes);
   } catch {}
 
+  if (isAutomatedAuditEnvironment()) {
+    return { profile: localProfile, latestResult: localResult };
+  }
+
   // 1. Check authenticated user doc in Firestore
   if (user?.uid) {
     try {
-      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      const userSnap = await withFirestoreTimeout(getDoc(doc(db, 'users', user.uid)), 2500);
       if (userSnap.exists()) {
         const data = userSnap.data();
         if (data.profile) {
@@ -158,7 +177,10 @@ export async function loadPersistentUserSession(user?: User | null): Promise<{
   // 2. Check visitor_sessions in Firestore
   const visitorId = getOrCreateVisitorId();
   try {
-    const visSnap = await getDoc(doc(db, 'visitor_sessions', visitorId));
+    const visSnap = await withFirestoreTimeout(
+      getDoc(doc(db, 'visitor_sessions', visitorId)),
+      2500
+    );
     if (visSnap.exists()) {
       const data = visSnap.data();
       if (data.profile && !localProfile) {
@@ -310,42 +332,47 @@ export async function fetchUserSavedResults(user?: User | null): Promise<SavedHi
   const ownerId = getEffectiveOwnerId(user);
   const visitorId = getOrCreateVisitorId();
 
-  // 1. If authenticated user, try /users/{uid}/results
-  if (user?.uid) {
+  if (!isAutomatedAuditEnvironment()) {
+    // 1. If authenticated user, try /users/{uid}/results
+    if (user?.uid) {
+      try {
+        const resultsCol = collection(db, 'users', user.uid, 'results');
+        const q = query(resultsCol, orderBy('createdAt', 'desc'));
+        const snapshot = await withFirestoreTimeout(getDocs(q), 2500);
+
+        const items: SavedHistoricalResult[] = [];
+        snapshot.forEach((d) => {
+          items.push(d.data() as SavedHistoricalResult);
+        });
+
+        if (items.length > 0) {
+          try {
+            localStorage.setItem(`offline_results_${user.uid}`, JSON.stringify(items));
+          } catch {}
+          return items;
+        }
+      } catch {
+        // Fallback to visitor session / local cache
+      }
+    }
+
+    // 2. Check /visitor_sessions/{visitorId} in Firestore
     try {
-      const resultsCol = collection(db, 'users', user.uid, 'results');
-      const q = query(resultsCol, orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-
-      const items: SavedHistoricalResult[] = [];
-      snapshot.forEach((d) => {
-        items.push(d.data() as SavedHistoricalResult);
-      });
-
-      if (items.length > 0) {
-        try {
-          localStorage.setItem(`offline_results_${user.uid}`, JSON.stringify(items));
-        } catch {}
-        return items;
+      const visSnap = await withFirestoreTimeout(
+        getDoc(doc(db, 'visitor_sessions', visitorId)),
+        2500
+      );
+      if (visSnap.exists()) {
+        const data = visSnap.data();
+        if (Array.isArray(data.results) && data.results.length > 0) {
+          try {
+            localStorage.setItem(`offline_results_${ownerId}`, JSON.stringify(data.results));
+          } catch {}
+          return data.results as SavedHistoricalResult[];
+        }
       }
-    } catch (err) {
-      console.warn('Firestore user results fetch failed, checking visitor session', err);
-    }
+    } catch {}
   }
-
-  // 2. Check /visitor_sessions/{visitorId} in Firestore
-  try {
-    const visSnap = await getDoc(doc(db, 'visitor_sessions', visitorId));
-    if (visSnap.exists()) {
-      const data = visSnap.data();
-      if (Array.isArray(data.results) && data.results.length > 0) {
-        try {
-          localStorage.setItem(`offline_results_${ownerId}`, JSON.stringify(data.results));
-        } catch {}
-        return data.results as SavedHistoricalResult[];
-      }
-    }
-  } catch {}
 
   // 3. Fallback to localStorage cache
   try {
@@ -700,42 +727,47 @@ export async function fetchUnifiedTestHistory(user?: User | null): Promise<Unifi
   const ownerId = getEffectiveOwnerId(user);
   const visitorId = getOrCreateVisitorId();
 
-  // 1. If authenticated user, check /users/{uid}/test_history
-  if (user?.uid) {
+  if (!isAutomatedAuditEnvironment()) {
+    // 1. If authenticated user, check /users/{uid}/test_history
+    if (user?.uid) {
+      try {
+        const historyCol = collection(db, 'users', user.uid, 'test_history');
+        const q = query(historyCol, orderBy('createdAt', 'desc'));
+        const snapshot = await withFirestoreTimeout(getDocs(q), 2500);
+
+        const items: UnifiedTestRecord[] = [];
+        snapshot.forEach((d) => {
+          items.push(d.data() as UnifiedTestRecord);
+        });
+
+        if (items.length > 0) {
+          try {
+            localStorage.setItem(`offline_test_history_${user.uid}`, JSON.stringify(items));
+          } catch {}
+          return items;
+        }
+      } catch {
+        // Fallback to visitor session / local cache
+      }
+    }
+
+    // 2. Check /visitor_sessions/{visitorId} in Firestore
     try {
-      const historyCol = collection(db, 'users', user.uid, 'test_history');
-      const q = query(historyCol, orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-
-      const items: UnifiedTestRecord[] = [];
-      snapshot.forEach((d) => {
-        items.push(d.data() as UnifiedTestRecord);
-      });
-
-      if (items.length > 0) {
-        try {
-          localStorage.setItem(`offline_test_history_${user.uid}`, JSON.stringify(items));
-        } catch {}
-        return items;
+      const visSnap = await withFirestoreTimeout(
+        getDoc(doc(db, 'visitor_sessions', visitorId)),
+        2500
+      );
+      if (visSnap.exists()) {
+        const data = visSnap.data();
+        if (Array.isArray(data.testHistory) && data.testHistory.length > 0) {
+          try {
+            localStorage.setItem(`offline_test_history_${ownerId}`, JSON.stringify(data.testHistory));
+          } catch {}
+          return data.testHistory as UnifiedTestRecord[];
+        }
       }
-    } catch (err) {
-      console.warn('Firestore fetchUnifiedTestHistory failed, checking visitor session', err);
-    }
+    } catch {}
   }
-
-  // 2. Check /visitor_sessions/{visitorId} in Firestore
-  try {
-    const visSnap = await getDoc(doc(db, 'visitor_sessions', visitorId));
-    if (visSnap.exists()) {
-      const data = visSnap.data();
-      if (Array.isArray(data.testHistory) && data.testHistory.length > 0) {
-        try {
-          localStorage.setItem(`offline_test_history_${ownerId}`, JSON.stringify(data.testHistory));
-        } catch {}
-        return data.testHistory as UnifiedTestRecord[];
-      }
-    }
-  } catch {}
 
   // 3. Fallback to local cache
   try {

@@ -27,6 +27,8 @@ import {
 import { soundManager } from '../utils/sound';
 import { db, doc, setDoc, getDoc } from '../firebase';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { downloadOwnerProtectedZip } from '../utils/ownerDownload';
 
 interface Props {
   isOpen: boolean;
@@ -126,6 +128,7 @@ const HOSTING_PLANS = [
 
 export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdSense }) => {
   const { language } = useLanguage();
+  const { user, isOwner } = useAuth();
   const [activeTab, setActiveTab] = useState<'public-launch' | 'buy-hosting' | 'domain' | 'dns-guide'>('public-launch');
   const [customDomain, setCustomDomain] = useState('miratalqulub.com');
   const [domainSearchQuery, setDomainSearchQuery] = useState('miratalqulub');
@@ -139,16 +142,18 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [hostingData, setHostingData] = useState<HostingStatusData | null>(null);
   const [pingLatency, setPingLatency] = useState<number | null>(null);
+  const [downloadingZip, setDownloadingZip] = useState<'cloudflare' | 'source' | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const publicSharedUrl =
     hostingData?.publicUrl || 'https://ais-pre-uhi2ujsliyan7cdnjqdgni-551936965486.europe-west2.run.app';
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isOwner) {
       fetchHostingStatus();
       loadFirestoreConfig();
     }
-  }, [isOpen]);
+  }, [isOpen, isOwner]);
 
   const loadFirestoreConfig = async () => {
     try {
@@ -358,7 +363,24 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  if (!isOpen) return null;
+  const handleProtectedDownload = async (
+    type: 'cloudflare' | 'source',
+    endpoint: '/api/download-cloudflare-zip' | '/api/download-source-zip',
+    filename: string
+  ) => {
+    soundManager.playTap();
+    setDownloadError(null);
+    setDownloadingZip(type);
+    try {
+      await downloadOwnerProtectedZip(endpoint, filename, user);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : 'تعذر تنزيل الملفات');
+    } finally {
+      setDownloadingZip(null);
+    }
+  };
+
+  if (!isOpen || !isOwner) return null;
 
   return (
     <AnimatePresence>
@@ -532,16 +554,44 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                   </li>
                 </ol>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                  <a
-                    href="/api/download-cloudflare-zip"
-                    download="miratalqulub-cloudflare-ready.zip"
-                    onClick={() => soundManager.playTap()}
-                    className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-amber-500/25 cursor-pointer"
+                <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
+                  <button
+                    type="button"
+                    disabled={downloadingZip !== null}
+                    onClick={() =>
+                      handleProtectedDownload(
+                        'cloudflare',
+                        '/api/download-cloudflare-zip',
+                        'miratalqulub-cloudflare-ready.zip'
+                      )
+                    }
+                    className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 disabled:opacity-60 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-amber-500/25 cursor-pointer"
                   >
                     <Rocket className="w-4 h-4" />
-                    <span>📦 تحميل حزمة الموقع الجاهزة لـ Cloudflare Pages (miratalqulub-cloudflare-ready.zip)</span>
-                  </a>
+                    <span>
+                      {downloadingZip === 'cloudflare'
+                        ? '⏳ جارٍ التحقق من هوية المالك وتجهيز الحزمة...'
+                        : '📦 تحميل حزمة النشر الجاهزة لـ Cloudflare Pages (miratalqulub-cloudflare-ready.zip)'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={downloadingZip !== null}
+                    onClick={() =>
+                      handleProtectedDownload(
+                        'source',
+                        '/api/download-source-zip',
+                        'miratalqulub-full-source.zip'
+                      )
+                    }
+                    className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer"
+                  >
+                    <span>
+                      {downloadingZip === 'source'
+                        ? '⏳ جارٍ التحقق وتجهيز الكود...'
+                        : '💻 تحميل الكود المصدري الكامل (miratalqulub-full-source.zip)'}
+                    </span>
+                  </button>
                   <a
                     href="https://dash.cloudflare.com/"
                     target="_blank"
@@ -552,6 +602,11 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
+                {downloadError && (
+                  <p className="mt-2.5 text-xs text-red-300 bg-red-500/15 border border-red-500/30 rounded-xl px-3 py-2">
+                    {downloadError}
+                  </p>
+                )}
               </div>
 
               {/* Primary Public URL Card */}

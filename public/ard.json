@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schemastore.org/schemas/json/ard-1.0.json",
+  "ard_version": "1.0.0",
+  "name": "مِـرآة القـلوب | Mirror of Hearts",
+  "short_name": "مرآة القلوب",
+  "canonical_url": "https://miratalqulub.com",
+  "description": "منصة عربية معرفية وتفاعلية متخصصة في تحليل الشخصية، ودراسة التوافق النفسي والعاطفي والفكري، واختبارات الذكاء المتعدد، والمقالات المعرفية والروايات، مع التزام صارم بهندسة الخصوصية وتشفير TLS 1.3.",
+  "in_language": ["ar", "en"],
+  "organization": {
+    "name": "مِـرآة القـلوب (Mirror of Hearts)",
+    "location": "Amman, Jordan",
+    "contact_email": "one497303@gmail.com",
+    "logo_url": "https://miratalqulub.com/logo.webp"
+  },
+  "documentation": {
+    "llms_txt": "https://miratalqulub.com/llms.txt",
+    "sitemap_xml": "https://miratalqulub.com/sitemap.xml",
+    "privacy_policy": "https://miratalqulub.com/#/privacy",
+    "terms_of_service": "https://miratalqulub.com/#/terms",
+    "scientific_disclaimer": "https://miratalqulub.com/#/disclaimer",
+    "methodology": "https://miratalqulub.com/#/methodology"
+  },
+  "resources": [
+    {
+      "id": "home",
+      "title": "الصفحة الرئيسية | مِـرآة القـلوب",
+      "url": "https://miratalqulub.com/",
+      "type": "webpage",
+      "description": "التعريف بالمنصة، دليل الأقسام الستة، وهندسة الخصوصية وإخلاء المسؤولية العلمي والعيادي."
+    },
+    {
+      "id": "personality-tests",
+      "title": "قسم تحليل الشخصية",
+      "url": "https://miratalqulub.com/#/personality-tests",
+      "type": "interactive_application",
+      "description": "مختبر مقاييس الشخصية المعتمدة (MBTI، Big Five، 16PF، وأنماط التعلق)."
+    },
+    {
+      "id": "compatibility",
+      "title": "قسم كاشف شريك الحياة",
+      "url": "https://miratalqulub.com/#/compatibility",
+      "type": "interactive_application",
+      "description": "معالج التوافق السيكومتري من 4 خطوات مع الاكتشاف التلقائي للموقع والجنسية وتجربة اللقاء الأعمى."
+    },
+    {
+      "id": "articles",
+      "title": "المقالات المعرفية والأبحاث المحكّمة",
+      "url": "https://miratalqulub.com/#/articles",
+      "type": "knowledge_base",
+      "description": "موسوعة المقالات النفسية والأبحاث السيكومترية الموثقة بمراجع APA."
+    },
+    {
+      "id": "novels",
+      "title": "الروايات والقصص",
+      "url": "https://miratalqulub.com/#/novels",
+      "type": "literature_library",
+      "description": "روايات وقصص إنسانية وتحقيقات تحمل معاني ودروساً قيمة."
+    },
+    {
+      "id": "about",
+      "title": "من نحن",
+      "url": "https://miratalqulub.com/#/about",
+      "type": "webpage",
+      "description": "رؤية ورسالة وأهداف وقيم منصة مرآة القلوب."
+    },
+    {
+      "id": "faq",
+      "title": "الأسئلة الشائعة",
+      "url": "https://miratalqulub.com/#/faq",
+      "type": "faq_page",
+      "description": "إجابات مفصلة حول الاختبارات، الخصوصية، وأدوات المنصة."
+    }
+  ],
+  "api_endpoints": [
+    {
+      "path": "/api/detect-location",
+      "method": "GET",
+      "description": "اكتشاف تلقائي يحترم الخصوصية للموقع الجغرافي والجنسية لمعايرة الملامح العرقية الواقعية."
+    },
+    {
+      "path": "/api/questions/:test_id",
+      "method": "GET",
+      "description": "استرجاع بنود المقاييس السيكومترية واختبارات الذكاء والتوافق."
+    },
+    {
+      "path": "/api/analytics/stats",
+      "method": "GET",
+      "description": "ملخص إحصاءات الاستخدام العام للمنصة."
+    }
+  ],
+  "privacy_and_security": {
+    "encryption": "TLS 1.3 & AES-256",
+    "data_minimization": true,
+    "gdpr_ccpa_compliant": true,
+    "instant_user_data_deletion": true
+  }
+}
