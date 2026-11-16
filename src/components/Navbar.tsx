@@ -221,8 +221,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500 shrink-0" />
               </div>
               <p
-                className={`text-[10px] hidden sm:block ${
-                  isLight ? 'text-slate-500' : 'text-slate-400'
+                className={`text-[10px] font-medium hidden sm:block ${
+                  isLight ? 'text-slate-700' : 'text-slate-300'
                 }`}
               >
                 {t('brand_tagline')}
@@ -305,7 +305,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                       <div
                         className={`text-[11px] font-normal mt-0.5 ${
-                          isLight ? 'text-slate-500' : 'text-slate-400'
+                          isLight ? 'text-slate-700' : 'text-slate-300'
                         }`}
                       >
                         {isAr
@@ -333,7 +333,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                         <div
                           className={`text-[11px] font-normal mt-0.5 ${
-                            isLight ? 'text-slate-500' : 'text-slate-400'
+                            isLight ? 'text-slate-700' : 'text-slate-300'
                           }`}
                         >
                           {isAr
@@ -362,7 +362,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                         <div
                           className={`text-[11px] font-normal mt-0.5 ${
-                            isLight ? 'text-slate-500' : 'text-slate-400'
+                            isLight ? 'text-slate-700' : 'text-slate-300'
                           }`}
                         >
                           {isAr
@@ -445,7 +445,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                       <div
                         className={`text-[11px] font-normal mt-0.5 ${
-                          isLight ? 'text-slate-500' : 'text-slate-400'
+                          isLight ? 'text-slate-700' : 'text-slate-300'
                         }`}
                       >
                         {isAr
@@ -473,7 +473,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                         <div
                           className={`text-[11px] font-normal mt-0.5 ${
-                            isLight ? 'text-slate-500' : 'text-slate-400'
+                            isLight ? 'text-slate-700' : 'text-slate-300'
                           }`}
                         >
                           {isAr
@@ -502,7 +502,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                         <div
                           className={`text-[11px] font-normal mt-0.5 ${
-                            isLight ? 'text-slate-500' : 'text-slate-400'
+                            isLight ? 'text-slate-700' : 'text-slate-300'
                           }`}
                         >
                           {isAr
@@ -590,7 +590,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                       <div
                         className={`text-[11px] font-normal mt-0.5 ${
-                          isLight ? 'text-slate-500' : 'text-slate-400'
+                          isLight ? 'text-slate-700' : 'text-slate-300'
                         }`}
                       >
                         {isAr
@@ -623,7 +623,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                       <div
                         className={`text-[11px] font-normal mt-0.5 ${
-                          isLight ? 'text-slate-500' : 'text-slate-400'
+                          isLight ? 'text-slate-700' : 'text-slate-300'
                         }`}
                       >
                         {isAr
@@ -651,7 +651,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                         <div
                           className={`text-[11px] font-normal mt-0.5 ${
-                            isLight ? 'text-slate-500' : 'text-slate-400'
+                            isLight ? 'text-slate-700' : 'text-slate-300'
                           }`}
                         >
                           {isAr
@@ -676,7 +676,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-expanded={activeDropdown === 'profile'}
                 className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
                   activeDropdown === 'profile'
-                    ? 'bg-gradient-to-r from-violet-600 to-rose-600 text-white border-violet-400 shadow-md'
+                    ? 'bg-gradient-to-r from-violet-700 to-rose-700 text-white border-violet-400 shadow-md'
                     : isLight
                     ? 'bg-violet-50 hover:bg-violet-100 border-violet-300 text-violet-900'
                     : 'bg-gradient-to-r from-violet-500/20 to-rose-500/20 hover:from-violet-500/30 hover:to-rose-500/30 border-violet-400/50 text-violet-100'

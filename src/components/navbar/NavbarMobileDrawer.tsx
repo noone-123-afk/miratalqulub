@@ -48,7 +48,11 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           isLight ? 'bg-purple-50/60 border-purple-200' : 'bg-purple-950/25 border-purple-500/30'
         }`}
       >
-        <div className="font-extrabold text-purple-500 flex items-center gap-1.5">
+        <div
+          className={`font-extrabold flex items-center gap-1.5 ${
+            isLight ? 'text-purple-800' : 'text-purple-300'
+          }`}
+        >
           <Brain className="w-4 h-4" />
           <span>
             {isAr
@@ -112,7 +116,11 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           isLight ? 'bg-rose-50/60 border-rose-200' : 'bg-rose-950/25 border-rose-500/30'
         }`}
       >
-        <div className="font-extrabold text-rose-500 flex items-center gap-1.5">
+        <div
+          className={`font-extrabold flex items-center gap-1.5 ${
+            isLight ? 'text-rose-800' : 'text-rose-300'
+          }`}
+        >
           <Heart className="w-4 h-4" />
           <span>
             {isAr
@@ -161,7 +169,11 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
             : 'bg-emerald-950/25 border-emerald-500/30'
         }`}
       >
-        <div className="font-extrabold text-emerald-500 flex items-center gap-1.5">
+        <div
+          className={`font-extrabold flex items-center gap-1.5 ${
+            isLight ? 'text-emerald-800' : 'text-emerald-300'
+          }`}
+        >
           <BookOpen className="w-4 h-4" />
           <span>
             {isAr
@@ -213,7 +225,11 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           isLight ? 'bg-violet-50/70 border-violet-200' : 'bg-violet-950/30 border-violet-500/30'
         }`}
       >
-        <div className="font-extrabold text-violet-500 flex items-center justify-between">
+        <div
+          className={`font-extrabold flex items-center justify-between ${
+            isLight ? 'text-violet-800' : 'text-violet-300'
+          }`}
+        >
           <span>👤 {isAr ? 'ملفي والتحكم بالبيانات' : 'My Profile & Data Control'}</span>
         </div>
         <div className="grid grid-cols-2 gap-1.5">
@@ -250,7 +266,11 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           <button
             type="button"
             onClick={() => onSetConfirmDeleteStep(true)}
-            className="w-full p-2 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-500 font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+            className={`w-full p-2 rounded-xl border font-bold flex items-center justify-center gap-1.5 cursor-pointer ${
+              isLight
+                ? 'bg-rose-50 border-rose-300 text-rose-800'
+                : 'bg-rose-500/20 border-rose-500/40 text-rose-200'
+            }`}
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>
@@ -258,8 +278,14 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
             </span>
           </button>
         ) : (
-          <div className="p-2.5 rounded-xl bg-rose-600/15 border border-rose-500/40 space-y-2">
-            <p className="text-[11px] font-bold text-rose-500">
+          <div
+            className={`p-2.5 rounded-xl border space-y-2 ${
+              isLight
+                ? 'bg-rose-50 border-rose-300 text-rose-950'
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-100'
+            }`}
+          >
+            <p className="text-[11px] font-bold">
               {isAr
                 ? 'تأكيد المسح النهائي لجميع البيانات المحلية والسحابية؟'
                 : 'Confirm permanent erasure of all local and cloud data?'}
@@ -268,7 +294,7 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
               <button
                 type="button"
                 onClick={onPermanentDeleteData}
-                className="flex-1 py-1.5 rounded-lg bg-rose-600 text-white font-bold cursor-pointer"
+                className="flex-1 py-1.5 rounded-lg bg-rose-700 text-white font-bold cursor-pointer"
               >
                 {isAr ? 'نعم، احذف نهائياً' : 'Yes, Delete'}
               </button>

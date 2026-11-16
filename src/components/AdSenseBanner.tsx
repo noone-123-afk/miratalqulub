@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useAppTheme } from '../utils/theme';
 
 const ADSENSE_STORAGE_KEY = 'mirat_adsense_config_v2';
 const DEFAULT_ADSENSE_PUB_ID = 'pub-7880718645976012';
@@ -38,6 +39,8 @@ export const AdSenseBanner: React.FC<Props> = ({
   responsive = true,
 }) => {
   const adRef = useRef<HTMLModElement | null>(null);
+  const [theme] = useAppTheme();
+  const isLight = theme === 'light';
   const [clientTag, setClientTag] = useState(DEFAULT_ADSENSE_CLIENT_TAG);
   const [activeSlot, setActiveSlot] = useState(slot);
 
@@ -94,17 +97,38 @@ export const AdSenseBanner: React.FC<Props> = ({
 
   return (
     <div className={`w-full max-w-4xl mx-auto my-4 text-center ${className}`} dir="rtl">
-      <div className="flex items-center justify-between px-3 py-1 text-[10px] text-gray-400 border-b border-white/5">
-        <span className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+      <div
+        className={`flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold border-b ${
+          isLight
+            ? 'text-slate-700 border-slate-200'
+            : 'text-slate-200 border-white/10'
+        }`}
+      >
+        <span className="flex items-center gap-1.5">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isLight ? 'bg-emerald-700' : 'bg-emerald-400'
+            }`}
+          />
           <span>إعلان معتمد من Google AdSense</span>
         </span>
-        <span className="text-[9px] text-gray-500 font-mono" dir="ltr">
+        <span
+          className={`text-[10px] font-mono font-bold ${
+            isLight ? 'text-slate-700' : 'text-slate-300'
+          }`}
+          dir="ltr"
+        >
           {clientTag}
         </span>
       </div>
 
-      <div className="relative min-h-[90px] rounded-2xl bg-white/[0.02] border border-white/5 p-2 flex items-center justify-center overflow-hidden">
+      <div
+        className={`relative min-h-[90px] rounded-2xl border p-2 flex items-center justify-center overflow-hidden ${
+          isLight
+            ? 'bg-slate-50 border-slate-200'
+            : 'bg-slate-900/80 border-white/10'
+        }`}
+      >
         {/* Real AdSense Ad Unit Tag */}
         <ins
           key={`${clientTag}-${activeSlot}`}
@@ -118,12 +142,26 @@ export const AdSenseBanner: React.FC<Props> = ({
         />
 
         {/* Fallback graceful presentation when AdSense is reviewing the site or ad-blocker is on */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-45 hover:opacity-75 transition p-2">
-          <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
-            <span className="font-['Alexandria'] font-bold text-amber-300">Google AdSense</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition p-2">
+          <div
+            className={`flex items-center gap-2 text-xs font-bold ${
+              isLight ? 'text-slate-800' : 'text-slate-100'
+            }`}
+          >
+            <span
+              className={`font-['Alexandria'] font-extrabold ${
+                isLight ? 'text-amber-800' : 'text-amber-300'
+              }`}
+            >
+              Google AdSense
+            </span>
             <span>• مساحة إعلانية متجاوبة ({activeSlot})</span>
           </div>
-          <span className="text-[10px] text-gray-500 mt-0.5">
+          <span
+            className={`text-[11px] font-medium mt-0.5 ${
+              isLight ? 'text-slate-700' : 'text-slate-300'
+            }`}
+          >
             مرتبط بمعرف الناشر ({clientTag}) — تظهر الإعلانات تلقائياً للزوار
           </span>
         </div>

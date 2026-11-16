@@ -106,11 +106,11 @@ export const CookieConsentBanner: React.FC<Props> = ({
                   <span>GDPR & Google AdSense Ready</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+              <p className="text-xs text-slate-200 leading-relaxed max-w-2xl">
                 {isEn
                   ? 'We use essential cookies and certified analytics to enhance your experience, safeguard platform security, and display compliant non-intrusive ads via Google AdSense.'
                   : 'نحن نستخدم ملفات تعريف الارتباط وتقنيات القياس المعتمدة لتحسين تجربة التصفح، وضمان أمان المنصة، وعرض محتوى وإعلانات مخصصة عبر شبكة Google AdSense.'}
-                <span className="text-emerald-400 font-semibold block mt-1">
+                <span className="text-emerald-300 font-semibold block mt-1">
                   {isEn
                     ? '🔒 All psychological assessments and test data are encrypted (TLS 1.3/AES-256), never sold or shared with advertisers, and comply strictly with Google privacy standards.'
                     : '🔒 جميع بياناتك النفسية وإجابات الاختبارات تُعالج بتشفير TLS 1.3 تام ولا تُباع ولا تُشارك مع أي طرف إعلاني، وتخضع لشروط وسياسة قوقل.'}
@@ -123,20 +123,20 @@ export const CookieConsentBanner: React.FC<Props> = ({
                     soundManager.playTap();
                     onOpenPrivacyPolicy();
                   }}
-                  className="text-blue-400 hover:text-blue-300 underline font-semibold cursor-pointer"
+                  className="text-sky-300 hover:text-sky-200 underline font-semibold cursor-pointer"
                 >
                   {isEn ? 'Full Privacy Policy' : 'سياسة الخصوصية الكاملة'}
                 </button>
                 {onOpenTermsOfService && (
                   <>
-                    <span className="text-slate-600">•</span>
+                    <span className="text-slate-300">•</span>
                     <button
                       type="button"
                       onClick={() => {
                         soundManager.playTap();
                         onOpenTermsOfService();
                       }}
-                      className="text-slate-400 hover:text-slate-200 underline cursor-pointer"
+                      className="text-slate-200 hover:text-white underline cursor-pointer"
                     >
                       {isEn ? 'Terms of Service' : 'شروط الاستخدام'}
                     </button>
@@ -154,7 +154,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
                 soundManager.playTap();
                 setShowPreferences(!showPreferences);
               }}
-              className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition flex items-center gap-1.5 cursor-pointer"
+              className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold border border-slate-600 transition flex items-center gap-1.5 cursor-pointer"
               title={isEn ? 'Customize Preferences' : 'تخصيص الخيارات'}
             >
               <Settings2 className="w-3.5 h-3.5" />
@@ -164,7 +164,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
             <button
               type="button"
               onClick={handleAcceptNecessaryOnly}
-              className="py-2.5 px-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold border border-slate-700 transition cursor-pointer"
+              className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 hover:text-white text-xs font-bold border border-slate-600 transition cursor-pointer"
             >
               {isEn ? 'Necessary Only' : 'الضرورية فقط'}
             </button>
@@ -190,13 +190,13 @@ export const CookieConsentBanner: React.FC<Props> = ({
                   <span className="font-bold text-white block">
                     {isEn ? 'Strictly Necessary' : 'ملفات ضرورية للتشغيل'}
                   </span>
-                  <p className="text-[11px] text-slate-400 leading-snug">
+                  <p className="text-[11px] text-slate-300 leading-snug">
                     {isEn
                       ? 'Session security, PIN lock authentication, and core UI functionality.'
                       : 'وظائف الأمان، التحقق من الجلسة، وحفظ إعدادات الخصوصية.'}
                   </p>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold shrink-0 mx-2">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-200 font-bold shrink-0 mx-2">
                   {isEn ? 'Always Active' : 'دائمة التفعيل'}
                 </span>
               </div>
@@ -207,7 +207,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
                   <span className="font-bold text-white block">
                     {isEn ? 'Performance & Speed' : 'تحسين الأداء والسرعة'}
                   </span>
-                  <p className="text-[11px] text-slate-400 leading-snug">
+                  <p className="text-[11px] text-slate-300 leading-snug">
                     {isEn
                       ? 'Measures response latency and diagnostics to optimize the platform.'
                       : 'قياس أوقات الاستجابة وتشخيص الأخطاء لتحسين المنصة.'}
@@ -217,6 +217,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
                   type="checkbox"
                   checked={allowAnalytics}
                   onChange={(e) => setAllowAnalytics(e.target.checked)}
+                  aria-label={isEn ? 'Performance & Speed Cookies' : 'ملفات تحسين الأداء والسرعة'}
                   className="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer mx-2 mt-0.5"
                 />
               </div>
@@ -227,7 +228,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
                   <span className="font-bold text-white block">
                     {isEn ? 'Google AdSense' : 'إعلانات Google AdSense'}
                   </span>
-                  <p className="text-[11px] text-slate-400 leading-snug">
+                  <p className="text-[11px] text-slate-300 leading-snug">
                     {isEn
                       ? 'Respectful, compliant advertising that keeps all psychometric tests free.'
                       : 'تخصيص الإعلانات النظيفة غير المتطفلة لضمان استمرارية المنصة المجانية.'}
@@ -237,6 +238,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
                   type="checkbox"
                   checked={allowPersonalizedAds}
                   onChange={(e) => setAllowPersonalizedAds(e.target.checked)}
+                  aria-label={isEn ? 'Google AdSense Cookies' : 'ملفات إعلانات Google AdSense'}
                   className="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer mx-2 mt-0.5"
                 />
               </div>
@@ -246,7 +248,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleSaveCustom}
-                className="py-2 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                className="py-2 px-4 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>{isEn ? 'Save Preferences' : 'حفظ خياراتي المفضلة'}</span>

@@ -95,8 +95,8 @@ export const Footer: React.FC<FooterProps> = ({
       dir={isAr ? 'rtl' : 'ltr'}
       className={`w-full border-t pt-12 pb-8 text-xs transition-colors duration-300 ${
         isLight
-          ? 'bg-slate-100/95 border-slate-200 text-slate-600'
-          : 'bg-[#08060f]/95 border-white/10 text-slate-400 backdrop-blur-md'
+          ? 'bg-slate-100/95 border-slate-200 text-slate-700'
+          : 'bg-[#08060f]/95 border-white/10 text-slate-300 backdrop-blur-md'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
@@ -220,7 +220,7 @@ export const Footer: React.FC<FooterProps> = ({
                   soundManager.playTap();
                   onOpenUserDashboard();
                 }}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-rose-600 hover:from-violet-500 hover:to-rose-500 text-white font-extrabold text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-700 to-rose-700 hover:from-violet-600 hover:to-rose-600 text-white font-extrabold text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>{isAr ? 'فتح لوحة ملفي وسجلاتي' : 'Open My Profile & Dossier'}</span>
@@ -235,8 +235,8 @@ export const Footer: React.FC<FooterProps> = ({
                   }}
                   className={`px-3 py-2 rounded-xl border font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${
                     isLight
-                      ? 'bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700'
-                      : 'bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/35 text-rose-300'
+                      ? 'bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-800'
+                      : 'bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40 text-rose-200'
                   }`}
                 >
                   <Trash2 className="w-3.5 h-3.5 text-rose-500" />
@@ -246,7 +246,13 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
 
             {deleteSuccess && (
-              <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-500 text-xs font-bold flex items-center gap-2">
+              <div
+                className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                  isLight
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                    : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200'
+                }`}
+              >
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>
                   {isAr
@@ -277,7 +283,7 @@ export const Footer: React.FC<FooterProps> = ({
                     type="button"
                     disabled={isDeleting}
                     onClick={handlePermanentDelete}
-                    className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-600 disabled:bg-rose-800 disabled:opacity-80 text-white font-extrabold text-xs cursor-pointer"
                   >
                     {isDeleting
                       ? isAr
@@ -348,9 +354,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'home'
-                        ? 'text-indigo-600'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-indigo-600'
+                        ? 'text-slate-700 hover:text-indigo-800'
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
@@ -366,9 +374,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'personality-tests'
-                        ? 'text-indigo-600'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-indigo-600'
+                        ? 'text-slate-700 hover:text-indigo-800'
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
@@ -384,9 +394,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'compatibility'
-                        ? 'text-indigo-600'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-indigo-600'
+                        ? 'text-slate-700 hover:text-indigo-800'
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
@@ -418,9 +430,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'articles'
-                        ? 'text-indigo-600'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-indigo-600'
+                        ? 'text-slate-700 hover:text-indigo-800'
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
@@ -436,9 +450,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'novels'
-                        ? 'text-indigo-600'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-indigo-600'
+                        ? 'text-slate-700 hover:text-indigo-800'
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
@@ -595,9 +611,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'privacy'
-                        ? 'text-emerald-600'
+                        ? isLight
+                          ? 'text-emerald-800'
+                          : 'text-emerald-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-emerald-600'
+                        ? 'text-slate-700 hover:text-emerald-800'
                         : 'text-slate-200 hover:text-emerald-300'
                     }`}
                   >
@@ -613,9 +631,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'terms'
-                        ? 'text-emerald-600'
+                        ? isLight
+                          ? 'text-emerald-800'
+                          : 'text-emerald-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-emerald-600'
+                        ? 'text-slate-700 hover:text-emerald-800'
                         : 'text-slate-200 hover:text-emerald-300'
                     }`}
                   >
@@ -631,9 +651,11 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${
                       currentPage === 'disclaimer'
-                        ? 'text-amber-600'
+                        ? isLight
+                          ? 'text-amber-800'
+                          : 'text-amber-300'
                         : isLight
-                        ? 'text-slate-700 hover:text-amber-600'
+                        ? 'text-slate-700 hover:text-amber-800'
                         : 'text-slate-200 hover:text-amber-300'
                     }`}
                   >
@@ -645,7 +667,11 @@ export const Footer: React.FC<FooterProps> = ({
                     <button
                       type="button"
                       onClick={() => onNavigatePage('admin-cms')}
-                      className="text-amber-500 hover:text-amber-400 font-bold transition cursor-pointer flex items-center gap-1.5"
+                      className={`font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        isLight
+                          ? 'text-amber-800 hover:text-amber-900'
+                          : 'text-amber-300 hover:text-amber-200'
+                      }`}
                     >
                       <span>🛡️ {isAr ? 'مركز إدارة المحتوى وتحميل ملفات الموقع' : 'CMS & Website Files Download'}</span>
                     </button>
@@ -687,8 +713,8 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Copyright & Security Status Bar */}
         <div
-          className={`pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] ${
-            isLight ? 'border-slate-200 text-slate-500' : 'border-white/5 text-slate-400'
+          className={`pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-medium ${
+            isLight ? 'border-slate-300 text-slate-700' : 'border-white/10 text-slate-300'
           }`}
         >
           <div className="flex items-center gap-3 flex-wrap justify-center sm:justify-start">
@@ -699,8 +725,16 @@ export const Footer: React.FC<FooterProps> = ({
             <span>Google Cloud Platform (Europe-West1)</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-emerald-500 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span
+              className={`flex items-center gap-1.5 font-bold ${
+                isLight ? 'text-emerald-800' : 'text-emerald-300'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isLight ? 'bg-emerald-700' : 'bg-emerald-400'
+                }`}
+              />
               <span>{t('cloud_status')}</span>
             </span>
             <span>{t('ssl_verified')}</span>

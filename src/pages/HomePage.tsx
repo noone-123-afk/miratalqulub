@@ -240,7 +240,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               <button
                 type="button"
                 onClick={() => handleDownloadLogo('png')}
-                className="px-3 py-1 rounded-xl bg-gradient-to-r from-rose-600 to-violet-600 hover:from-rose-500 hover:to-violet-500 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center gap-1"
+                className="px-3 py-1 rounded-xl bg-gradient-to-r from-rose-700 to-violet-700 hover:from-rose-600 hover:to-violet-600 text-white text-[11px] font-bold shadow-sm transition cursor-pointer flex items-center gap-1"
               >
                 <span>⬇</span>
                 <span>
@@ -326,7 +326,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
             <button
               type="button"
               onClick={openCompatibilitySection}
-              className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-500/25 transition-all duration-200 cursor-pointer flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-500/25 transition-all duration-200 cursor-pointer flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span>{isAr ? 'ابدأ الآن' : 'Start Now'}</span>
               <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
@@ -357,11 +357,21 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shrink-0">
+              <div
+                className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${
+                  isLight
+                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                    : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
+                }`}
+              >
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[11px] font-extrabold text-indigo-500 uppercase tracking-wider block">
+                <span
+                  className={`text-[11px] font-extrabold uppercase tracking-wider block ${
+                    isLight ? 'text-indigo-700' : 'text-indigo-300'
+                  }`}
+                >
                   {isAr ? 'نبذة عن الموقع' : 'About the Platform'}
                 </span>
                 <h2
@@ -466,7 +476,13 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                       : 'bg-slate-950/60 border-white/10 text-slate-100'
                   }`}
                 >
-                  <span className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 font-bold text-xs">
+                  <span
+                    className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs ${
+                      isLight
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-emerald-500/20 text-emerald-300'
+                    }`}
+                  >
                     ✓
                   </span>
                   <span className="text-xs font-bold leading-snug">
@@ -488,7 +504,13 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
         className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-4"
       >
         <div className="text-center mb-7 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold bg-indigo-500/10 border border-indigo-500/20 text-indigo-500">
+          <div
+            className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold border ${
+              isLight
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-800'
+                : 'bg-indigo-500/15 border-indigo-400/30 text-indigo-200'
+            }`}
+          >
             <Compass className="w-3.5 h-3.5" />
             <span>{isAr ? 'دليل أقسام المنصة' : 'Platform Sections Directory'}</span>
           </div>
@@ -501,7 +523,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
           </h2>
           <p
             className={`text-sm sm:text-base max-w-xl mx-auto ${
-              isLight ? 'text-slate-500' : 'text-slate-400'
+              isLight ? 'text-slate-700' : 'text-slate-300'
             }`}
           >
             {isAr
@@ -543,7 +565,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
 
                   <p
                     className={`text-xs sm:text-sm leading-relaxed ${
-                      isLight ? 'text-slate-600' : 'text-slate-400'
+                      isLight ? 'text-slate-700' : 'text-slate-300'
                     }`}
                   >
                     {isAr ? card.descAr : card.descEn}
@@ -553,8 +575,8 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                 <div
                   className={`pt-3 border-t flex items-center justify-between text-xs font-extrabold ${
                     isLight
-                      ? 'border-slate-100 text-indigo-600 group-hover:text-indigo-700'
-                      : 'border-white/5 text-indigo-400 group-hover:text-indigo-300'
+                      ? 'border-slate-200 text-indigo-700 group-hover:text-indigo-800'
+                      : 'border-white/10 text-indigo-300 group-hover:text-indigo-200'
                   }`}
                 >
                   <span>{isAr ? 'دخول القسم' : 'Enter Section'}</span>
@@ -592,14 +614,18 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               <div
                 className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
                   isLight
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
-                    : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
                 }`}
               >
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[11px] font-extrabold text-emerald-500 uppercase tracking-wider block">
+                <span
+                  className={`text-[11px] font-extrabold uppercase tracking-wider block ${
+                    isLight ? 'text-emerald-800' : 'text-emerald-300'
+                  }`}
+                >
                   {isAr ? 'سياسة الخصوصية والضمانات القانونية والعيادية' : 'Privacy Policy & Legal/Clinical Safeguards'}
                 </span>
                 <h2
@@ -621,7 +647,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                   soundManager.playTap();
                   if (props.onNavigatePage) props.onNavigatePage('privacy');
                 }}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                className="px-4 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>{isAr ? 'سياسة الخصوصية الكاملة' : 'Full Privacy Policy'}</span>
@@ -775,7 +801,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                     : 'User’s Right to Permanently Delete Data (Instant Control):'}
                 </span>
               </span>
-              <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className={`text-xs ${isLight ? 'text-slate-700' : 'text-slate-200'}`}>
                 {isAr
                   ? 'اضغط هنا لمسح جميع بياناتك وسجل اختباراتك من المتصفح والسحابة نهائياً وبلا رجعة.'
                   : 'Click here to permanently erase all your profile data and test history from browser and cloud storage.'}
@@ -789,7 +815,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                   soundManager.playTap();
                   setConfirmDelete(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition cursor-pointer shrink-0 flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs transition cursor-pointer shrink-0 flex items-center gap-1.5 shadow-sm"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>{isAr ? 'حذف بياناتي نهائياً' : 'Delete My Data Permanently'}</span>
@@ -797,7 +823,11 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
             )}
 
             {deleteSuccess && (
-              <span className="text-xs font-bold text-emerald-500 flex items-center gap-1.5">
+              <span
+                className={`text-xs font-bold flex items-center gap-1.5 ${
+                  isLight ? 'text-emerald-800' : 'text-emerald-300'
+                }`}
+              >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>
                   {isAr ? 'تم مسح جميع بياناتك نهائياً بنجاح.' : 'All data permanently erased.'}
@@ -811,7 +841,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                   type="button"
                   disabled={isDeleting}
                   onClick={handlePermanentDelete}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-700 hover:bg-rose-600 disabled:bg-rose-800 disabled:opacity-80 text-white font-extrabold text-xs cursor-pointer"
                 >
                   {isDeleting
                     ? isAr
@@ -826,8 +856,8 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                   onClick={() => setConfirmDelete(false)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer ${
                     isLight
-                      ? 'bg-white border border-slate-300 text-slate-700'
-                      : 'bg-slate-800 text-slate-300'
+                      ? 'bg-white border border-slate-300 text-slate-800'
+                      : 'bg-slate-800 text-slate-200'
                   }`}
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}

@@ -63,8 +63,8 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
           {isAr ? 'مركز التحكم الشخصي والخصوصية' : 'Personal Profile & Data Control'}
         </span>
         <span
-          className={`text-[10px] font-mono px-2 py-0.5 rounded ${
-            isLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/15 text-emerald-300'
+          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+            isLight ? 'bg-emerald-50 text-emerald-800' : 'bg-emerald-500/20 text-emerald-200'
           }`}
         >
           TLS 1.3
@@ -85,7 +85,7 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
             <div>{isAr ? 'لوحة ملفي السيكومتري الشامل' : 'My Psychometric Dashboard'}</div>
             <div
               className={`text-[10px] font-normal ${
-                isLight ? 'text-slate-500' : 'text-slate-400'
+                isLight ? 'text-slate-700' : 'text-slate-300'
               }`}
             >
               {isAr
@@ -114,7 +114,7 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
             </div>
             <div
               className={`text-[10px] font-normal ${
-                isLight ? 'text-slate-500' : 'text-slate-400'
+                isLight ? 'text-slate-700' : 'text-slate-300'
               }`}
             >
               {isAr
@@ -151,7 +151,7 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
             </div>
             <div
               className={`text-[10px] font-normal ${
-                isLight ? 'text-slate-500' : 'text-slate-400'
+                isLight ? 'text-slate-700' : 'text-slate-300'
               }`}
             >
               {isAr
@@ -165,7 +165,13 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
       {/* 4. PERMANENT DATA DELETION OPTION */}
       <div className={`pt-2 border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
         {deleteSuccessToast ? (
-          <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-500 text-xs font-bold flex items-center gap-2">
+          <div
+            className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+              isLight
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200'
+            }`}
+          >
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>
               {isAr
@@ -182,8 +188,8 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
             }}
             className={`w-full p-2.5 rounded-xl border transition flex items-center justify-between text-xs font-bold cursor-pointer ${
               isLight
-                ? 'bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700'
-                : 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30 text-rose-300'
+                ? 'bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-800'
+                : 'bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/40 text-rose-200'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -214,7 +220,7 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
                 type="button"
                 disabled={isDeletingData}
                 onClick={onPermanentDeleteData}
-                className="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition cursor-pointer"
+                className="flex-1 py-1.5 px-3 rounded-lg bg-rose-700 hover:bg-rose-600 disabled:bg-rose-800 disabled:opacity-80 text-white text-xs font-extrabold transition cursor-pointer"
               >
                 {isDeletingData
                   ? isAr
@@ -229,8 +235,8 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
                 onClick={() => onSetConfirmDeleteStep(false)}
                 className={`py-1.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer ${
                   isLight
-                    ? 'bg-white border border-slate-300 text-slate-700'
-                    : 'bg-slate-800 text-slate-300'
+                    ? 'bg-white border border-slate-300 text-slate-800'
+                    : 'bg-slate-800 text-slate-200'
                 }`}
               >
                 {isAr ? 'إلغاء' : 'Cancel'}

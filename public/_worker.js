@@ -62,20 +62,87 @@ export default {
       );
     }
 
-    if (path === '/ai-catalog.json' || path === '/.well-known/ai-catalog.json') {
+    if (
+      path === '/ai-catalog.json' ||
+      path === '/.well-known/ai-catalog.json' ||
+      path === '/ard.json' ||
+      path === '/.well-known/ard.json'
+    ) {
       return new Response(
         JSON.stringify(
           {
-            catalog_version: '1.0',
-            name: 'منصة مِـرآة القـلوب',
-            description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
-            url: 'https://miratalqulub.com',
-            resources: [
+            specVersion: '1.0',
+            host: {
+              displayName: 'منصة مِـرآة القـلوب',
+              identifier: 'did:web:miratalqulub.com',
+              documentationUrl: 'https://miratalqulub.com/llms.txt',
+              logoUrl: 'https://miratalqulub.com/logo.png',
+            },
+            entries: [
               {
-                name: 'الرئيسية',
-                url: 'https://miratalqulub.com/',
+                identifier: 'urn:air:miratalqulub.com:web:home',
+                displayName: 'الرئيسية - منصة مِـرآة القـلوب',
                 type: 'text/html',
-                description: 'الصفحة الرئيسية للمنصة واختبارات الشخصية.',
+                url: 'https://miratalqulub.com/',
+                description:
+                  'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
+                version: '1.0.0',
+                updatedAt: '2026-11-16T00:00:00Z',
+                tags: ['psychology', 'personality-assessment', 'compatibility'],
+                capabilities: ['PersonalityAssessment', 'CompatibilityAnalysis'],
+                representativeQueries: [
+                  'اختبار تحليل الشخصية مرآة القلوب',
+                  'اختبار التوافق العاطفي وكاشف شريك الحياة',
+                  'Mirror of Hearts psychometric personality test',
+                ],
+              },
+              {
+                identifier: 'urn:air:miratalqulub.com:web:personality-tests',
+                displayName: 'تحليل الشخصية السيكومتري',
+                type: 'text/html',
+                url: 'https://miratalqulub.com/#/personality-tests',
+                description:
+                  'منظومة التحليل النفسي متعدد المستويات (السريع، المتقدم، الاحترافي) ومقارنة الشخصيات.',
+                version: '1.0.0',
+                updatedAt: '2026-11-16T00:00:00Z',
+                tags: ['mbti', 'big-five', 'psychometrics'],
+                capabilities: ['TieredPersonalityAssessment', 'PersonalityComparison'],
+                representativeQueries: [
+                  'اختبار الشخصية MBTI والعوامل الخمسة الكبرى',
+                  'مقارنة توافق شخصيتين علمياً',
+                ],
+              },
+              {
+                identifier: 'urn:air:miratalqulub.com:web:compatibility',
+                displayName: 'كاشف شريك الحياة والتوافق العاطفي',
+                type: 'text/html',
+                url: 'https://miratalqulub.com/#/compatibility',
+                description:
+                  'اختبار التوافق العاطفي والفكري والأسري المبني على النماذج السيكومترية المعتمدة.',
+                version: '1.0.0',
+                updatedAt: '2026-11-16T00:00:00Z',
+                tags: ['relationship-compatibility', 'partner-matching'],
+                capabilities: ['PartnerCompatibilityTest', 'RelationalSynergyReport'],
+                representativeQueries: [
+                  'اختبار التوافق بين الشريكين',
+                  'تحليل توافق الزواج والعلاقات العاطفية',
+                ],
+              },
+              {
+                identifier: 'urn:air:miratalqulub.com:docs:llms',
+                displayName: 'دليل النماذج اللغوية (LLMs)',
+                type: 'text/plain',
+                url: 'https://miratalqulub.com/llms.txt',
+                description:
+                  'ملف تعريفي مهيأ لوكلاء الذكاء الاصطناعي والنماذج اللغوية الكبيرة.',
+                version: '1.0.0',
+                updatedAt: '2026-11-16T00:00:00Z',
+                tags: ['llms-txt', 'ai-documentation'],
+                capabilities: ['LLMContextGuide'],
+                representativeQueries: [
+                  'ملف llms.txt لمنصة مرآة القلوب',
+                  'توثيق منصة مرآة القلوب لوكلاء الذكاء الاصطناعي',
+                ],
               },
             ],
           },

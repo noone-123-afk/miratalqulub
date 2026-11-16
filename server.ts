@@ -95,56 +95,47 @@ app.get(['/llms.txt', '/llms-full.txt'], (_req: Request, res: Response) => {
   );
 });
 
-app.get(['/ard.json', '/.well-known/ard.json'], (_req: Request, res: Response) => {
-  const ardPath = path.resolve('public', 'ard.json');
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  if (fs.existsSync(ardPath)) {
-    try {
-      const raw = fs.readFileSync(ardPath, 'utf-8');
-      const parsed = JSON.parse(raw);
-      return res.json(parsed);
-    } catch {
-      // Fallback below
+app.get(
+  ['/ai-catalog.json', '/.well-known/ai-catalog.json', '/ard.json', '/.well-known/ard.json'],
+  (_req: Request, res: Response) => {
+    const publicCatalogPath = path.resolve('public', 'ai-catalog.json');
+    const rootCatalogPath = path.resolve('ai-catalog.json');
+    const targetPath = fs.existsSync(publicCatalogPath) ? publicCatalogPath : rootCatalogPath;
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (fs.existsSync(targetPath)) {
+      return res.status(200).sendFile(targetPath);
     }
-  }
-  return res.json({
-    ard_version: '1.0.0',
-    name: 'مِـرآة القـلوب | Mirror of Hearts',
-    canonical_url: 'https://miratalqulub.com',
-    documentation: {
-      llms_txt: 'https://miratalqulub.com/llms.txt',
-      sitemap_xml: 'https://miratalqulub.com/sitemap.xml',
-    },
-  });
-});
-
-app.get(['/ai-catalog.json', '/.well-known/ai-catalog.json'], (_req: Request, res: Response) => {
-  const rootCatalogPath = path.resolve('ai-catalog.json');
-  const publicCatalogPath = path.resolve('public', 'ai-catalog.json');
-  const targetPath = fs.existsSync(rootCatalogPath) ? rootCatalogPath : publicCatalogPath;
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  if (fs.existsSync(targetPath)) {
-    return res.status(200).sendFile(targetPath);
-  }
-  return res.status(200).json({
-    catalog_version: '1.0',
-    name: 'منصة مِـرآة القـلوب',
-    description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
-    url: 'https://miratalqulub.com',
-    resources: [
-      {
-        name: 'الرئيسية',
-        url: 'https://miratalqulub.com/',
-        type: 'text/html',
-        description: 'الصفحة الرئيسية للمنصة واختبارات الشخصية.',
+    return res.status(200).json({
+      specVersion: '1.0',
+      host: {
+        displayName: 'منصة مِـرآة القـلوب',
+        identifier: 'did:web:miratalqulub.com',
+        documentationUrl: 'https://miratalqulub.com/llms.txt',
+        logoUrl: 'https://miratalqulub.com/logo.png',
       },
-    ],
-  });
-});
+      entries: [
+        {
+          identifier: 'urn:air:miratalqulub.com:web:home',
+          displayName: 'الرئيسية - منصة مِـرآة القـلوب',
+          type: 'text/html',
+          url: 'https://miratalqulub.com/',
+          description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
+          version: '1.0.0',
+          updatedAt: '2026-11-16T00:00:00Z',
+          tags: ['psychology', 'personality-assessment', 'compatibility'],
+          capabilities: ['PersonalityAssessment', 'CompatibilityAnalysis'],
+          representativeQueries: [
+            'اختبار تحليل الشخصية مرآة القلوب',
+            'اختبار التوافق العاطفي وكاشف شريك الحياة',
+            'Mirror of Hearts psychometric personality test',
+          ],
+        },
+      ],
+    });
+  }
+);
 
 app.get('/api/download-logo', (req: Request, res: Response) => {
   const format = String(req.query.format || 'png').toLowerCase() === 'jpg' ? 'jpg' : 'png';
