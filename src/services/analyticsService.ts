@@ -1,5 +1,3 @@
-import { db, doc, setDoc, getDoc, isAutomatedAuditEnvironment } from '../firebase';
-
 export interface AnalyticsSummary {
   totalVisitors: number;
   todayVisitors: number;
@@ -25,6 +23,35 @@ export interface AnalyticsSummary {
 
 // Session cache to prevent over-counting in a single tab session
 let hasTrackedSession = false;
+
+function isAutomatedAuditEnvironment(): boolean {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return true;
+  const ua = navigator.userAgent || '';
+  return Boolean(
+    navigator.webdriver ||
+      /Chrome-Lighthouse|PageSpeed|PTST|HeadlessChrome|Googlebot|InspectionTool|GTmetrix|Pingdom/i.test(
+        ua
+      )
+  );
+}
+
+function hasActiveCloudSession(): boolean {
+  try {
+    if (
+      localStorage.getItem('mirat_has_auth_session') === '1' ||
+      localStorage.getItem('mirat_has_cloud_data') === '1'
+    ) {
+      return true;
+    }
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('firebase:authUser:')) {
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
 
 function withTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -58,7 +85,11 @@ function getYearString(): string {
 function detectDevice(): 'mobile' | 'tablet' | 'desktop' {
   if (typeof window === 'undefined') return 'desktop';
   const ua = navigator.userAgent.toLowerCase();
-  if (/(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(ua)) {
+  if (
+    /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(
+      ua
+    )
+  ) {
     return 'tablet';
   }
   if (/mobile|iphone|ipod|blackberry|opera mini|iemobile|wpdesktop/.test(ua)) {
@@ -68,7 +99,7 @@ function detectDevice(): 'mobile' | 'tablet' | 'desktop' {
 }
 
 /**
- * Tracks a site visit (daily, monthly, yearly) without blocking the main thread or causing 405 / timeout errors
+ * Tracks a site visit (daily, monthly, yearly) without blocking the main thread or pulling Firestore for anonymous visitors
  */
 export async function trackSiteVisit(): Promise<void> {
   if (hasTrackedSession) return;
@@ -85,7 +116,7 @@ export async function trackSiteVisit(): Promise<void> {
     const device = detectDevice();
     const now = new Date().toISOString();
 
-    // Use GET query string so both Express app.all('/api/analytics/track') and static CDN edges return 200 OK (never 405 Method Not Allowed)
+    // Use GET query string so both Express app.all('/api/analytics/track') and static CDN edges return 200 OK
     try {
       const params = new URLSearchParams({
         type: 'visit',
@@ -100,8 +131,14 @@ export async function trackSiteVisit(): Promise<void> {
       }).catch(() => {});
     } catch {}
 
+    // Only dynamically load Firestore SDK if the user already has an authenticated/cloud session
+    if (!hasActiveCloudSession()) {
+      return;
+    }
+
     const persistToFirestore = async () => {
       try {
+        const { db, doc, getDoc, setDoc } = await import('../firebase');
         const overviewRef = doc(db, 'site_analytics', 'overview');
         const overviewSnap = await withTimeout(getDoc(overviewRef), 2500);
         const existing = overviewSnap.exists() ? overviewSnap.data() : {};
@@ -179,7 +216,14 @@ export async function trackSiteVisit(): Promise<void> {
  * Tracks an interactive test or section event
  */
 export async function trackTestEvent(
-  testKey: 'partner_compatibility' | 'intelligence_multiple' | 'psychology_16pf' | 'psychology_bigfive' | 'blind_date' | 'novels' | 'articles',
+  testKey:
+    | 'partner_compatibility'
+    | 'intelligence_multiple'
+    | 'psychology_16pf'
+    | 'psychology_bigfive'
+    | 'blind_date'
+    | 'novels'
+    | 'articles',
   action: 'started' | 'completed' | 'viewed'
 ): Promise<void> {
   if (isAutomatedAuditEnvironment()) return;
@@ -198,8 +242,11 @@ export async function trackTestEvent(
     }).catch(() => {});
   } catch {}
 
-  // Direct Firestore with timeout guard
+  if (!hasActiveCloudSession()) return;
+
+  // Dynamic Firestore import only when needed
   try {
+    const { db, doc, getDoc, setDoc } = await import('../firebase');
     const overviewRef = doc(db, 'site_analytics', 'overview');
     const snap = await withTimeout(getDoc(overviewRef), 2500);
     const data = snap.exists() ? snap.data() : {};
@@ -240,10 +287,10 @@ export async function trackTestEvent(
 }
 
 /**
- * Fetch full analytics summary (combining Firestore & defaults)
+ * Fetch full analytics summary (combining Server API & lazy Firestore fallback)
  */
 export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
-  // First try server endpoint
+  // First try server endpoint (0 KB extra bundle)
   try {
     const res = await fetch('/api/analytics/stats');
     if (res.ok) {
@@ -254,14 +301,18 @@ export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
     }
   } catch {}
 
-  // Then try Firestore directly with timeout
+  // Then dynamically import Firestore only if server endpoint is unreachable
   try {
+    const { db, doc, getDoc } = await import('../firebase');
     const overviewRef = doc(db, 'site_analytics', 'overview');
     const snap = await withTimeout(getDoc(overviewRef), 2500);
     if (snap.exists()) {
       const d = snap.data();
       const today = getTodayString();
-      const dailySnap = await withTimeout(getDoc(doc(db, 'site_analytics', `daily_${today}`)), 2500);
+      const dailySnap = await withTimeout(
+        getDoc(doc(db, 'site_analytics', `daily_${today}`)),
+        2500
+      );
       const todayCount = dailySnap.exists() ? dailySnap.data().visitorCount || 0 : 0;
 
       return {
@@ -314,7 +365,9 @@ export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
 /**
  * Triggers an analytical report dispatch to the official owner email (one497303@gmail.com)
  */
-export async function sendAnalyticsEmailReport(summary: AnalyticsSummary): Promise<{ success: boolean; message: string }> {
+export async function sendAnalyticsEmailReport(
+  summary: AnalyticsSummary
+): Promise<{ success: boolean; message: string }> {
   try {
     const res = await fetch('/api/analytics/send-report', {
       method: 'POST',
@@ -327,7 +380,10 @@ export async function sendAnalyticsEmailReport(summary: AnalyticsSummary): Promi
     });
     if (res.ok) {
       const data = await res.json();
-      return { success: true, message: data.message || 'تم إرسال التقرير التحليلي بنجاح إلى one497303@gmail.com' };
+      return {
+        success: true,
+        message: data.message || 'تم إرسال التقرير التحليلي بنجاح إلى one497303@gmail.com',
+      };
     }
   } catch (e) {
     console.error('Email report API call failed', e);

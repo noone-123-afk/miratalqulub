@@ -636,6 +636,8 @@
     "احسب التوافق العلمي الشامل بين الشخصيتين (9 محاور + 6 مؤشرات)": "Calculate Comprehensive Dyadic Compatibility (9 Axes + 6 Sub-Indices)",
     "المؤشر العام الموزون": "Weighted Composite Index",
     "تفصيل المقارنة عبر المحاور السيكومترية التسعة:": "Detailed Breakdown Across the 9 Psychometric Axes:",
-    "تصدير تقرير المقارنة (PDF بالرسوم)": "Export Comparison Report (PDF with Charts)"
+    "تصدير تقرير المقارنة (PDF بالرسوم)": "Export Comparison Report (PDF with Charts)",
+    "تصدير PDF نصي نظيف": "Export Clean Text-Only PDF",
+    "طباعة نظيفة A4": "Print Clean A4"
   }
 }

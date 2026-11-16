@@ -120,6 +120,36 @@ app.get(['/ard.json', '/.well-known/ard.json'], (_req: Request, res: Response) =
   });
 });
 
+app.get(['/ai-catalog.json', '/.well-known/ai-catalog.json'], (_req: Request, res: Response) => {
+  const catalogPath = path.resolve('public', 'ai-catalog.json');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (fs.existsSync(catalogPath)) {
+    try {
+      const raw = fs.readFileSync(catalogPath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return res.json(parsed);
+    } catch {
+      // Fallback below
+    }
+  }
+  return res.json({
+    catalog_version: '1.0',
+    name: 'منصة مِـرآة القـلوب',
+    description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
+    url: 'https://miratalqulub.com',
+    resources: [
+      {
+        name: 'الرئيسية',
+        url: 'https://miratalqulub.com/',
+        type: 'text/html',
+        description: 'الصفحة الرئيسية للمنصة واختبارات الشخصية.',
+      },
+    ],
+  });
+});
+
 app.get('/api/download-logo', (req: Request, res: Response) => {
   const format = String(req.query.format || 'png').toLowerCase() === 'jpg' ? 'jpg' : 'png';
   const fileName = `mirat-al-qulub-official-logo.${format}`;

@@ -58,6 +58,13 @@ export interface PrintableReportData {
     personBName: string;
     axes: Array<{ axisNameAr: string; personAScore: number; personBScore: number }>;
   };
+  textOnly?: boolean;
+}
+
+export interface PdfExportOptions {
+  textOnly?: boolean;
+  mode?: 'pdf' | 'print';
+  lang?: SupportedLanguage;
 }
 
 export function generateExecutiveSummary(
@@ -367,10 +374,67 @@ function drawDualComparisonRadarOnCanvas(
   ctx.restore();
 }
 
+function drawHorizontalBarChartOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  items: Array<{ label: string; score: number; color?: string }>,
+  title: string,
+  isRTL: boolean
+) {
+  if (!items || items.length === 0) return;
+  ctx.save();
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 17px Alexandria, Tahoma, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, x + w / 2, y - 14);
+
+  const rowH = Math.min(44, Math.floor((h - 16) / items.length));
+  items.slice(0, 6).forEach((item, idx) => {
+    const ry = y + 8 + idx * rowH;
+    const pct = Math.max(0, Math.min(100, Math.round(item.score)));
+
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 13px Alexandria, Tahoma, Arial, sans-serif';
+    if (isRTL) {
+      ctx.textAlign = 'right';
+      ctx.fillText(item.label.slice(0, 26), x + w - 10, ry + 15);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = item.color || '#6d28d9';
+      ctx.fillText(`${pct}%`, x + 10, ry + 15);
+    } else {
+      ctx.textAlign = 'left';
+      ctx.fillText(item.label.slice(0, 26), x + 10, ry + 15);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = item.color || '#6d28d9';
+      ctx.fillText(`${pct}%`, x + w - 10, ry + 15);
+    }
+
+    const barX = x + 10;
+    const barY = ry + 22;
+    const barW = w - 20;
+    const barH = 10;
+    ctx.fillStyle = '#e2e8f0';
+    drawRoundedRect(ctx, barX, barY, barW, barH, 5);
+    ctx.fill();
+
+    if (pct > 0) {
+      const fillW = (barW * pct) / 100;
+      ctx.fillStyle = item.color || '#7c3aed';
+      drawRoundedRect(ctx, isRTL ? barX + (barW - fillW) : barX, barY, fillW, barH, 5);
+      ctx.fill();
+    }
+  });
+  ctx.restore();
+}
+
 // Renders report data onto one or more high-resolution A4 Canvas elements with structured data tables
 function renderReportPagesToCanvases(
   data: PrintableReportData,
-  lang: SupportedLanguage
+  lang: SupportedLanguage,
+  textOnlyMode = false
 ): {
   dataUrl: string;
   width: number;
@@ -742,8 +806,8 @@ function renderReportPagesToCanvases(
     y += 20;
   }
 
-  // 3B. Scientific Visual Dashboards Embedded Directly in PDF (Charts 1-9 & Comparison Radar)
-  if (data.comparisonDualRadar && data.comparisonDualRadar.axes.length >= 3) {
+  // 3B. Scientific Visual Dashboards Embedded Directly in PDF (or Clean Text-Only Breakdown when textOnlyMode=true)
+  if (!textOnlyMode && data.comparisonDualRadar && data.comparisonDualRadar.axes.length >= 3) {
     ensureSpace(470);
     ctx.fillStyle = '#f8fafc';
     drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 450, 16);
@@ -759,7 +823,10 @@ function renderReportPagesToCanvases(
       142,
       localizeReportText(data.comparisonDualRadar.personAName, lang),
       localizeReportText(data.comparisonDualRadar.personBName, lang),
-      data.comparisonDualRadar.axes,
+      data.comparisonDualRadar.axes.map((ax) => ({
+        ...ax,
+        axisNameAr: localizeReportText(ax.axisNameAr.split('(')[0].trim(), lang),
+      })),
       isRTL
         ? `مخطط المقارنة السيكومترية المباشرة عبر المحاور التسعة`
         : 'Nine-Axis Two-Person Psychometric Overlay Radar'
@@ -768,80 +835,197 @@ function renderReportPagesToCanvases(
   }
 
   if (data.visualCharts) {
-    ensureSpace(520);
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '800 22px Alexandria, Tahoma, Arial, sans-serif';
-    ctx.textAlign = primaryAlign;
-    ctx.fillText(
-      isRTL ? 'الرسوم البيانية واللوحات البصرية السيكومترية:' : 'Scientific Psychometric Visual Dashboards:',
-      startX,
-      y
-    );
-    y += 18;
+    if (textOnlyMode) {
+      // Clean Text-Only Mode: Render structured textual summary of visual constructs without graphics
+      const att = data.visualCharts.attachment;
+      const comm = data.visualCharts.communicationStyles || [];
+      const conf = data.visualCharts.conflictModes || [];
+      const goals = data.visualCharts.lifeGoalsAlignment || [];
 
-    // Row 1: Overall 8-Construct Radar + Big Five Radar
-    ctx.fillStyle = '#f8fafc';
-    drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 410, 16);
-    ctx.fill();
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+      const textSummaryLines: string[] = [
+        isRTL
+          ? `• إحداثيات التعلق العاطفي (ECR-R): ${att?.styleAr || 'آمن'} — قلق التعلق ${att?.anxiety ?? 25}% | تجنب القرب ${att?.avoidance ?? 25}%`
+          : `• Adult Attachment Coordinates (ECR-R): ${localizeReportText(att?.styleAr || 'Secure', lang)} — Anxiety ${att?.anxiety ?? 25}% | Avoidance ${att?.avoidance ?? 25}%`,
+        comm.length > 0
+          ? isRTL
+            ? `• أنماط التواصل الحواري: ${comm.map((c) => `${c.style} (${c.score}%)`).join(' ، ')}`
+            : `• Interpersonal Communication Styles: ${comm.map((c) => `${localizeReportText(c.style, lang)} (${c.score}%)`).join(', ')}`
+          : '',
+        conf.length > 0
+          ? isRTL
+            ? `• خريطة إدارة النزاعات (TKI): ${conf.map((c) => `${c.mode} (${c.score}%)`).join(' ، ')}`
+            : `• Conflict Resolution Modes (TKI): ${conf.map((c) => `${localizeReportText(c.mode, lang)} (${c.score}%)`).join(', ')}`
+          : '',
+        goals.length > 0
+          ? isRTL
+            ? `• اتساق أهداف الحياة (PERMA): ${goals.map((g) => `${g.domain} (${g.userScore}%)`).join(' ، ')}`
+            : `• Life Goals & PERMA Alignment: ${goals.map((g) => `${localizeReportText(g.domain, lang)} (${g.userScore}%)`).join(', ')}`
+          : '',
+      ].filter(Boolean);
 
-    drawRadarChartOnCanvas(
-      ctx,
-      MARGIN + CONTENT_W * 0.25,
-      y + 215,
-      120,
-      (data.visualCharts.overallRadar || []).map((o) => ({ label: o.subject.split('(')[0], score: o.score })),
-      '#7c3aed',
-      'rgba(124,58,237,0.28)',
-      isRTL ? 'رادار النماذج الثمانية الشامل' : '8-Construct Synthesis Radar'
-    );
+      const boxH = 66 + textSummaryLines.length * 32;
+      ensureSpace(boxH + 20);
 
-    drawRadarChartOnCanvas(
-      ctx,
-      MARGIN + CONTENT_W * 0.75,
-      y + 215,
-      120,
-      (data.visualCharts.bigFiveRadar || []).map((b) => ({ label: b.trait.split('(')[0], score: b.score })),
-      '#db2777',
-      'rgba(219,39,119,0.26)',
-      isRTL ? 'رادار العوامل الخمسة الكبرى (Big Five)' : 'Big Five Personality Radar'
-    );
-    y += 432;
+      ctx.fillStyle = '#f8fafc';
+      drawRoundedRect(ctx, MARGIN, y, CONTENT_W, boxH, 14);
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
 
-    // Row 2: HEXACO Radar + ECR-R 2D Attachment Quadrant
-    ensureSpace(390);
-    ctx.fillStyle = '#f8fafc';
-    drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 370, 16);
-    ctx.fill();
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '800 19px Alexandria, Tahoma, Arial, sans-serif';
+      ctx.textAlign = primaryAlign;
+      ctx.fillText(
+        isRTL
+          ? 'ملخص المؤشرات البصرية والنماذج السيكومترية (الوضع النصي النظيف):'
+          : 'Structured Summary of Psychometric Construct Models (Clean Text-Only Mode):',
+        isRTL ? PAGE_W - MARGIN - 22 : MARGIN + 22,
+        y + 34
+      );
 
-    drawRadarChartOnCanvas(
-      ctx,
-      MARGIN + CONTENT_W * 0.25,
-      y + 195,
-      108,
-      (data.visualCharts.hexacoRadar || []).map((h) => ({ label: h.trait.split('(')[0], score: h.score })),
-      '#0891b2',
-      'rgba(8,145,178,0.28)',
-      isRTL ? 'رادار هيكساكو سداسي العوامل (HEXACO)' : 'HEXACO 6-Factor Radar'
-    );
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 16px Alexandria, Tahoma, Arial, sans-serif';
+      let ty = y + 66;
+      textSummaryLines.forEach((line) => {
+        ctx.fillText(line.slice(0, 112), isRTL ? PAGE_W - MARGIN - 22 : MARGIN + 22, ty);
+        ty += 30;
+      });
 
-    drawAttachmentQuadrantOnCanvas(
-      ctx,
-      MARGIN + CONTENT_W * 0.54,
-      y + 62,
-      CONTENT_W * 0.41,
-      235,
-      data.visualCharts.attachment?.anxiety ?? 30,
-      data.visualCharts.attachment?.avoidance ?? 30,
-      localizeReportText(data.visualCharts.attachment?.styleAr, lang),
-      isRTL ? 'خريطة التعلق العاطفي ثنائية الأبعاد (ECR-R)' : 'ECR-R Attachment 2D Quadrant'
-    );
-    y += 392;
+      y += boxH + 20;
+    } else {
+      ensureSpace(520);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '800 22px Alexandria, Tahoma, Arial, sans-serif';
+      ctx.textAlign = primaryAlign;
+      ctx.fillText(
+        isRTL ? 'الرسوم البيانية واللوحات البصرية السيكومترية:' : 'Scientific Psychometric Visual Dashboards:',
+        startX,
+        y
+      );
+      y += 18;
+
+      // Row 1: Overall 8-Construct Radar + Big Five Radar
+      ctx.fillStyle = '#f8fafc';
+      drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 410, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      drawRadarChartOnCanvas(
+        ctx,
+        MARGIN + CONTENT_W * 0.25,
+        y + 215,
+        120,
+        (data.visualCharts.overallRadar || []).map((o) => ({
+          label: localizeReportText(o.subject.split('(')[0].trim(), lang),
+          score: o.score,
+        })),
+        '#7c3aed',
+        'rgba(124,58,237,0.28)',
+        isRTL ? 'رادار النماذج الثمانية الشامل' : '8-Construct Synthesis Radar'
+      );
+
+      drawRadarChartOnCanvas(
+        ctx,
+        MARGIN + CONTENT_W * 0.75,
+        y + 215,
+        120,
+        (data.visualCharts.bigFiveRadar || []).map((b) => ({
+          label: localizeReportText(b.trait, lang),
+          score: b.score,
+        })),
+        '#db2777',
+        'rgba(219,39,119,0.26)',
+        isRTL ? 'رادار العوامل الخمسة الكبرى (Big Five)' : 'Big Five Personality Radar'
+      );
+      y += 432;
+
+      // Row 2: HEXACO Radar + ECR-R 2D Attachment Quadrant
+      ensureSpace(390);
+      ctx.fillStyle = '#f8fafc';
+      drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 370, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      drawRadarChartOnCanvas(
+        ctx,
+        MARGIN + CONTENT_W * 0.25,
+        y + 195,
+        108,
+        (data.visualCharts.hexacoRadar || []).map((h) => ({
+          label: localizeReportText(h.trait, lang),
+          score: h.score,
+        })),
+        '#0891b2',
+        'rgba(8,145,178,0.28)',
+        isRTL ? 'رادار هيكساكو سداسي العوامل (HEXACO)' : 'HEXACO 6-Factor Radar'
+      );
+
+      drawAttachmentQuadrantOnCanvas(
+        ctx,
+        MARGIN + CONTENT_W * 0.54,
+        y + 62,
+        CONTENT_W * 0.41,
+        235,
+        data.visualCharts.attachment?.anxiety ?? 30,
+        data.visualCharts.attachment?.avoidance ?? 30,
+        localizeReportText(data.visualCharts.attachment?.styleAr, lang),
+        isRTL ? 'خريطة التعلق العاطفي ثنائية الأبعاد (ECR-R)' : 'ECR-R Attachment 2D Quadrant'
+      );
+      y += 392;
+
+      // Row 3: TKI Conflict Modes Radar + Communication & EQ Bar Chart
+      if (
+        (data.visualCharts.conflictModes && data.visualCharts.conflictModes.length >= 3) ||
+        (data.visualCharts.communicationStyles && data.visualCharts.communicationStyles.length > 0)
+      ) {
+        ensureSpace(370);
+        ctx.fillStyle = '#f8fafc';
+        drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 350, 16);
+        ctx.fill();
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        if (data.visualCharts.conflictModes && data.visualCharts.conflictModes.length >= 3) {
+          drawRadarChartOnCanvas(
+            ctx,
+            MARGIN + CONTENT_W * 0.25,
+            y + 188,
+            102,
+            data.visualCharts.conflictModes.map((c) => ({
+              label: localizeReportText(c.mode, lang),
+              score: c.score,
+            })),
+            '#d97706',
+            'rgba(217,119,6,0.25)',
+            isRTL ? 'خريطة إدارة النزاعات (TKI)' : 'TKI Conflict Modes Radar'
+          );
+        }
+
+        if (data.visualCharts.communicationStyles && data.visualCharts.communicationStyles.length > 0) {
+          drawHorizontalBarChartOnCanvas(
+            ctx,
+            MARGIN + CONTENT_W * 0.52,
+            y + 52,
+            CONTENT_W * 0.44,
+            265,
+            data.visualCharts.communicationStyles.map((cs) => ({
+              label: localizeReportText(cs.style, lang),
+              score: cs.score,
+              color: cs.color,
+            })),
+            isRTL ? 'أنماط التواصل الحواري (NVC)' : 'Communication Styles Profile',
+            isRTL
+          );
+        }
+        y += 372;
+      }
+    }
   }
 
   // 4. Detailed Qualitative Analysis Sections
@@ -1438,13 +1622,37 @@ function triggerBlobDownload(blob: Blob, filename: string) {
   }, 1500);
 }
 
+export function triggerPrintFriendlyReport(options?: { textOnly?: boolean }): void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  const root = document.documentElement;
+  if (options?.textOnly) {
+    root.classList.add('print-text-only-mode');
+  } else {
+    root.classList.remove('print-text-only-mode');
+  }
+
+  const cleanup = () => {
+    root.classList.remove('print-text-only-mode');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
+
 export function exportPsychometricReportAsPDF(
   data: PrintableReportData,
-  overrideLang?: SupportedLanguage
+  overrideLang?: SupportedLanguage,
+  options?: PdfExportOptions
 ): void {
-  let activeLang: SupportedLanguage = overrideLang || data.lang || getInitialLanguage();
+  if (options?.mode === 'print') {
+    triggerPrintFriendlyReport({ textOnly: options.textOnly ?? data.textOnly });
+    return;
+  }
 
-  const generateAndSaveForLang = (lang: SupportedLanguage, autoDownload: boolean) => {
+  let activeLang: SupportedLanguage = options?.lang || overrideLang || data.lang || getInitialLanguage();
+  let isTextOnly: boolean = Boolean(options?.textOnly ?? data.textOnly);
+
+  const generateAndSaveForLang = (lang: SupportedLanguage, textOnly: boolean, autoDownload: boolean) => {
     const localizedTitle = localizeReportText(data.reportTitle, lang);
     const safeBaseName =
       localizedTitle
@@ -1452,21 +1660,22 @@ export function exportPsychometricReportAsPDF(
         .replace(/^_+|_+$/g, '')
         .slice(0, 60) || (lang === 'ar' ? 'تقرير_مرآة_القلوب' : 'Mirror_of_Hearts_Report');
 
-    const jpegPages = renderReportPagesToCanvases(data, lang);
+    const suffix = textOnly ? '_TEXT_CLEAN' : '';
+    const jpegPages = renderReportPagesToCanvases(data, lang, textOnly);
     const pdfDoc = buildJsPdfDocument(jpegPages, data, lang);
     const pdfBlob = pdfDoc.output('blob');
 
     if (autoDownload) {
-      triggerBlobDownload(pdfBlob, `${safeBaseName}_${lang.toUpperCase()}.pdf`);
+      triggerBlobDownload(pdfBlob, `${safeBaseName}${suffix}_${lang.toUpperCase()}.pdf`);
     }
 
-    return { jpegPages, pdfBlob, safeBaseName };
+    return { jpegPages, pdfBlob, safeBaseName: `${safeBaseName}${suffix}` };
   };
 
-  // 1. Immediately generate and download the genuine jsPDF file in the user's selected language
-  let currentBundle = generateAndSaveForLang(activeLang, true);
+  // 1. Immediately generate and download the genuine jsPDF file in the user's selected language and layout mode
+  let currentBundle = generateAndSaveForLang(activeLang, isTextOnly, true);
 
-  // 2. Display interactive On-Screen Report Preview Modal with live Arabic / English switcher
+  // 2. Display interactive On-Screen Report Preview Modal with live Arabic / English & Text-Only / Charts switchers
   const existingModal = document.getElementById('mirat-pdf-preview-overlay');
   if (existingModal) {
     existingModal.remove();
@@ -1484,6 +1693,7 @@ export function exportPsychometricReportAsPDF(
     const isRTL = activeLang === 'ar';
 
     const toolbar = document.createElement('div');
+    toolbar.className = 'pdf-preview-toolbar no-print';
     toolbar.style.cssText =
       'width:100%;max-width:920px;background:#0f172a;border:1px solid rgba(139,92,246,0.45);border-radius:20px;padding:14px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;color:#ffffff;box-shadow:0 15px 35px rgba(0,0,0,0.5);position:sticky;top:0;z-index:10;';
 
@@ -1499,15 +1709,40 @@ export function exportPsychometricReportAsPDF(
       </div>
       <div style="font-size:11.5px;color:#cbd5e1;margin-top:2px;">
         ${localizedTitle} • ${
-      isRTL
-        ? 'يمكنك التبديل بين العربية والإنجليزية أو إعادة التنزيل أدناه'
-        : 'Switch between Arabic & English or re-download below'
+      isTextOnly
+        ? isRTL
+          ? 'الوضع النصي النظيف (بدون رسوم)'
+          : 'Clean Text-Only Layout'
+        : isRTL
+        ? 'وضع الرسوم البيانية والجداول الكاملة'
+        : 'Full Readable Charts & Tables Layout'
     }
       </div>
     `;
 
     const actionsSide = document.createElement('div');
     actionsSide.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+
+    // Toggle Clean Text-Only vs Full Readable Charts
+    if (data.visualCharts || data.comparisonDualRadar) {
+      const btnToggleTextOnly = document.createElement('button');
+      btnToggleTextOnly.type = 'button';
+      btnToggleTextOnly.textContent = isTextOnly
+        ? isRTL
+          ? '📊 التبديل لوضع الرسوم البيانية الكامل'
+          : '📊 Switch to Full Charts PDF'
+        : isRTL
+        ? '📄 وضع النص النظيف فقط (Text-Only PDF)'
+        : '📄 Clean Text-Only PDF';
+      btnToggleTextOnly.style.cssText =
+        'background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.45);border-radius:12px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;';
+      btnToggleTextOnly.onclick = () => {
+        isTextOnly = !isTextOnly;
+        currentBundle = generateAndSaveForLang(activeLang, isTextOnly, true);
+        renderModalContents();
+      };
+      actionsSide.appendChild(btnToggleTextOnly);
+    }
 
     // Language Switcher inside PDF Modal (Arabic <-> English)
     const btnSwitchLang = document.createElement('button');
@@ -1519,7 +1754,7 @@ export function exportPsychometricReportAsPDF(
       'background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;border:1px solid rgba(56,189,248,0.4);border-radius:12px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;';
     btnSwitchLang.onclick = () => {
       activeLang = activeLang === 'ar' ? 'en' : 'ar';
-      currentBundle = generateAndSaveForLang(activeLang, true);
+      currentBundle = generateAndSaveForLang(activeLang, isTextOnly, true);
       renderModalContents();
     };
 
@@ -1535,6 +1770,15 @@ export function exportPsychometricReportAsPDF(
         currentBundle.pdfBlob,
         `${currentBundle.safeBaseName}_${activeLang.toUpperCase()}.pdf`
       );
+    };
+
+    const btnPrintClean = document.createElement('button');
+    btnPrintClean.type = 'button';
+    btnPrintClean.textContent = isRTL ? 'طباعة نظيفة 🖨️' : 'Print Clean A4 🖨️';
+    btnPrintClean.style.cssText =
+      'background:#0f766e;color:#fff;border:1px solid rgba(45,212,191,0.35);border-radius:12px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;';
+    btnPrintClean.onclick = () => {
+      triggerPrintFriendlyReport({ textOnly: isTextOnly });
     };
 
     const btnDownloadHtml = document.createElement('button');
@@ -1562,6 +1806,7 @@ export function exportPsychometricReportAsPDF(
 
     actionsSide.appendChild(btnSwitchLang);
     actionsSide.appendChild(btnRedownloadPdf);
+    actionsSide.appendChild(btnPrintClean);
     actionsSide.appendChild(btnDownloadHtml);
     actionsSide.appendChild(btnClose);
 
@@ -1575,9 +1820,11 @@ export function exportPsychometricReportAsPDF(
 
     currentBundle.jpegPages.forEach((p, idx) => {
       const imgWrap = document.createElement('div');
+      imgWrap.className = 'print-keep-together';
       imgWrap.style.cssText =
         'background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.45);border:2px solid #cbd5e1;';
       const img = document.createElement('img');
+      img.className = 'keep-in-print';
       img.src = p.dataUrl;
       img.alt = isRTL ? `صفحة ${idx + 1}` : `Page ${idx + 1}`;
       img.style.cssText = 'width:100%;height:auto;display:block;';
@@ -1591,3 +1838,16 @@ export function exportPsychometricReportAsPDF(
   renderModalContents();
   document.body.appendChild(overlay);
 }
+
+/**
+ * Helper function to export any active psychological report, multi-tier assessment result,
+ * or two-person comparison report directly to PDF (with full readable charts or clean text-only mode)
+ * or trigger the print-friendly stylesheet view.
+ */
+export function exportCurrentReportOrAnalysisToPDF(
+  reportOrPayload: PrintableReportData,
+  options?: PdfExportOptions
+): void {
+  exportPsychometricReportAsPDF(reportOrPayload, options?.lang, options);
+}
+

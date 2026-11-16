@@ -30,6 +30,8 @@ import {
   History,
   RotateCw,
   FileDown,
+  FileText,
+  Printer,
 } from 'lucide-react';
 import { useAppTheme } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
@@ -305,42 +307,45 @@ export const ResultStep: React.FC<Props> = ({
     `أتممت التقييم السيكومتري العلمي للتوافق الأسري عبر منصة مِـرآة القـلوب بنسبة توافق موزون ${result.compatibilityScore}%! 📊🔬`
   )}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`;
 
-  const handleExportScientificPDF = async () => {
+  const handleExportScientificPDF = async (options?: { textOnly?: boolean; mode?: 'pdf' | 'print' }) => {
     soundManager.playTap();
-    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
+    const { exportCurrentReportOrAnalysisToPDF } = await import('../utils/pdfReportGenerator');
     const subscales = effectiveBreakdown.scientificSubscales || [];
-    exportPsychometricReportAsPDF({
-      reportTitle: 'التقرير السيكومتري العلمي الشامل للتوافق الأسري والزواجي',
-      subTitle: 'مبني على 25 بنداً محكّماً وفق نماذج Gottman و Bowlby/ECR-R و Sternberg و Bowen و Schwartz و Klontz',
-      scientificBasis:
-        'Gottman (1999) Sound Relationship House • Fraley et al. (2000) ECR-R • Sternberg (1986) • Bowen (1978) • Schwartz (1992) • Klontz (2011)',
-      userName: profile.userName || 'مشارك',
-      completedAt: new Date().toLocaleDateString('ar-JO'),
-      overallScoreLabel: 'مؤشر التوافق السيكومتري الموزون',
-      overallScoreValue: `${effectiveBreakdown.compatibilityScore}%`,
-      cognitiveFingerprintTitle: `${result.partnerArchetype} — بصمة التناغم الأسري (${effectiveBreakdown.auditHash})`,
-      executiveSummary: `${result.detailedMatchReason} — خوارزمية القياس: ${effectiveBreakdown.algorithmVersion}`,
-      metrics: subscales.map((sub) => ({
-        label: `${sub.titleAr} (${sub.theoryNameEn})`,
-        scorePercent: sub.score,
-        rawText: `${sub.questionsUsed.length} بنود قياسية`,
-        levelLabel: sub.scientistAr,
-        color: '#10b981',
-      })),
-      sections: subscales.map((sub) => ({
-        title: sub.titleAr,
-        badge: `${sub.scientistAr} • ${sub.theoryNameEn}`,
-        content: sub.analysisAr,
-        scorePercent: sub.score,
-      })),
-      careersOrRecommendations: [
-        result.intellectualSynergy,
-        result.socialHarmony,
-        result.romanticAdvice,
-      ],
-      disclaimerText:
-        'هذا التقرير السيكومتري مبني على إجاباتك الفعلية عبر معادلات إحصائية حتمية (Deterministic Weighted Scoring) لأغراض الوعي الذاتي والإرشاد الأسري، ولا يعتمد على أي توقعات غيبية أو عشوائية.',
-    });
+    exportCurrentReportOrAnalysisToPDF(
+      {
+        reportTitle: 'التقرير السيكومتري العلمي الشامل للتوافق الأسري والزواجي',
+        subTitle: 'مبني على 25 بنداً محكّماً وفق نماذج Gottman و Bowlby/ECR-R و Sternberg و Bowen و Schwartz و Klontz',
+        scientificBasis:
+          'Gottman (1999) Sound Relationship House • Fraley et al. (2000) ECR-R • Sternberg (1986) • Bowen (1978) • Schwartz (1992) • Klontz (2011)',
+        userName: profile.userName || 'مشارك',
+        completedAt: new Date().toLocaleDateString('ar-JO'),
+        overallScoreLabel: 'مؤشر التوافق السيكومتري الموزون',
+        overallScoreValue: `${effectiveBreakdown.compatibilityScore}%`,
+        cognitiveFingerprintTitle: `${result.partnerArchetype} — بصمة التناغم الأسري (${effectiveBreakdown.auditHash})`,
+        executiveSummary: `${result.detailedMatchReason} — خوارزمية القياس: ${effectiveBreakdown.algorithmVersion}`,
+        metrics: subscales.map((sub) => ({
+          label: `${sub.titleAr} (${sub.theoryNameEn})`,
+          scorePercent: sub.score,
+          rawText: `${sub.questionsUsed.length} بنود قياسية`,
+          levelLabel: sub.scientistAr,
+          color: '#10b981',
+        })),
+        sections: subscales.map((sub) => ({
+          title: sub.titleAr,
+          badge: `${sub.scientistAr} • ${sub.theoryNameEn}`,
+          content: sub.analysisAr,
+          scorePercent: sub.score,
+        })),
+        careersOrRecommendations: [
+          result.intellectualSynergy,
+          result.socialHarmony,
+          result.romanticAdvice,
+        ],
+        disclaimerText:
+          'هذا التقرير السيكومتري مبني على إجاباتك الفعلية عبر معادلات إحصائية حتمية (Deterministic Weighted Scoring) لأغراض الوعي الذاتي والإرشاد الأسري، ولا يعتمد على أي توقعات غيبية أو عشوائية.',
+      },
+      options
+    );
   };
 
   const handleCopyLink = () => {
@@ -1306,14 +1311,22 @@ export const ResultStep: React.FC<Props> = ({
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0 no-print">
               <button
                 type="button"
-                onClick={handleExportScientificPDF}
+                onClick={() => handleExportScientificPDF({ textOnly: false, mode: 'pdf' })}
                 className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-md"
               >
                 <FileDown className="w-4 h-4" />
                 <span>تحميل التقرير العلمي (PDF)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExportScientificPDF({ textOnly: true, mode: 'pdf' })}
+                className="px-3 py-2 rounded-xl bg-amber-600/25 hover:bg-amber-600/35 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span>تصدير PDF نصي نظيف</span>
               </button>
               {onOpenCoupleInvite && (
                 <button
@@ -1532,11 +1545,34 @@ export const ResultStep: React.FC<Props> = ({
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleExportScientificPDF}
+            onClick={() => handleExportScientificPDF({ textOnly: false, mode: 'pdf' })}
             className="py-3.5 px-4 rounded-2xl bg-emerald-600/25 hover:bg-emerald-600/35 border border-emerald-500/40 text-emerald-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
           >
             <FileDown className="w-4 h-4 text-emerald-400" />
             <span>تصدير التقرير العلمي PDF</span>
+          </motion.button>
+        </div>
+
+        {/* Clean Text-Only PDF & Print-Friendly A4 Controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 no-print">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleExportScientificPDF({ textOnly: true, mode: 'pdf' })}
+            className="py-3 px-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
+          >
+            <FileText className="w-4 h-4 text-amber-400" />
+            <span>تصدير PDF نصي نظيف</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleExportScientificPDF({ textOnly: false, mode: 'print' })}
+            className="py-3 px-4 rounded-2xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
+          >
+            <Printer className="w-4 h-4 text-sky-400" />
+            <span>طباعة نظيفة A4</span>
           </motion.button>
         </div>
 

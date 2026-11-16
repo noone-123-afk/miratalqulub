@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { soundManager } from '../utils/sound';
 
 export const OWNER_EMAIL = 'one497303@gmail.com';
+const AUTH_SESSION_STORAGE_KEY = 'mirat_has_auth_session';
 
 interface AuthContextType {
   user: User | null;
@@ -30,38 +31,79 @@ function isBotOrLighthouse(): boolean {
   );
 }
 
+/**
+ * Checks whether the browser has a previously stored Firebase Auth session
+ * so anonymous first-time visitors never download the 150 KB vendor-firebase-auth chunk
+ * until they actually click Sign In.
+ */
+function hasStoredAuthSession(): boolean {
+  try {
+    if (localStorage.getItem(AUTH_SESSION_STORAGE_KEY) === '1') {
+      return true;
+    }
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('firebase:authUser:')) {
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
+function markAuthSessionActive(active: boolean): void {
+  try {
+    if (active) {
+      localStorage.setItem(AUTH_SESSION_STORAGE_KEY, '1');
+    } else {
+      localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    }
+  } catch {}
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  const attachAuthListener = async () => {
+    if (unsubscribeRef.current) {
+      return import('../firebaseAuth');
+    }
+    const fb = await import('../firebaseAuth');
+    if (!unsubscribeRef.current) {
+      unsubscribeRef.current = fb.onAuthStateChanged(fb.auth, (currentUser) => {
+        setUser(currentUser);
+        markAuthSessionActive(Boolean(currentUser));
+        setLoading(false);
+      });
+    }
+    return fb;
+  };
 
   useEffect(() => {
-    if (isBotOrLighthouse()) {
+    // Skip downloading firebaseAuth (150 KB) on first visit if user has no stored session or is a bot
+    if (isBotOrLighthouse() || !hasStoredAuthSession()) {
       setLoading(false);
       return;
     }
 
-    let unsubscribe: (() => void) | null = null;
     let isCancelled = false;
-
     const timer = setTimeout(() => {
-      import('../firebaseAuth')
-        .then((fb) => {
-          if (isCancelled) return;
-          unsubscribe = fb.onAuthStateChanged(fb.auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-          });
-        })
-        .catch(() => {
-          if (!isCancelled) setLoading(false);
-        });
+      if (isCancelled) return;
+      attachAuthListener().catch(() => {
+        if (!isCancelled) setLoading(false);
+      });
     }, 150);
 
     return () => {
       isCancelled = true;
       clearTimeout(timer);
-      if (unsubscribe) unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
     };
   }, []);
 
@@ -93,8 +135,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthError(null);
     try {
       soundManager.playTap();
-      const fb = await import('../firebaseAuth');
-      await fb.signInWithPopup(fb.auth, fb.googleProvider);
+      const fb = await attachAuthListener();
+      const cred = await fb.signInWithPopup(fb.auth, fb.googleProvider);
+      if (cred?.user) {
+        setUser(cred.user);
+        markAuthSessionActive(true);
+      }
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Google Sign-In failed', err);
@@ -107,8 +153,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthError(null);
     try {
       soundManager.playTap();
-      const fb = await import('../firebaseAuth');
-      await fb.signInWithEmailAndPassword(fb.auth, email.trim(), pass);
+      const fb = await attachAuthListener();
+      const cred = await fb.signInWithEmailAndPassword(fb.auth, email.trim(), pass);
+      if (cred?.user) {
+        setUser(cred.user);
+        markAuthSessionActive(true);
+      }
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Email Sign-In failed', err);
@@ -126,8 +176,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     try {
       soundManager.playTap();
-      const fb = await import('../firebaseAuth');
-      await fb.createUserWithEmailAndPassword(fb.auth, email.trim(), pass);
+      const fb = await attachAuthListener();
+      const cred = await fb.createUserWithEmailAndPassword(fb.auth, email.trim(), pass);
+      if (cred?.user) {
+        setUser(cred.user);
+        markAuthSessionActive(true);
+      }
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Email Sign-Up failed', err);
@@ -140,8 +194,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthError(null);
     try {
       soundManager.playTap();
-      const fb = await import('../firebaseAuth');
-      await fb.signInAnonymously(fb.auth);
+      const fb = await attachAuthListener();
+      const cred = await fb.signInAnonymously(fb.auth);
+      if (cred?.user) {
+        setUser(cred.user);
+        markAuthSessionActive(true);
+      }
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Guest Sign-In failed', err);
@@ -152,8 +210,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logoutHandler = async () => {
     soundManager.playTap();
-    const fb = await import('../firebaseAuth');
+    markAuthSessionActive(false);
+    const fb = await attachAuthListener();
     await fb.signOut(fb.auth);
+    setUser(null);
   };
 
   const isOwner = Boolean(

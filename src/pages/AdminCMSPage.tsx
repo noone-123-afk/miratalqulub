@@ -64,15 +64,12 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
   const [downloadingType, setDownloadingType] = useState<'dist' | 'src' | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
-  if (!isOwner) {
-    return null;
-  }
-
   const handleProtectedDownload = async (
     endpoint: '/api/download-cloudflare-zip' | '/api/download-source-zip',
     filename: string,
     kind: 'dist' | 'src'
   ) => {
+    if (!isOwner) return;
     soundManager.playTap();
     setDownloadError(null);
     setDownloadingType(kind);
@@ -116,8 +113,14 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
   };
 
   useEffect(() => {
-    reloadData();
-  }, []);
+    if (isOwner) {
+      reloadData();
+    }
+  }, [isOwner]);
+
+  if (!isOwner) {
+    return null;
+  }
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();

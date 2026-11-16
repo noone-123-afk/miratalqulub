@@ -25,6 +25,8 @@ import {
   BookmarkCheck,
   Sliders,
   ListChecks,
+  Printer,
+  FileText,
 } from 'lucide-react';
 import {
   AnalysisTier,
@@ -391,10 +393,13 @@ export const TieredAssessmentModule: React.FC<Props> = ({
     }
   };
 
-  const handleDownloadTierPdf = async (targetReport: TieredAssessmentReport = report!) => {
+  const handleDownloadTierPdf = async (
+    targetReport: TieredAssessmentReport = report!,
+    options?: { textOnly?: boolean; mode?: 'pdf' | 'print' }
+  ) => {
     if (!targetReport) return;
     soundManager.playTap();
-    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
+    const { exportCurrentReportOrAnalysisToPDF } = await import('../utils/pdfReportGenerator');
 
     const sections = [
       {
@@ -432,94 +437,106 @@ export const TieredAssessmentModule: React.FC<Props> = ({
       });
     }
 
-    exportPsychometricReportAsPDF({
-      reportTitle: `${targetReport.tierTitleAr} — التقرير السيكومتري الشامل`,
-      subTitle: `${targetReport.archetypeTitleAr} (${targetReport.answeredCount}/${targetReport.questionCount} سؤالاً)`,
-      scientificBasis: targetReport.scientificReferences.join(' • '),
-      userName: targetReport.userName,
-      completedAt: new Date(targetReport.createdAt).toLocaleDateString('ar-JO'),
-      overallScoreLabel: 'مؤشر النضج السيكومتري الكلي',
-      overallScoreValue: `${targetReport.overallMaturityIndex}%`,
-      cognitiveFingerprintTitle: `الاتساق الداخلي ${targetReport.consistencyIndex}% • المعيارية ${targetReport.overallPercentile}%`,
-      executiveSummary: targetReport.executiveSummaryAr,
-      metrics: targetReport.subscales.slice(0, 14).map((s) => ({
-        label: s.labelAr,
-        scorePercent: s.percentage,
-        levelLabel: `Sten ${s.stenScore}/10 • T=${s.tScore}`,
-        rawText: s.interpretationAr,
-        color: s.color,
-      })),
-      sections,
-      careersOrRecommendations: targetReport.improvementAreasAr,
-      disclaimerText: targetReport.scientificDisclaimerAr,
-      visualCharts: targetReport.visualCharts,
-    });
+    exportCurrentReportOrAnalysisToPDF(
+      {
+        reportTitle: `${targetReport.tierTitleAr} — التقرير السيكومتري الشامل`,
+        subTitle: `${targetReport.archetypeTitleAr} (${targetReport.answeredCount}/${targetReport.questionCount} سؤالاً)`,
+        scientificBasis: targetReport.scientificReferences.join(' • '),
+        userName: targetReport.userName,
+        completedAt: new Date(targetReport.createdAt).toLocaleDateString('ar-JO'),
+        overallScoreLabel: 'مؤشر النضج السيكومتري الكلي',
+        overallScoreValue: `${targetReport.overallMaturityIndex}%`,
+        cognitiveFingerprintTitle: `الاتساق الداخلي ${targetReport.consistencyIndex}% • المعيارية ${targetReport.overallPercentile}%`,
+        executiveSummary: targetReport.executiveSummaryAr,
+        metrics: targetReport.subscales.slice(0, 14).map((s) => ({
+          label: s.labelAr,
+          scorePercent: s.percentage,
+          levelLabel: `Sten ${s.stenScore}/10 • T=${s.tScore}`,
+          rawText: s.interpretationAr,
+          color: s.color,
+        })),
+        sections,
+        careersOrRecommendations: targetReport.improvementAreasAr,
+        disclaimerText: targetReport.scientificDisclaimerAr,
+        visualCharts: targetReport.visualCharts,
+      },
+      options
+    );
   };
 
-  const handleDownloadSavedRecordPdf = async (rec: UnifiedTestRecord) => {
+  const handleDownloadSavedRecordPdf = async (
+    rec: UnifiedTestRecord,
+    options?: { textOnly?: boolean; mode?: 'pdf' | 'print' }
+  ) => {
     soundManager.playTap();
     if (rec.snapshot && rec.snapshot.subscales && rec.snapshot.visualCharts) {
-      await handleDownloadTierPdf(rec.snapshot as TieredAssessmentReport);
+      await handleDownloadTierPdf(rec.snapshot as TieredAssessmentReport, options);
       return;
     }
-    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
+    const { exportCurrentReportOrAnalysisToPDF } = await import('../utils/pdfReportGenerator');
     if (rec.testType === 'personality_comparison' && rec.snapshot?.nineAxesBreakdown) {
       const cmp = rec.snapshot as TwoPersonComparisonReport;
-      exportPsychometricReportAsPDF({
-        reportTitle: 'تقرير مقارنة شخصيتين عبر المحاور التسعة السيكومترية',
-        subTitle: `${cmp.personA.personName} ✕ ${cmp.personB.personName}`,
-        scientificBasis: (cmp.scientificReferences || []).join(' • '),
-        userName: cmp.personA.personName,
-        completedAt: new Date(rec.createdAt).toLocaleDateString('ar-JO'),
-        overallScoreLabel: 'التوافق الإجمالي الموزون',
-        overallScoreValue: `${cmp.overallWeightedCompatibility}%`,
-        cognitiveFingerprintTitle: cmp.compatibilityClassificationAr,
-        executiveSummary: cmp.executiveSummaryAr,
-        metrics: (cmp.subIndices || []).map((s) => ({
-          label: s.titleAr,
-          scorePercent: s.score,
-          levelLabel: `وزن ${Math.round(s.weight * 100)}%`,
-          rawText: s.interpretationAr,
-          color: '#059669',
-        })),
-        sections: (cmp.nineAxesBreakdown || []).map((ax) => ({
-          title: ax.axisNameAr,
-          badge: `توافق ${ax.matchScore}%`,
-          content: ax.scientificNoteAr,
-        })),
-        comparisonDualRadar: {
-          personAName: cmp.personA.personName,
-          personBName: cmp.personB.personName,
-          axes: cmp.nineAxesBreakdown,
+      exportCurrentReportOrAnalysisToPDF(
+        {
+          reportTitle: 'تقرير مقارنة شخصيتين عبر المحاور التسعة السيكومترية',
+          subTitle: `${cmp.personA.personName} ✕ ${cmp.personB.personName}`,
+          scientificBasis: (cmp.scientificReferences || []).join(' • '),
+          userName: cmp.personA.personName,
+          completedAt: new Date(rec.createdAt).toLocaleDateString('ar-JO'),
+          overallScoreLabel: 'التوافق الإجمالي الموزون',
+          overallScoreValue: `${cmp.overallWeightedCompatibility}%`,
+          cognitiveFingerprintTitle: cmp.compatibilityClassificationAr,
+          executiveSummary: cmp.executiveSummaryAr,
+          metrics: (cmp.subIndices || []).map((s) => ({
+            label: s.titleAr,
+            scorePercent: s.score,
+            levelLabel: `وزن ${Math.round(s.weight * 100)}%`,
+            rawText: s.interpretationAr,
+            color: '#059669',
+          })),
+          sections: (cmp.nineAxesBreakdown || []).map((ax) => ({
+            title: ax.axisNameAr,
+            badge: `توافق ${ax.matchScore}%`,
+            content: ax.scientificNoteAr,
+          })),
+          comparisonDualRadar: {
+            personAName: cmp.personA.personName,
+            personBName: cmp.personB.personName,
+            axes: cmp.nineAxesBreakdown,
+          },
         },
-      });
+        options
+      );
       return;
     }
 
-    exportPsychometricReportAsPDF({
-      reportTitle: rec.testTitleAr,
-      subTitle: rec.testCategoryAr,
-      scientificBasis: 'APA Validated Psychometric Models • Mirror of Hearts Lab',
-      userName: userName || user?.displayName || 'المختبَر',
-      completedAt: new Date(rec.createdAt).toLocaleDateString('ar-JO'),
-      overallScoreLabel: 'النتيجة المعيارية',
-      overallScoreValue: rec.scoreOrArchetype,
-      cognitiveFingerprintTitle: rec.testTitleAr,
-      executiveSummary: (rec.keyInsights || []).join(' — ') || rec.scoreOrArchetype,
-      metrics: Object.entries(rec.standardizedScores || {}).map(([k, v]) => ({
-        label: k,
-        scorePercent: Number(v) || rec.percentage,
-        levelLabel: 'معياري معتمد',
-        color: rec.badgeColor || '#8b5cf6',
-      })),
-      sections: [
-        {
-          title: 'أبرز المؤشرات السيكومترية المستخلصة',
-          content: rec.scoreOrArchetype,
-          items: rec.keyInsights || [],
-        },
-      ],
-    });
+    exportCurrentReportOrAnalysisToPDF(
+      {
+        reportTitle: rec.testTitleAr,
+        subTitle: rec.testCategoryAr,
+        scientificBasis: 'APA Validated Psychometric Models • Mirror of Hearts Lab',
+        userName: userName || user?.displayName || 'المختبَر',
+        completedAt: new Date(rec.createdAt).toLocaleDateString('ar-JO'),
+        overallScoreLabel: 'النتيجة المعيارية',
+        overallScoreValue: rec.scoreOrArchetype,
+        cognitiveFingerprintTitle: rec.testTitleAr,
+        executiveSummary: (rec.keyInsights || []).join(' — ') || rec.scoreOrArchetype,
+        metrics: Object.entries(rec.standardizedScores || {}).map(([k, v]) => ({
+          label: k,
+          scorePercent: Number(v) || rec.percentage,
+          levelLabel: 'معياري معتمد',
+          color: rec.badgeColor || '#8b5cf6',
+        })),
+        sections: [
+          {
+            title: 'أبرز المؤشرات السيكومترية المستخلصة',
+            content: rec.scoreOrArchetype,
+            items: rec.keyInsights || [],
+          },
+        ],
+      },
+      options
+    );
   };
 
   const handleDeleteRecord = async (id: string) => {
@@ -656,14 +673,32 @@ export const TieredAssessmentModule: React.FC<Props> = ({
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 no-print">
             <button
               type="button"
-              onClick={() => handleDownloadTierPdf(report)}
+              onClick={() => handleDownloadTierPdf(report, { textOnly: false, mode: 'pdf' })}
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
             >
               <FileDown className="w-4 h-4" />
               <span>تنزيل التقرير الكامل (PDF بالرسوم البيانية)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDownloadTierPdf(report, { textOnly: true, mode: 'pdf' })}
+              className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <FileText className="w-4 h-4" />
+              <span>تصدير PDF نصي نظيف</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDownloadTierPdf(report, { textOnly: false, mode: 'print' })}
+              className="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              <span>طباعة نظيفة A4</span>
             </button>
 
             <button
@@ -1858,24 +1893,79 @@ export const TieredAssessmentModule: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() =>
-                    handleDownloadSavedRecordPdf({
-                      id: comparisonReport.id,
-                      userId: 'current',
-                      testType: 'personality_comparison',
-                      testTitleAr: `مقارنة: ${comparisonReport.personA.personName} ✕ ${comparisonReport.personB.personName}`,
-                      testCategoryAr: 'مقارنة شخصيتين علمياً',
-                      scoreOrArchetype: `${comparisonReport.overallWeightedCompatibility}%`,
-                      percentage: comparisonReport.overallWeightedCompatibility,
-                      createdAt: comparisonReport.createdAt,
-                      badgeColor: '#059669',
-                      keyInsights: [],
-                      snapshot: comparisonReport,
-                    })
+                    handleDownloadSavedRecordPdf(
+                      {
+                        id: comparisonReport.id,
+                        userId: 'current',
+                        testType: 'personality_comparison',
+                        testTitleAr: `مقارنة: ${comparisonReport.personA.personName} ✕ ${comparisonReport.personB.personName}`,
+                        testCategoryAr: 'مقارنة شخصيتين علمياً',
+                        scoreOrArchetype: `${comparisonReport.overallWeightedCompatibility}%`,
+                        percentage: comparisonReport.overallWeightedCompatibility,
+                        createdAt: comparisonReport.createdAt,
+                        badgeColor: '#059669',
+                        keyInsights: [],
+                        snapshot: comparisonReport,
+                      },
+                      { textOnly: false, mode: 'pdf' }
+                    )
                   }
                   className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
                 >
                   <FileDown className="w-4 h-4" />
                   <span>تصدير تقرير المقارنة (PDF بالرسوم)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleDownloadSavedRecordPdf(
+                      {
+                        id: comparisonReport.id,
+                        userId: 'current',
+                        testType: 'personality_comparison',
+                        testTitleAr: `مقارنة: ${comparisonReport.personA.personName} ✕ ${comparisonReport.personB.personName}`,
+                        testCategoryAr: 'مقارنة شخصيتين علمياً',
+                        scoreOrArchetype: `${comparisonReport.overallWeightedCompatibility}%`,
+                        percentage: comparisonReport.overallWeightedCompatibility,
+                        createdAt: comparisonReport.createdAt,
+                        badgeColor: '#059669',
+                        keyInsights: [],
+                        snapshot: comparisonReport,
+                      },
+                      { textOnly: true, mode: 'pdf' }
+                    )
+                  }
+                  className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>تصدير PDF نصي نظيف</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleDownloadSavedRecordPdf(
+                      {
+                        id: comparisonReport.id,
+                        userId: 'current',
+                        testType: 'personality_comparison',
+                        testTitleAr: `مقارنة: ${comparisonReport.personA.personName} ✕ ${comparisonReport.personB.personName}`,
+                        testCategoryAr: 'مقارنة شخصيتين علمياً',
+                        scoreOrArchetype: `${comparisonReport.overallWeightedCompatibility}%`,
+                        percentage: comparisonReport.overallWeightedCompatibility,
+                        createdAt: comparisonReport.createdAt,
+                        badgeColor: '#059669',
+                        keyInsights: [],
+                        snapshot: comparisonReport,
+                      },
+                      { textOnly: false, mode: 'print' }
+                    )
+                  }
+                  className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>طباعة نظيفة A4</span>
                 </button>
               </div>
             </div>

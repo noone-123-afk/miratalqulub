@@ -118,6 +118,7 @@ export default defineConfig(({ command }) => {
           'logo.jpg',
           'llms.txt',
           'ard.json',
+          'ai-catalog.json',
           'apple-touch-icon.png',
           'pwa-192x192.png',
           'pwa-512x512.png',
@@ -158,6 +159,8 @@ export default defineConfig(({ command }) => {
         workbox: {
           maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
           navigateFallbackDenylist: [
+            /^\/ai-catalog\.json$/,
+            /^\/\.well-known\/ai-catalog\.json$/,
             /^\/llms\.txt$/,
             /^\/llms-full\.txt$/,
             /^\/ard\.json$/,

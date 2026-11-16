@@ -342,34 +342,64 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Defer site analytics tracking & session loading to idle time to keep Main Thread fast on initial load
+  // Defer site analytics tracking & session loading to idle time without pulling 498 KB Firebase Firestore SDK for anonymous/Lighthouse visits
   useEffect(() => {
     let isMounted = true;
+
+    // 1. Fast zero-bundle local read from localStorage
+    try {
+      const rawProfile = localStorage.getItem('mirat_persistent_user_profile');
+      if (rawProfile) {
+        const parsedProfile = JSON.parse(rawProfile);
+        if (parsedProfile && typeof parsedProfile === 'object') {
+          setProfile((prev) => prev || parsedProfile);
+        }
+      }
+      const rawSaved = localStorage.getItem('mirat_saved_results_local_v1');
+      const rawUnified = localStorage.getItem('mirat_unified_test_history_v2');
+      const savedLen = rawSaved ? (JSON.parse(rawSaved)?.length || 0) : 0;
+      const unifiedLen = rawUnified ? (JSON.parse(rawUnified)?.length || 0) : 0;
+      setSavedTestsCount(Math.max(savedLen, unifiedLen));
+    } catch {}
+
+    const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+    const isAuditBot = Boolean(
+      (typeof navigator !== 'undefined' && navigator.webdriver) ||
+        /Chrome-Lighthouse|PageSpeed|PTST|HeadlessChrome|Googlebot|InspectionTool|GTmetrix/i.test(ua)
+    );
+    if (isAuditBot) {
+      return;
+    }
+
     const timer = setTimeout(async () => {
       if (!isMounted) return;
       try {
-        const [{ trackSiteVisit }, historySvc] = await Promise.all([
-          import('./services/analyticsService'),
-          import('./services/userHistoryService'),
-        ]);
+        const { trackSiteVisit } = await import('./services/analyticsService');
         if (!isMounted) return;
         trackSiteVisit();
-        const [session, savedResults, unifiedHistory] = await Promise.all([
-          historySvc.loadPersistentUserSession(user),
-          historySvc.fetchUserSavedResults(user),
-          historySvc.fetchUnifiedTestHistory(user),
-        ]);
-        if (!isMounted) return;
-        if (session.profile) {
-          setProfile((prev) => prev || session.profile);
+
+        // Only dynamically import userHistoryService (and Firebase Firestore) when user is signed in or has cloud-synced data
+        const hasCloudFlag = localStorage.getItem('mirat_has_cloud_data') === '1';
+        if (user || hasCloudFlag) {
+          const historySvc = await import('./services/userHistoryService');
+          if (!isMounted) return;
+          const [session, savedResults, unifiedHistory] = await Promise.all([
+            historySvc.loadPersistentUserSession(user),
+            historySvc.fetchUserSavedResults(user),
+            historySvc.fetchUnifiedTestHistory(user),
+          ]);
+          if (!isMounted) return;
+          if (session.profile) {
+            setProfile((prev) => prev || session.profile);
+          }
+          const totalSaved = Math.max(
+            savedResults?.length || 0,
+            unifiedHistory?.length || 0
+          );
+          setSavedTestsCount(totalSaved);
         }
-        const totalSaved = Math.max(
-          savedResults?.length || 0,
-          unifiedHistory?.length || 0
-        );
-        setSavedTestsCount(totalSaved);
       } catch {}
-    }, 1200);
+    }, 1500);
 
     return () => {
       isMounted = false;
@@ -383,6 +413,7 @@ function AppContent() {
   };
 
   const handleOpenAnalytics = () => {
+    if (!isOwner) return;
     soundManager.playTap();
     setIsAnalyticsOpen(true);
   };
@@ -775,7 +806,7 @@ function AppContent() {
         onOpenArticles={handleOpenArticles}
         onOpenNovels={handleOpenNovels}
         onOpenContactFeedback={handleOpenContactFeedback}
-        onOpenAnalytics={handleOpenAnalytics}
+        onOpenAnalytics={isOwner ? handleOpenAnalytics : undefined}
         onNavigatePage={handleNavigatePage}
         onDataDeleted={() => setSavedTestsCount(0)}
         currentPage={currentPage}
@@ -911,31 +942,27 @@ function AppContent() {
                   onOpenAnalyticsModal={handleOpenAnalytics}
                 />
               ) : (
-                <div className="max-w-lg mx-auto my-12 p-8 rounded-3xl border border-amber-500/30 bg-slate-900/90 text-white text-center space-y-4 shadow-2xl">
-                  <div className="text-3xl">🔒</div>
-                  <h2 className="text-xl font-black font-['Alexandria']">
-                    صفحة مخصصة لمالك الموقع فقط
-                  </h2>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    هذا القسم مقيد بحساب مالك منصة مرآة القلوب الموثق فقط ولا يظهر للزوار أو المستخدمين.
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAuthModalOpen(true)}
-                      className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs cursor-pointer"
-                    >
-                      تسجيل دخول المالك (Google)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleNavigatePage('home')}
-                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer"
-                    >
-                      العودة للرئيسية
-                    </button>
-                  </div>
-                </div>
+                <HomePage
+                  onStart={(prof) => {
+                    handleStart(prof);
+                    setCurrentPage('compatibility');
+                    window.location.hash = '#/compatibility';
+                  }}
+                  initialProfile={profile}
+                  savedTestsCount={savedTestsCount}
+                  onOpenSavedHistory={() => setIsHistoryModalOpen(true)}
+                  onOpenBlindDate={() => setIsBlindDateOpen(true)}
+                  onOpenDomainHosting={undefined}
+                  onOpenWebsiteSection={handleOpenWebsiteSection}
+                  onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+                  onOpenIntelligenceTests={handleOpenIntelligenceTests}
+                  onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
+                  onOpenArticles={handleOpenArticles}
+                  onOpenNovels={handleOpenNovels}
+                  onOpenContactFeedback={handleOpenContactFeedback}
+                  onOpenCommunity={() => setIsBookClubOpen(true)}
+                  onNavigatePage={handleNavigatePage}
+                />
               ))}
 
             {currentPage === 'personality-tests' && (
@@ -1204,7 +1231,7 @@ function AppContent() {
           />
         )}
 
-        {isAnalyticsOpen && (
+        {isOwner && isAnalyticsOpen && (
           <AnalyticsDashboardModal
             isOpen={isAnalyticsOpen}
             onClose={() => setIsAnalyticsOpen(false)}
@@ -1241,7 +1268,7 @@ function AppContent() {
           onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
           onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
           onOpenAdSense={isOwner ? () => setIsAdSenseOpen(true) : undefined}
-          onOpenAnalytics={handleOpenAnalytics}
+          onOpenAnalytics={isOwner ? handleOpenAnalytics : undefined}
           onDataDeleted={() => setSavedTestsCount(0)}
         />
       </Suspense>
