@@ -66,52 +66,79 @@ export default {
       return new Response(
         JSON.stringify(
           {
-            catalog_version: '1.0',
-            name: 'منصة مِـرآة القـلوب',
-            description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
-            url: 'https://miratalqulub.com',
-            resources: [
+            specVersion: '1.0',
+            host: {
+              displayName: 'منصة مِـرآة القـلوب | Mirror of Hearts',
+              identifier: 'did:web:miratalqulub.com',
+              documentationUrl: 'https://miratalqulub.com/llms.txt',
+              logoUrl: 'https://miratalqulub.com/logo.png',
+            },
+            entries: [
               {
-                name: 'الرئيسية',
+                identifier: 'urn:air:miratalqulub.com:web:home',
+                displayName: 'الرئيسية - منصة مِـرآة القـلوب',
+                type: 'text/html',
                 url: 'https://miratalqulub.com/',
-                type: 'text/html',
-                description: 'الصفحة الرئيسية للمنصة واختبارات الشخصية.',
+                description:
+                  'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
+                version: '1.0.0',
+                representativeQueries: [
+                  'اختبار تحليل الشخصية مرآة القلوب',
+                  'اختبار التوافق العاطفي وكاشف شريك الحياة',
+                  'Mirror of Hearts psychometric personality test',
+                ],
               },
               {
-                name: 'تحليل الشخصية',
+                identifier: 'urn:air:miratalqulub.com:web:personality-tests',
+                displayName: 'تحليل الشخصية السيكومتري',
+                type: 'text/html',
                 url: 'https://miratalqulub.com/#/personality-tests',
-                type: 'text/html',
-                description: 'منظومة التحليل النفسي متعدد المستويات (السريع، المتقدم، الاحترافي) ومقارنة الشخصيات.',
+                description:
+                  'منظومة التحليل النفسي متعدد المستويات (السريع، المتقدم، الاحترافي) ومقارنة الشخصيات.',
+                version: '1.0.0',
+                representativeQueries: [
+                  'اختبار الشخصية MBTI والعوامل الخمسة الكبرى',
+                  'مقارنة توافق شخصيتين علمياً',
+                ],
               },
               {
-                name: 'كاشف شريك الحياة',
+                identifier: 'urn:air:miratalqulub.com:web:compatibility',
+                displayName: 'كاشف شريك الحياة والتوافق العاطفي',
+                type: 'text/html',
                 url: 'https://miratalqulub.com/#/compatibility',
-                type: 'text/html',
-                description: 'اختبار التوافق العاطفي والفكري والأسري المبني على النماذج السيكومترية المعتمدة.',
+                description:
+                  'اختبار التوافق العاطفي والفكري والأسري المبني على النماذج السيكومترية المعتمدة.',
+                version: '1.0.0',
+                representativeQueries: [
+                  'اختبار التوافق بين الشريكين',
+                  'تحليل توافق الزواج والعلاقات العاطفية',
+                ],
               },
               {
-                name: 'المقالات المعرفية والأبحاث',
-                url: 'https://miratalqulub.com/#/articles',
-                type: 'text/html',
-                description: 'موسوعة المقالات النفسية والأبحاث السيكومترية الموثقة.',
-              },
-              {
-                name: 'الروايات والقصص',
-                url: 'https://miratalqulub.com/#/novels',
-                type: 'text/html',
-                description: 'مكتبة الروايات والقصص النفسية والاجتماعية التفاعلية.',
-              },
-              {
-                name: 'دليل النماذج اللغوية (LLMs)',
-                url: 'https://miratalqulub.com/llms.txt',
+                identifier: 'urn:air:miratalqulub.com:docs:llms',
+                displayName: 'دليل النماذج اللغوية (LLMs)',
                 type: 'text/plain',
-                description: 'ملف تعريفي مهيأ لوكلاء الذكاء الاصطناعي والنماذج اللغوية الكبيرة.',
+                url: 'https://miratalqulub.com/llms.txt',
+                description:
+                  'ملف تعريفي مهيأ لوكلاء الذكاء الاصطناعي والنماذج اللغوية الكبيرة.',
+                version: '1.0.0',
+                representativeQueries: [
+                  'ملف llms.txt لمنصة مرآة القلوب',
+                  'توثيق منصة مرآة القلوب لوكلاء الذكاء الاصطناعي',
+                ],
               },
               {
-                name: 'وصف موارد الوكلاء (ARD)',
-                url: 'https://miratalqulub.com/ard.json',
+                identifier: 'urn:air:miratalqulub.com:ard:manifest',
+                displayName: 'وصف موارد الوكلاء (ARD)',
                 type: 'application/json',
-                description: 'ملف توصيف الموارد والواجهات البرمجية لمعيار التصفح الوكيل (Agentic Browsing).',
+                url: 'https://miratalqulub.com/ard.json',
+                description:
+                  'ملف توصيف الموارد والواجهات البرمجية لمعيار التصفح الوكيل (Agentic Browsing).',
+                version: '1.0.0',
+                representativeQueries: [
+                  'موارد وواجهات منصة مرآة القلوب',
+                  'Mirror of Hearts agent resource discovery',
+                ],
               },
             ],
           },

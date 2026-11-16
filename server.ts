@@ -135,16 +135,26 @@ app.get(['/ai-catalog.json', '/.well-known/ai-catalog.json'], (_req: Request, re
     }
   }
   return res.json({
-    catalog_version: '1.0',
-    name: 'منصة مِـرآة القـلوب',
-    description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
-    url: 'https://miratalqulub.com',
-    resources: [
+    specVersion: '1.0',
+    host: {
+      displayName: 'منصة مِـرآة القـلوب | Mirror of Hearts',
+      identifier: 'did:web:miratalqulub.com',
+      documentationUrl: 'https://miratalqulub.com/llms.txt',
+      logoUrl: 'https://miratalqulub.com/logo.png',
+    },
+    entries: [
       {
-        name: 'الرئيسية',
-        url: 'https://miratalqulub.com/',
+        identifier: 'urn:air:miratalqulub.com:web:home',
+        displayName: 'الرئيسية - منصة مِـرآة القـلوب',
         type: 'text/html',
-        description: 'الصفحة الرئيسية للمنصة واختبارات الشخصية.',
+        url: 'https://miratalqulub.com/',
+        description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
+        version: '1.0.0',
+        representativeQueries: [
+          'اختبار تحليل الشخصية مرآة القلوب',
+          'اختبار التوافق العاطفي وكاشف شريك الحياة',
+          'Mirror of Hearts psychometric personality test',
+        ],
       },
     ],
   });
