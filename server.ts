@@ -121,40 +121,26 @@ app.get(['/ard.json', '/.well-known/ard.json'], (_req: Request, res: Response) =
 });
 
 app.get(['/ai-catalog.json', '/.well-known/ai-catalog.json'], (_req: Request, res: Response) => {
-  const catalogPath = path.resolve('public', 'ai-catalog.json');
+  const rootCatalogPath = path.resolve('ai-catalog.json');
+  const publicCatalogPath = path.resolve('public', 'ai-catalog.json');
+  const targetPath = fs.existsSync(rootCatalogPath) ? rootCatalogPath : publicCatalogPath;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  if (fs.existsSync(catalogPath)) {
-    try {
-      const raw = fs.readFileSync(catalogPath, 'utf-8');
-      const parsed = JSON.parse(raw);
-      return res.json(parsed);
-    } catch {
-      // Fallback below
-    }
+  if (fs.existsSync(targetPath)) {
+    return res.status(200).sendFile(targetPath);
   }
-  return res.json({
-    specVersion: '1.0',
-    host: {
-      displayName: 'منصة مِـرآة القـلوب | Mirror of Hearts',
-      identifier: 'did:web:miratalqulub.com',
-      documentationUrl: 'https://miratalqulub.com/llms.txt',
-      logoUrl: 'https://miratalqulub.com/logo.png',
-    },
-    entries: [
+  return res.status(200).json({
+    catalog_version: '1.0',
+    name: 'منصة مِـرآة القـلوب',
+    description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
+    url: 'https://miratalqulub.com',
+    resources: [
       {
-        identifier: 'urn:air:miratalqulub.com:web:home',
-        displayName: 'الرئيسية - منصة مِـرآة القـلوب',
-        type: 'text/html',
+        name: 'الرئيسية',
         url: 'https://miratalqulub.com/',
-        description: 'منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.',
-        version: '1.0.0',
-        representativeQueries: [
-          'اختبار تحليل الشخصية مرآة القلوب',
-          'اختبار التوافق العاطفي وكاشف شريك الحياة',
-          'Mirror of Hearts psychometric personality test',
-        ],
+        type: 'text/html',
+        description: 'الصفحة الرئيسية للمنصة واختبارات الشخصية.',
       },
     ],
   });

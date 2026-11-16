@@ -1,0 +1,14 @@
+{
+  "catalog_version": "1.0",
+  "name": "منصة مِـرآة القـلوب",
+  "description": "منصة متخصصة في التحليل النفسي، تقييم الشخصية، واختبارات التوافق العاطفي.",
+  "url": "https://miratalqulub.com",
+  "resources": [
+    {
+      "name": "الرئيسية",
+      "url": "https://miratalqulub.com/",
+      "type": "text/html",
+      "description": "الصفحة الرئيسية للمنصة واختبارات الشخصية."
+    }
+  ]
+}
