@@ -185,6 +185,8 @@ export const NovelCommentsSection: React.FC<Props> = ({ novelId, novelTitle }) =
           <div>
             <label className="text-[11px] text-gray-400 block mb-1">صفتك أو اهتمامك:</label>
             <select
+              aria-label="صفتك أو اهتمامك الأدبي"
+              title="صفتك أو اهتمامك الأدبي"
               value={userRoleTitle}
               onChange={(e) => setUserRoleTitle(e.target.value)}
               className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white focus:outline-none focus:border-rose-400/50 transition cursor-pointer"

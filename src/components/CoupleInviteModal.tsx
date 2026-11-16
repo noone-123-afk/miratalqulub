@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -14,15 +14,43 @@ import {
   CheckCircle2,
   FileDown,
   RotateCcw,
+  BookmarkCheck,
+  Sliders,
 } from 'lucide-react';
-import { UserProfile, PartnerAnalysisResult } from '../types';
+import {
+  UserProfile,
+  PartnerAnalysisResult,
+  IndividualPsychometricProfile,
+  TwoPersonComparisonReport,
+  VisualChartsPayload,
+} from '../types';
 import { QUIZ_QUESTIONS } from '../data/questions';
 import {
   calculateDyadicCoupleCompatibility,
   DyadicCoupleReport,
 } from '../utils/realScoringEngine';
-import { exportPsychometricReportAsPDF } from '../utils/pdfReportGenerator';
+import {
+  compareTwoPsychometricProfiles,
+  profileFromUnifiedRecord,
+  profileFromQuestionnaireOrCommunity,
+} from '../utils/personalityComparisonEngine';
+import {
+  fetchUnifiedTestHistory,
+  saveUnifiedTestRecord,
+  UnifiedTestRecord,
+} from '../services/userHistoryService';
+import {
+  COMMUNITY_PROFILES,
+  loadUserPersonalQuestionnaire,
+} from '../data/communityProfiles';
+import { useAuth } from '../context/AuthContext';
 import { soundManager } from '../utils/sound';
+
+const LazyScientificVisualDashboards = lazy(() =>
+  import('./ScientificVisualDashboards').then((m) => ({
+    default: m.ScientificVisualDashboards,
+  }))
+);
 
 interface Props {
   isOpen: boolean;
@@ -40,9 +68,17 @@ export const CoupleInviteModal: React.FC<Props> = ({
   profile,
   result,
 }) => {
-  const [activeMode, setActiveMode] = useState<'dyadic_lab' | 'invite_link'>('dyadic_lab');
+  const { user } = useAuth();
+  const [activeMode, setActiveMode] = useState<'two_person_compare' | 'dyadic_lab' | 'invite_link'>('two_person_compare');
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
+
+  // Two-Person 9-Axis Comparison Engine State
+  const [savedRecords, setSavedRecords] = useState<UnifiedTestRecord[]>([]);
+  const [sourceAKey, setSourceAKey] = useState<string>('questionnaire');
+  const [sourceBKey, setSourceBKey] = useState<string>('community:0');
+  const [comparisonReport, setComparisonReport] = useState<TwoPersonComparisonReport | null>(null);
+  const [comparisonSaved, setComparisonSaved] = useState(false);
 
   // Dyadic Scientific Assessment State
   const [partnerAName, setPartnerAName] = useState(profile?.userName || 'الطرف الأول');
@@ -53,11 +89,170 @@ export const CoupleInviteModal: React.FC<Props> = ({
   const [partnerBAnswers, setPartnerBAnswers] = useState<Record<number, string>>({});
   const [dyadicReport, setDyadicReport] = useState<DyadicCoupleReport | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    fetchUnifiedTestHistory(user)
+      .then((list) => {
+        if (!active) return;
+        const comparable = list.filter(
+          (r) =>
+            r.testType === 'tiered_assessment' ||
+            r.testType === 'psychology' ||
+            r.testType === 'partner_compatibility'
+        );
+        setSavedRecords(comparable);
+        if (comparable.length > 0) {
+          setSourceAKey(`record:${comparable[0].id}`);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isOpen, user]);
+
   if (!isOpen) return null;
 
-  const userName = profile?.userName || 'شريكك';
+  const userName = profile?.userName || user?.displayName || 'شريكك';
   const userGender = profile?.userGender || 'male';
   const country = profile?.country || 'المملكة العربية السعودية';
+
+  const resolveSelectedProfile = (
+    key: string,
+    fallbackLabel: string
+  ): IndividualPsychometricProfile => {
+    if (key.startsWith('record:')) {
+      const recId = key.replace('record:', '');
+      const found = savedRecords.find((r) => r.id === recId);
+      if (found) return profileFromUnifiedRecord(found);
+    }
+    if (key.startsWith('community:')) {
+      const idx = Number(key.replace('community:', '')) || 0;
+      const member = COMMUNITY_PROFILES[idx] || COMMUNITY_PROFILES[0];
+      return profileFromQuestionnaireOrCommunity(member, member.displayName);
+    }
+    if (key === 'preset_divergent') {
+      return {
+        personName: 'نمط تحليلي متباين (عينة تباين)',
+        personLabelAr: 'نمط متباين',
+        sourceType: 'live_assessment',
+        bigFive: {
+          openness: 32,
+          conscientiousness: 38,
+          extraversion: 28,
+          agreeableness: 35,
+          emotionalStability: 30,
+        },
+        hexaco: {
+          honestyHumility: 40,
+          emotionality: 78,
+          extraversion: 30,
+          agreeableness: 34,
+          conscientiousness: 38,
+          openness: 32,
+        },
+        attachment: { anxiety: 76, avoidance: 72, styleAr: 'ارتباط حذر متوتر' },
+        emotionalIntelligence: 34,
+        communicationStyle: {
+          assertive: 30,
+          reflective: 32,
+          analytical: 74,
+          expressive: 28,
+          primaryAr: 'التحفظ الصامت',
+        },
+        conflictResolution: {
+          collaborating: 32,
+          compromising: 35,
+          accommodating: 30,
+          competing: 78,
+          avoiding: 74,
+          primaryAr: 'الانسحاب أو الحسم',
+        },
+        valuesScore: 42,
+        lifeGoals: {
+          familyStability: 36,
+          careerGrowth: 84,
+          intellectualDepth: 40,
+          socialHarmony: 32,
+          financialSecurity: 45,
+        },
+        parentingOrientation: 38,
+      };
+    }
+    const qData = loadUserPersonalQuestionnaire();
+    return profileFromQuestionnaireOrCommunity(qData, profile?.userName || fallbackLabel);
+  };
+
+  const handleRunTwoPersonComparison = () => {
+    soundManager.playResultReveal();
+    setComparisonSaved(false);
+    const profA = resolveSelectedProfile(sourceAKey, profile?.userName || 'الشخص الأول');
+    const profB = resolveSelectedProfile(sourceBKey, 'الشخص الثاني');
+    const computed = compareTwoPsychometricProfiles(profA, profB);
+    setComparisonReport(computed);
+  };
+
+  const handleSaveComparisonRecord = async () => {
+    if (!comparisonReport) return;
+    soundManager.playTap();
+    await saveUnifiedTestRecord(user || null, {
+      testType: 'personality_comparison',
+      testTitleAr: `مقارنة: ${comparisonReport.personA.personName} ✕ ${comparisonReport.personB.personName}`,
+      testCategoryAr: 'مقارنة شخصيتين علمياً',
+      scoreOrArchetype: `${comparisonReport.overallWeightedCompatibility}% • ${comparisonReport.compatibilityClassificationAr}`,
+      percentage: comparisonReport.overallWeightedCompatibility,
+      badgeColor: '#059669',
+      keyInsights: comparisonReport.subIndices.map((s) => `${s.titleAr}: ${s.score}%`),
+      snapshot: comparisonReport,
+      standardizedScores: Object.fromEntries(
+        comparisonReport.subIndices.map((s) => [s.key, s.score])
+      ),
+    });
+    setComparisonSaved(true);
+  };
+
+  const handleExportComparisonPdf = async () => {
+    if (!comparisonReport) return;
+    soundManager.playTap();
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
+    exportPsychometricReportAsPDF({
+      reportTitle: 'تقرير مقارنة شخصيتين عبر المحاور التسعة السيكومترية',
+      subTitle: `${comparisonReport.personA.personName} ✕ ${comparisonReport.personB.personName} • ${comparisonReport.compatibilityClassificationAr}`,
+      scientificBasis: comparisonReport.scientificReferences.join(' • '),
+      userName: comparisonReport.personA.personName,
+      completedAt: new Date(comparisonReport.createdAt).toLocaleDateString('ar-JO'),
+      overallScoreLabel: 'التوافق الإجمالي الموزون',
+      overallScoreValue: `${comparisonReport.overallWeightedCompatibility}%`,
+      cognitiveFingerprintTitle: 'تحليل 6 مؤشرات توافقية + 9 محاور سيكومترية',
+      executiveSummary: comparisonReport.executiveSummaryAr,
+      metrics: comparisonReport.subIndices.map((sub) => ({
+        label: sub.titleAr,
+        scorePercent: sub.score,
+        levelLabel: `وزن ${(sub.weight * 100).toFixed(0)}%`,
+        rawText: sub.interpretationAr,
+        color: '#059669',
+      })),
+      sections: comparisonReport.nineAxesBreakdown.map((ax) => ({
+        title: ax.axisNameAr,
+        badge: `توافق ${ax.matchScore}% (فارق ${ax.delta}%)`,
+        content: ax.scientificNoteAr,
+        items: [
+          `${comparisonReport.personA.personName}: ${ax.personAScore}%`,
+          `${comparisonReport.personB.personName}: ${ax.personBScore}%`,
+        ],
+      })),
+      careersOrRecommendations: [
+        ...comparisonReport.sharedStrengthsAr,
+        ...comparisonReport.growthRecommendationsAr,
+      ],
+      comparisonDualRadar: {
+        personAName: comparisonReport.personA.personName,
+        personBName: comparisonReport.personB.personName,
+        axes: comparisonReport.nineAxesBreakdown,
+      },
+    });
+  };
 
   const dyadicQuestions = QUIZ_QUESTIONS.filter((q) => DYADIC_CORE_QUESTION_IDS.includes(q.id));
   const currentQ = dyadicQuestions[questionIdx] || dyadicQuestions[0];
@@ -124,9 +319,10 @@ export const CoupleInviteModal: React.FC<Props> = ({
     setDyadicReport(null);
   };
 
-  const handleExportDyadicPdf = () => {
+  const handleExportDyadicPdf = async () => {
     if (!dyadicReport) return;
     soundManager.playTap();
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     exportPsychometricReportAsPDF({
       reportTitle: `تقرير التوافق العلمي المزدوج بين الشريكين (Dyadic Assessment)`,
       subTitle: `${dyadicReport.partnerAName} ✕ ${dyadicReport.partnerBName} • ${dyadicReport.stabilityClassificationAr}`,
@@ -202,7 +398,23 @@ export const CoupleInviteModal: React.FC<Props> = ({
         </div>
 
         {/* Mode Switcher Tabs */}
-        <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-black/40 border border-white/10 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1 rounded-2xl bg-black/40 border border-white/10 mb-5">
+          <button
+            type="button"
+            onClick={() => {
+              soundManager.playTap();
+              setActiveMode('two_person_compare');
+            }}
+            className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeMode === 'two_person_compare'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Sliders className="w-4 h-4" />
+            <span>مقارنة شخصيتين (9 محاور)</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
@@ -216,7 +428,7 @@ export const CoupleInviteModal: React.FC<Props> = ({
             }`}
           >
             <Brain className="w-4 h-4" />
-            <span>إجراء التقييم العلمي للطرفين الآن</span>
+            <span>تقييم ثنائي مباشر</span>
           </button>
 
           <button
@@ -232,11 +444,246 @@ export const CoupleInviteModal: React.FC<Props> = ({
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>إرسال رابط دعوة للشريك عن بُعد</span>
+            <span>رابط دعوة عن بُعد</span>
           </button>
         </div>
 
-        {activeMode === 'dyadic_lab' ? (
+        {activeMode === 'two_person_compare' ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-700/80">
+              <div>
+                <label className="block text-[11px] font-bold text-purple-300 mb-1.5">
+                  مصدر بيانات الشخص الأول (Person A):
+                </label>
+                <select
+                  aria-label="مصدر بيانات الشخص الأول"
+                  value={sourceAKey}
+                  onChange={(e) => setSourceAKey(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/15 text-xs text-white focus:outline-none focus:border-purple-400"
+                >
+                  <option value="questionnaire">ملفي الشخصي الحالي (الاستبيان)</option>
+                  {savedRecords.map((rec) => (
+                    <option key={`a_${rec.id}`} value={`record:${rec.id}`}>
+                      تقرير محفوظ: {rec.testTitleAr.slice(0, 34)} ({rec.percentage}%)
+                    </option>
+                  ))}
+                  {COMMUNITY_PROFILES.slice(0, 6).map((cm, idx) => (
+                    <option key={`ca_${cm.id}`} value={`community:${idx}`}>
+                      ملف: {cm.displayName} — {cm.country}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-emerald-300 mb-1.5">
+                  مصدر بيانات الشخص الثاني (Person B):
+                </label>
+                <select
+                  aria-label="مصدر بيانات الشخص الثاني"
+                  value={sourceBKey}
+                  onChange={(e) => setSourceBKey(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/15 text-xs text-white focus:outline-none focus:border-emerald-400"
+                >
+                  <option value="questionnaire">ملفي الشخصي الحالي (مقارنة التطابق)</option>
+                  <option value="preset_divergent">ملف متباين عالي القلق والتنافس (لاختبار الفروق)</option>
+                  {savedRecords.map((rec) => (
+                    <option key={`b_${rec.id}`} value={`record:${rec.id}`}>
+                      تقرير محفوظ: {rec.testTitleAr.slice(0, 34)} ({rec.percentage}%)
+                    </option>
+                  ))}
+                  {COMMUNITY_PROFILES.slice(0, 8).map((cm, idx) => (
+                    <option key={`cb_${cm.id}`} value={`community:${idx}`}>
+                      ملف: {cm.displayName} — {cm.country}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRunTwoPersonComparison}
+              className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 hover:opacity-95 text-white text-xs sm:text-sm font-extrabold transition cursor-pointer shadow-lg flex items-center justify-center gap-2"
+            >
+              <Scale className="w-4 h-4" />
+              <span>تشغيل محرك المقارنة السيكومترية عبر المحاور التسعة</span>
+            </button>
+
+            {comparisonReport && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-l from-purple-950/60 to-emerald-950/40 border border-purple-500/35 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="text-[11px] text-purple-300 font-bold">
+                      {comparisonReport.personA.personName} ✕ {comparisonReport.personB.personName}
+                    </div>
+                    <h4 className="text-base font-black text-white font-['Alexandria']">
+                      {comparisonReport.compatibilityClassificationAr}
+                    </h4>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {comparisonReport.executiveSummaryAr}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-black/50 border border-emerald-400/40 text-center shrink-0 min-w-[120px]">
+                    <div className="text-[10px] text-slate-300">التوافق العام</div>
+                    <div className="text-3xl font-black text-emerald-400 tabular-nums">
+                      {comparisonReport.overallWeightedCompatibility}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6 Sub-Indices */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {comparisonReport.subIndices.map((sub) => (
+                    <div
+                      key={sub.key}
+                      className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="font-extrabold text-white">{sub.titleAr}</span>
+                        <span className="font-black text-emerald-400 tabular-nums">{sub.score}%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-black/50 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-purple-500 to-emerald-500"
+                          style={{ width: `${sub.score}%` }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        {sub.interpretationAr}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 9-Axis Table */}
+                <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-2">
+                  <div className="text-xs font-extrabold text-white">تفصيل المحاور التسعة:</div>
+                  <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                    {comparisonReport.nineAxesBreakdown.map((ax) => (
+                      <div
+                        key={ax.axisKey}
+                        className="p-2.5 rounded-xl bg-black/35 border border-white/5 text-[11px] space-y-1"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-white">{ax.axisNameAr}</span>
+                          <span className="font-black text-cyan-300 tabular-nums">
+                            تطابق {ax.matchScore}% (Δ {ax.delta}%)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-slate-400 tabular-nums">
+                          <span>أ: {ax.personAScore}%</span>
+                          <span>ب: {ax.personBScore}%</span>
+                        </div>
+                        <p className="text-slate-300">{ax.scientificNoteAr}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lazy Dual Radar Chart */}
+                <Suspense
+                  fallback={
+                    <div className="p-4 text-center text-xs text-slate-400">
+                      جارٍ رسم مخطط المقارنة السيكومترية...
+                    </div>
+                  }
+                >
+                  {(() => {
+                    const emptyCharts: VisualChartsPayload = {
+                      overallRadar: comparisonReport.nineAxesBreakdown.slice(0, 8).map((r) => ({
+                        subject: r.axisNameAr.split('(')[0].trim(),
+                        score: r.matchScore,
+                        fullMark: 100,
+                      })),
+                      bigFiveRadar: [
+                        { trait: 'O', score: comparisonReport.personA.bigFive.openness, benchmark: comparisonReport.personB.bigFive.openness, fullMark: 100 },
+                        { trait: 'C', score: comparisonReport.personA.bigFive.conscientiousness, benchmark: comparisonReport.personB.bigFive.conscientiousness, fullMark: 100 },
+                        { trait: 'E', score: comparisonReport.personA.bigFive.extraversion, benchmark: comparisonReport.personB.bigFive.extraversion, fullMark: 100 },
+                        { trait: 'A', score: comparisonReport.personA.bigFive.agreeableness, benchmark: comparisonReport.personB.bigFive.agreeableness, fullMark: 100 },
+                        { trait: 'ES', score: comparisonReport.personA.bigFive.emotionalStability, benchmark: comparisonReport.personB.bigFive.emotionalStability, fullMark: 100 },
+                      ],
+                      hexacoRadar: [
+                        { trait: 'H', score: comparisonReport.personA.hexaco.honestyHumility, fullMark: 100 },
+                        { trait: 'E', score: comparisonReport.personA.hexaco.emotionality, fullMark: 100 },
+                        { trait: 'X', score: comparisonReport.personA.hexaco.extraversion, fullMark: 100 },
+                        { trait: 'A', score: comparisonReport.personA.hexaco.agreeableness, fullMark: 100 },
+                        { trait: 'C', score: comparisonReport.personA.hexaco.conscientiousness, fullMark: 100 },
+                        { trait: 'O', score: comparisonReport.personA.hexaco.openness, fullMark: 100 },
+                      ],
+                      emotionalIntelligence: [
+                        { branch: 'الذكاء العاطفي (أ)', score: comparisonReport.personA.emotionalIntelligence, color: '#8b5cf6' },
+                        { branch: 'الذكاء العاطفي (ب)', score: comparisonReport.personB.emotionalIntelligence, color: '#10b981' },
+                      ],
+                      attachment: {
+                        anxiety: comparisonReport.personA.attachment.anxiety,
+                        avoidance: comparisonReport.personA.attachment.avoidance,
+                        styleKey: 'secure',
+                        styleAr: comparisonReport.personA.attachment.styleAr,
+                        styleEn: 'Attachment',
+                      },
+                      communicationStyles: [
+                        { style: 'الحزم', score: comparisonReport.personA.communicationStyle.assertive, color: '#3b82f6' },
+                        { style: 'الإنصات', score: comparisonReport.personA.communicationStyle.reflective, color: '#10b981' },
+                      ],
+                      conflictModes: [
+                        { mode: 'التعاون', score: comparisonReport.personA.conflictResolution.collaborating, fullMark: 100 },
+                        { mode: 'التسوية', score: comparisonReport.personA.conflictResolution.compromising, fullMark: 100 },
+                        { mode: 'التجنب', score: comparisonReport.personA.conflictResolution.avoiding, fullMark: 100 },
+                      ],
+                      lifeGoalsAlignment: [
+                        { domain: 'الاستقرار الأسري', userScore: comparisonReport.personA.lifeGoals.familyStability, targetBenchmark: comparisonReport.personB.lifeGoals.familyStability },
+                        { domain: 'النمو المهني', userScore: comparisonReport.personA.lifeGoals.careerGrowth, targetBenchmark: comparisonReport.personB.lifeGoals.careerGrowth },
+                        { domain: 'العمق الفكري', userScore: comparisonReport.personA.lifeGoals.intellectualDepth, targetBenchmark: comparisonReport.personB.lifeGoals.intellectualDepth },
+                      ],
+                      compatibilityMatrix: comparisonReport.nineAxesBreakdown.slice(0, 8).map((r) => ({
+                        axisA: r.axisNameAr.split('(')[0],
+                        axisB: 'التناغم',
+                        synergyScore: r.matchScore,
+                        labelAr: r.axisNameAr.split('(')[0],
+                      })),
+                    };
+                    return (
+                      <LazyScientificVisualDashboards
+                        charts={emptyCharts}
+                        userName={comparisonReport.personA.personName}
+                        comparisonOverlay={{
+                          personAName: comparisonReport.personA.personName,
+                          personBName: comparisonReport.personB.personName,
+                          axes: comparisonReport.nineAxesBreakdown,
+                        }}
+                      />
+                    );
+                  })()}
+                </Suspense>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveComparisonRecord}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                      comparisonSaved
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-purple-600 hover:bg-purple-500 text-white'
+                    }`}
+                  >
+                    <BookmarkCheck className="w-4 h-4" />
+                    <span>{comparisonSaved ? '✓ تم الحفظ في سجل تقاريري' : 'حفظ المقارنة في سجل تقاريري'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportComparisonPdf}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <FileDown className="w-4 h-4" />
+                    <span>تصدير تقرير المقارنة (PDF)</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : activeMode === 'dyadic_lab' ? (
           <div className="space-y-4">
             {!dyadicReport ? (
               <>

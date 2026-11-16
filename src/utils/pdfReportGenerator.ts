@@ -6,6 +6,7 @@
 import { jsPDF } from 'jspdf';
 import { getInitialLanguage } from '../context/LanguageContext';
 import { SupportedLanguage, translateDynamicField } from '../data/translations';
+import type { VisualChartsPayload } from '../types';
 
 export interface PrintableReportSection {
   title: string;
@@ -51,6 +52,12 @@ export interface PrintableReportData {
     explanationAr?: string;
     dimensionLabelAr?: string;
   }>;
+  visualCharts?: VisualChartsPayload;
+  comparisonDualRadar?: {
+    personAName: string;
+    personBName: string;
+    axes: Array<{ axisNameAr: string; personAScore: number; personBScore: number }>;
+  };
 }
 
 export function generateExecutiveSummary(
@@ -121,6 +128,243 @@ function drawRoundedRect(
   ctx.lineTo(x, y + radius);
   ctx.quadraticCurveTo(x, y, x + radius, y);
   ctx.closePath();
+}
+
+function drawRadarChartOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  items: Array<{ label: string; score: number }>,
+  strokeColor: string,
+  fillRgba: string,
+  title: string
+) {
+  if (!items || items.length < 3) return;
+  ctx.save();
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 17px Alexandria, Tahoma, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, cx, cy - radius - 34);
+
+  // Concentric reference rings (25%, 50%, 75%, 100%)
+  [0.25, 0.5, 0.75, 1].forEach((rPct) => {
+    ctx.beginPath();
+    const r = radius * rPct;
+    items.forEach((_, idx) => {
+      const ang = (Math.PI * 2 * idx) / items.length - Math.PI / 2;
+      const px = cx + Math.cos(ang) * r;
+      const py = cy + Math.sin(ang) * r;
+      if (idx === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.closePath();
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Spokes and axis labels
+  items.forEach((it, idx) => {
+    const ang = (Math.PI * 2 * idx) / items.length - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(ang) * radius, cy + Math.sin(ang) * radius);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.stroke();
+
+    const lx = cx + Math.cos(ang) * (radius + 22);
+    const ly = cy + Math.sin(ang) * (radius + 18);
+    ctx.fillStyle = '#334155';
+    ctx.font = 'bold 12px Alexandria, Tahoma, Arial, sans-serif';
+    ctx.textAlign = Math.cos(ang) > 0.2 ? 'left' : Math.cos(ang) < -0.2 ? 'right' : 'center';
+    const clamped = Math.max(0, Math.min(100, Math.round(it.score)));
+    ctx.fillText(`${it.label.slice(0, 22)} (${clamped}%)`, lx, ly + 4);
+  });
+
+  // Data polygon
+  ctx.beginPath();
+  items.forEach((it, idx) => {
+    const clamped = Math.max(0, Math.min(100, it.score));
+    const r = (clamped / 100) * radius;
+    const ang = (Math.PI * 2 * idx) / items.length - Math.PI / 2;
+    const px = cx + Math.cos(ang) * r;
+    const py = cy + Math.sin(ang) * r;
+    if (idx === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.closePath();
+  ctx.fillStyle = fillRgba;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawAttachmentQuadrantOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  anxiety: number,
+  avoidance: number,
+  styleLabel: string,
+  title: string
+) {
+  ctx.save();
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 17px Alexandria, Tahoma, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, x + w / 2, y - 14);
+
+  const halfW = w / 2;
+  const halfH = h / 2;
+  // 4 Quadrant fills
+  ctx.fillStyle = 'rgba(245,158,11,0.12)';
+  ctx.fillRect(x, y, halfW, halfH);
+  ctx.fillStyle = 'rgba(244,63,94,0.12)';
+  ctx.fillRect(x + halfW, y, halfW, halfH);
+  ctx.fillStyle = 'rgba(16,185,129,0.15)';
+  ctx.fillRect(x, y + halfH, halfW, halfH);
+  ctx.fillStyle = 'rgba(249,115,22,0.12)';
+  ctx.fillRect(x + halfW, y + halfH, halfW, halfH);
+
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x + halfW, y);
+  ctx.lineTo(x + halfW, y + h);
+  ctx.moveTo(x, y + halfH);
+  ctx.lineTo(x + w, y + halfH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.font = 'bold 12px Alexandria, Tahoma, Arial, sans-serif';
+  ctx.fillStyle = '#92400e';
+  ctx.fillText('قلق متعطش (Anxious)', x + halfW / 2, y + 22);
+  ctx.fillStyle = '#9f1239';
+  ctx.fillText('حذر متذبذب (Fearful)', x + halfW + halfW / 2, y + 22);
+  ctx.fillStyle = '#065f46';
+  ctx.fillText('آمن مستقر (Secure)', x + halfW / 2, y + h - 14);
+  ctx.fillStyle = '#9a3412';
+  ctx.fillText('تجنبي مكتفٍ (Avoidant)', x + halfW + halfW / 2, y + h - 14);
+
+  const safeAvoid = Math.max(0, Math.min(100, avoidance));
+  const safeAnx = Math.max(0, Math.min(100, anxiety));
+  const dotX = x + (safeAvoid / 100) * w;
+  const dotY = y + h - (safeAnx / 100) * h;
+
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 13, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(109,40,217,0.28)';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 6.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#6d28d9';
+  ctx.fill();
+
+  ctx.fillStyle = '#334155';
+  ctx.font = 'bold 12.5px Alexandria, Tahoma, Arial, sans-serif';
+  ctx.fillText(`${styleLabel} (${safeAnx}% قلق / ${safeAvoid}% تجنب)`, x + w / 2, y + h + 24);
+  ctx.restore();
+}
+
+function drawDualComparisonRadarOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  personAName: string,
+  personBName: string,
+  axes: Array<{ axisNameAr: string; personAScore: number; personBScore: number }>,
+  title: string
+) {
+  if (!axes || axes.length < 3) return;
+  ctx.save();
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 18px Alexandria, Tahoma, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, cx, cy - radius - 42);
+
+  [0.25, 0.5, 0.75, 1].forEach((rPct) => {
+    ctx.beginPath();
+    const r = radius * rPct;
+    axes.forEach((_, idx) => {
+      const ang = (Math.PI * 2 * idx) / axes.length - Math.PI / 2;
+      const px = cx + Math.cos(ang) * r;
+      const py = cy + Math.sin(ang) * r;
+      if (idx === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.closePath();
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  axes.forEach((ax, idx) => {
+    const ang = (Math.PI * 2 * idx) / axes.length - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(ang) * radius, cy + Math.sin(ang) * radius);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.stroke();
+
+    const lx = cx + Math.cos(ang) * (radius + 26);
+    const ly = cy + Math.sin(ang) * (radius + 20);
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 12px Alexandria, Tahoma, Arial, sans-serif';
+    ctx.textAlign = Math.cos(ang) > 0.2 ? 'left' : Math.cos(ang) < -0.2 ? 'right' : 'center';
+    ctx.fillText(ax.axisNameAr.split('(')[0].trim().slice(0, 26), lx, ly + 4);
+  });
+
+  // Person A polygon
+  ctx.beginPath();
+  axes.forEach((ax, idx) => {
+    const r = (Math.max(0, Math.min(100, ax.personAScore)) / 100) * radius;
+    const ang = (Math.PI * 2 * idx) / axes.length - Math.PI / 2;
+    const px = cx + Math.cos(ang) * r;
+    const py = cy + Math.sin(ang) * r;
+    if (idx === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(139,92,246,0.28)';
+  ctx.fill();
+  ctx.strokeStyle = '#7c3aed';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Person B polygon
+  ctx.beginPath();
+  axes.forEach((ax, idx) => {
+    const r = (Math.max(0, Math.min(100, ax.personBScore)) / 100) * radius;
+    const ang = (Math.PI * 2 * idx) / axes.length - Math.PI / 2;
+    const px = cx + Math.cos(ang) * r;
+    const py = cy + Math.sin(ang) * r;
+    if (idx === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(16,185,129,0.24)';
+  ctx.fill();
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Legend
+  ctx.fillStyle = '#7c3aed';
+  ctx.font = 'bold 14px Alexandria, Tahoma, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`● ${personAName}    |    ● ${personBName}`, cx, cy + radius + 48);
+  ctx.fillStyle = '#059669';
+  ctx.fillText(`(بنفسجي: ${personAName} • أخضر: ${personBName})`, cx, cy + radius + 70);
+  ctx.restore();
 }
 
 // Renders report data onto one or more high-resolution A4 Canvas elements with structured data tables
@@ -496,6 +740,108 @@ function renderReportPagesToCanvases(
     });
 
     y += 20;
+  }
+
+  // 3B. Scientific Visual Dashboards Embedded Directly in PDF (Charts 1-9 & Comparison Radar)
+  if (data.comparisonDualRadar && data.comparisonDualRadar.axes.length >= 3) {
+    ensureSpace(470);
+    ctx.fillStyle = '#f8fafc';
+    drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 450, 16);
+    ctx.fill();
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    drawDualComparisonRadarOnCanvas(
+      ctx,
+      PAGE_W / 2,
+      y + 218,
+      142,
+      localizeReportText(data.comparisonDualRadar.personAName, lang),
+      localizeReportText(data.comparisonDualRadar.personBName, lang),
+      data.comparisonDualRadar.axes,
+      isRTL
+        ? `مخطط المقارنة السيكومترية المباشرة عبر المحاور التسعة`
+        : 'Nine-Axis Two-Person Psychometric Overlay Radar'
+    );
+    y += 472;
+  }
+
+  if (data.visualCharts) {
+    ensureSpace(520);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '800 22px Alexandria, Tahoma, Arial, sans-serif';
+    ctx.textAlign = primaryAlign;
+    ctx.fillText(
+      isRTL ? 'الرسوم البيانية واللوحات البصرية السيكومترية:' : 'Scientific Psychometric Visual Dashboards:',
+      startX,
+      y
+    );
+    y += 18;
+
+    // Row 1: Overall 8-Construct Radar + Big Five Radar
+    ctx.fillStyle = '#f8fafc';
+    drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 410, 16);
+    ctx.fill();
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    drawRadarChartOnCanvas(
+      ctx,
+      MARGIN + CONTENT_W * 0.25,
+      y + 215,
+      120,
+      (data.visualCharts.overallRadar || []).map((o) => ({ label: o.subject.split('(')[0], score: o.score })),
+      '#7c3aed',
+      'rgba(124,58,237,0.28)',
+      isRTL ? 'رادار النماذج الثمانية الشامل' : '8-Construct Synthesis Radar'
+    );
+
+    drawRadarChartOnCanvas(
+      ctx,
+      MARGIN + CONTENT_W * 0.75,
+      y + 215,
+      120,
+      (data.visualCharts.bigFiveRadar || []).map((b) => ({ label: b.trait.split('(')[0], score: b.score })),
+      '#db2777',
+      'rgba(219,39,119,0.26)',
+      isRTL ? 'رادار العوامل الخمسة الكبرى (Big Five)' : 'Big Five Personality Radar'
+    );
+    y += 432;
+
+    // Row 2: HEXACO Radar + ECR-R 2D Attachment Quadrant
+    ensureSpace(390);
+    ctx.fillStyle = '#f8fafc';
+    drawRoundedRect(ctx, MARGIN, y, CONTENT_W, 370, 16);
+    ctx.fill();
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    drawRadarChartOnCanvas(
+      ctx,
+      MARGIN + CONTENT_W * 0.25,
+      y + 195,
+      108,
+      (data.visualCharts.hexacoRadar || []).map((h) => ({ label: h.trait.split('(')[0], score: h.score })),
+      '#0891b2',
+      'rgba(8,145,178,0.28)',
+      isRTL ? 'رادار هيكساكو سداسي العوامل (HEXACO)' : 'HEXACO 6-Factor Radar'
+    );
+
+    drawAttachmentQuadrantOnCanvas(
+      ctx,
+      MARGIN + CONTENT_W * 0.54,
+      y + 62,
+      CONTENT_W * 0.41,
+      235,
+      data.visualCharts.attachment?.anxiety ?? 30,
+      data.visualCharts.attachment?.avoidance ?? 30,
+      localizeReportText(data.visualCharts.attachment?.styleAr, lang),
+      isRTL ? 'خريطة التعلق العاطفي ثنائية الأبعاد (ECR-R)' : 'ECR-R Attachment 2D Quadrant'
+    );
+    y += 392;
   }
 
   // 4. Detailed Qualitative Analysis Sections

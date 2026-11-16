@@ -9,10 +9,37 @@ import {
   orderBy,
   deleteDoc,
   User,
+  auth,
   isAutomatedAuditEnvironment,
 } from '../firebase';
-import { UserProfile, PartnerAnalysisResult } from '../types';
-import { COMMUNITY_PROFILES, CommunityMemberProfile } from '../data/communityProfiles';
+import { AnalysisTier, UserProfile, PartnerAnalysisResult } from '../types';
+import type { CommunityMemberProfile } from '../data/communityProfiles';
+
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null
+): void {
+  const errInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    operationType,
+    path,
+    authInfo: {
+      userId: auth?.currentUser?.uid || null,
+      email: auth?.currentUser?.email || null,
+    },
+  };
+  console.warn('Firestore Operation Advisory:', JSON.stringify(errInfo));
+}
 
 function withFirestoreTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -56,6 +83,21 @@ export interface SavedHistoricalResult {
 const VISITOR_ID_STORAGE_KEY = 'mirat_persistent_visitor_id';
 const VISITOR_PROFILE_STORAGE_KEY = 'mirat_persistent_user_profile';
 const VISITOR_LATEST_RESULT_KEY = 'mirat_persistent_latest_result';
+const CLOUD_SYNC_FLAG_KEY = 'mirat_has_cloud_data';
+
+function hasVisitorCloudData(): boolean {
+  try {
+    return localStorage.getItem(CLOUD_SYNC_FLAG_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markVisitorCloudData(): void {
+  try {
+    localStorage.setItem(CLOUD_SYNC_FLAG_KEY, '1');
+  } catch {}
+}
 
 /**
  * Generates or retrieves a persistent visitor ID so returning visitors always keep their database records
@@ -108,6 +150,7 @@ export async function savePersistentUserProfile(
       ),
       2500
     );
+    markVisitorCloudData();
   } catch {
     // Ignore offline/timeout
   }
@@ -174,37 +217,39 @@ export async function loadPersistentUserSession(user?: User | null): Promise<{
     } catch {}
   }
 
-  // 2. Check visitor_sessions in Firestore
-  const visitorId = getOrCreateVisitorId();
-  try {
-    const visSnap = await withFirestoreTimeout(
-      getDoc(doc(db, 'visitor_sessions', visitorId)),
-      2500
-    );
-    if (visSnap.exists()) {
-      const data = visSnap.data();
-      if (data.profile && !localProfile) {
-        localProfile = data.profile as UserProfile;
-        localStorage.setItem(VISITOR_PROFILE_STORAGE_KEY, JSON.stringify(localProfile));
-      }
-      if (data.latestResult && !localResult) {
-        localResult = data.latestResult as PartnerAnalysisResult;
-        localStorage.setItem(VISITOR_LATEST_RESULT_KEY, JSON.stringify(localResult));
-      }
-      if (Array.isArray(data.testHistory) && data.testHistory.length > 0) {
-        const key = `offline_test_history_${getEffectiveOwnerId(user)}`;
-        if (!localStorage.getItem(key)) {
-          localStorage.setItem(key, JSON.stringify(data.testHistory));
+  // 2. Check visitor_sessions in Firestore only if this visitor has previously synced cloud data
+  if (hasVisitorCloudData()) {
+    const visitorId = getOrCreateVisitorId();
+    try {
+      const visSnap = await withFirestoreTimeout(
+        getDoc(doc(db, 'visitor_sessions', visitorId)),
+        2500
+      );
+      if (visSnap.exists()) {
+        const data = visSnap.data();
+        if (data.profile && !localProfile) {
+          localProfile = data.profile as UserProfile;
+          localStorage.setItem(VISITOR_PROFILE_STORAGE_KEY, JSON.stringify(localProfile));
+        }
+        if (data.latestResult && !localResult) {
+          localResult = data.latestResult as PartnerAnalysisResult;
+          localStorage.setItem(VISITOR_LATEST_RESULT_KEY, JSON.stringify(localResult));
+        }
+        if (Array.isArray(data.testHistory) && data.testHistory.length > 0) {
+          const key = `offline_test_history_${getEffectiveOwnerId(user)}`;
+          if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, JSON.stringify(data.testHistory));
+          }
+        }
+        if (Array.isArray(data.results) && data.results.length > 0) {
+          const key = `offline_results_${getEffectiveOwnerId(user)}`;
+          if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, JSON.stringify(data.results));
+          }
         }
       }
-      if (Array.isArray(data.results) && data.results.length > 0) {
-        const key = `offline_results_${getEffectiveOwnerId(user)}`;
-        if (!localStorage.getItem(key)) {
-          localStorage.setItem(key, JSON.stringify(data.results));
-        }
-      }
-    }
-  } catch {}
+    } catch {}
+  }
 
   return { profile: localProfile, latestResult: localResult };
 }
@@ -305,6 +350,7 @@ export async function saveTestResultToHistory(
       },
       { merge: true }
     );
+    markVisitorCloudData();
   } catch (err) {
     console.warn('Could not sync result to visitor_sessions in Firestore', err);
   }
@@ -356,22 +402,24 @@ export async function fetchUserSavedResults(user?: User | null): Promise<SavedHi
       }
     }
 
-    // 2. Check /visitor_sessions/{visitorId} in Firestore
-    try {
-      const visSnap = await withFirestoreTimeout(
-        getDoc(doc(db, 'visitor_sessions', visitorId)),
-        2500
-      );
-      if (visSnap.exists()) {
-        const data = visSnap.data();
-        if (Array.isArray(data.results) && data.results.length > 0) {
-          try {
-            localStorage.setItem(`offline_results_${ownerId}`, JSON.stringify(data.results));
-          } catch {}
-          return data.results as SavedHistoricalResult[];
+    // 2. Check /visitor_sessions/{visitorId} in Firestore only if prior cloud data exists
+    if (hasVisitorCloudData()) {
+      try {
+        const visSnap = await withFirestoreTimeout(
+          getDoc(doc(db, 'visitor_sessions', visitorId)),
+          2500
+        );
+        if (visSnap.exists()) {
+          const data = visSnap.data();
+          if (Array.isArray(data.results) && data.results.length > 0) {
+            try {
+              localStorage.setItem(`offline_results_${ownerId}`, JSON.stringify(data.results));
+            } catch {}
+            return data.results as SavedHistoricalResult[];
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
   }
 
   // 3. Fallback to localStorage cache
@@ -459,6 +507,7 @@ export async function saveUserPsychologyReport(
       },
       { merge: true }
     );
+    markVisitorCloudData();
   } catch {}
 
   // 3. If user is signed in to Firebase, persist to /users/{uid}
@@ -585,6 +634,7 @@ export async function setPublicProfileStatus(
  * combined with scientific reference archetype profiles
  */
 export async function fetchPublicCommunityProfiles(): Promise<CommunityMemberProfile[]> {
+  const { COMMUNITY_PROFILES } = await import('../data/communityProfiles');
   try {
     const snap = await getDocs(collection(db, 'public_profiles'));
     const list: CommunityMemberProfile[] = [];
@@ -649,7 +699,12 @@ export async function fetchPublicCommunityProfiles(): Promise<CommunityMemberPro
 
 // ================= UNIFIED TEST TRACKING & TIMELINE SERVICE =================
 
-export type UnifiedTestType = 'partner_compatibility' | 'psychology' | 'intelligence';
+export type UnifiedTestType =
+  | 'partner_compatibility'
+  | 'psychology'
+  | 'intelligence'
+  | 'tiered_assessment'
+  | 'personality_comparison';
 
 export interface UnifiedTestRecord {
   id: string;
@@ -663,6 +718,123 @@ export interface UnifiedTestRecord {
   badgeColor: string;
   keyInsights: string[];
   snapshot: any;
+  analysisTier?: AnalysisTier;
+  rawScores?: Record<string, number>;
+  standardizedScores?: Record<string, number>;
+}
+
+export interface TemporalBucketPoint {
+  periodKey: 'year' | 'month' | 'today';
+  periodLabelAr: string;
+  avgScore: number;
+  count: number;
+  emotionalAvg: number;
+  cognitiveAvg: number;
+  relationalAvg: number;
+}
+
+export interface TemporalEvolutionSummary {
+  buckets: TemporalBucketPoint[];
+  trendDelta: number;
+  trendDirection: 'up' | 'steady' | 'down';
+  trendInsightAr: string;
+}
+
+export function buildTemporalEvolutionSummary(
+  records: UnifiedTestRecord[],
+  nowMs: number = Date.now()
+): TemporalEvolutionSummary {
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const thirtyDaysMs = 30 * oneDayMs;
+  const yearMs = 365 * oneDayMs;
+
+  const startOfToday = new Date(nowMs);
+  startOfToday.setHours(0, 0, 0, 0);
+  const todayCutoff = startOfToday.getTime();
+  const monthCutoff = nowMs - thirtyDaysMs;
+  const yearCutoff = nowMs - yearMs;
+
+  const yearRecords: UnifiedTestRecord[] = [];
+  const monthRecords: UnifiedTestRecord[] = [];
+  const todayRecords: UnifiedTestRecord[] = [];
+
+  records.forEach((r) => {
+    const ts = new Date(r.createdAt).getTime();
+    if (!Number.isFinite(ts)) return;
+    if (ts >= todayCutoff) {
+      todayRecords.push(r);
+    } else if (ts >= monthCutoff) {
+      monthRecords.push(r);
+    } else if (ts >= yearCutoff) {
+      yearRecords.push(r);
+    } else {
+      yearRecords.push(r);
+    }
+  });
+
+  const summarize = (
+    key: TemporalBucketPoint['periodKey'],
+    labelAr: string,
+    list: UnifiedTestRecord[]
+  ): TemporalBucketPoint => {
+    if (list.length === 0) {
+      return {
+        periodKey: key,
+        periodLabelAr: labelAr,
+        avgScore: 0,
+        count: 0,
+        emotionalAvg: 0,
+        cognitiveAvg: 0,
+        relationalAvg: 0,
+      };
+    }
+
+    const avgAll = Math.round(
+      list.reduce((s, r) => s + (Number(r.percentage) || 0), 0) / list.length
+    );
+
+    const pickByType = (types: UnifiedTestType[], fallback: number) => {
+      const sub = list.filter((r) => types.includes(r.testType));
+      if (sub.length === 0) return fallback;
+      return Math.round(sub.reduce((s, r) => s + (Number(r.percentage) || 0), 0) / sub.length);
+    };
+
+    return {
+      periodKey: key,
+      periodLabelAr: labelAr,
+      avgScore: avgAll,
+      count: list.length,
+      emotionalAvg: pickByType(['psychology', 'tiered_assessment'], avgAll),
+      cognitiveAvg: pickByType(['intelligence', 'tiered_assessment'], avgAll),
+      relationalAvg: pickByType(['partner_compatibility', 'personality_comparison'], avgAll),
+    };
+  };
+
+  const bYear = summarize('year', 'العام الماضي', yearRecords);
+  const bMonth = summarize('month', 'الشهر الماضي', monthRecords);
+  const bToday = summarize('today', 'اليوم', todayRecords);
+
+  const baseline = bYear.count > 0 ? bYear.avgScore : bMonth.count > 0 ? bMonth.avgScore : bToday.avgScore;
+  const latest = bToday.count > 0 ? bToday.avgScore : bMonth.count > 0 ? bMonth.avgScore : bYear.avgScore;
+  const trendDelta = latest - baseline;
+  const trendDirection: TemporalEvolutionSummary['trendDirection'] =
+    trendDelta >= 3 ? 'up' : trendDelta <= -3 ? 'down' : 'steady';
+
+  const trendInsightAr =
+    records.length === 0
+      ? 'ابدأ بإجراء أول اختبار نفسي أو توافقي لتفعيل رسم منحنى التطور الزمني عبر اليوم والشهر والعام.'
+      : trendDirection === 'up'
+      ? `تطور إيجابي بمقدار +${trendDelta}% مقارنة بسجلاتك الأقدم، مما يعكس تنامياً في الوعي العاطفي والاستقرار العلائقي.`
+      : trendDirection === 'down'
+      ? `انخفاض طفيف بمقدار ${trendDelta}% مقارنة بالمعدل الأقدم؛ قد يرتبط بضغوط ظرفية أو خوض مقاييس أعمق لأول مرة.`
+      : 'ثبات سيكومتري مستقر عبر الفترات الزمنية يعكس وضوحاً راسخاً في السمات والقيم الشخصية.';
+
+  return {
+    buckets: [bYear, bMonth, bToday],
+    trendDelta,
+    trendDirection,
+    trendInsightAr,
+  };
 }
 
 export async function saveUnifiedTestRecord(
@@ -700,7 +872,7 @@ export async function saveUnifiedTestRecord(
       const testDocRef = doc(db, 'users', user.uid, 'test_history', recordId);
       await setDoc(testDocRef, fullRecord);
     } catch (err) {
-      console.warn('Could not save test_history to user firestore doc', err);
+      handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/test_history/${recordId}`);
     }
   }
 
@@ -716,6 +888,7 @@ export async function saveUnifiedTestRecord(
       },
       { merge: true }
     );
+    markVisitorCloudData();
   } catch (err) {
     console.warn('Could not sync test_history to visitor_sessions in Firestore', err);
   }
@@ -751,22 +924,24 @@ export async function fetchUnifiedTestHistory(user?: User | null): Promise<Unifi
       }
     }
 
-    // 2. Check /visitor_sessions/{visitorId} in Firestore
-    try {
-      const visSnap = await withFirestoreTimeout(
-        getDoc(doc(db, 'visitor_sessions', visitorId)),
-        2500
-      );
-      if (visSnap.exists()) {
-        const data = visSnap.data();
-        if (Array.isArray(data.testHistory) && data.testHistory.length > 0) {
-          try {
-            localStorage.setItem(`offline_test_history_${ownerId}`, JSON.stringify(data.testHistory));
-          } catch {}
-          return data.testHistory as UnifiedTestRecord[];
+    // 2. Check /visitor_sessions/{visitorId} in Firestore only if prior cloud data exists
+    if (hasVisitorCloudData()) {
+      try {
+        const visSnap = await withFirestoreTimeout(
+          getDoc(doc(db, 'visitor_sessions', visitorId)),
+          2500
+        );
+        if (visSnap.exists()) {
+          const data = visSnap.data();
+          if (Array.isArray(data.testHistory) && data.testHistory.length > 0) {
+            try {
+              localStorage.setItem(`offline_test_history_${ownerId}`, JSON.stringify(data.testHistory));
+            } catch {}
+            return data.testHistory as UnifiedTestRecord[];
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
   }
 
   // 3. Fallback to local cache

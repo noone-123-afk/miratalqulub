@@ -55,6 +55,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     subtitle: 'يقيس التوافق الذهني (Cognitive Compatibility) ونضج اتخاذ القرار',
     category: 'التوافق الفكري والقرارات',
     scientificDimension: 'المرونة الإدراكية والتشارك',
+    scientificReference: 'Sternberg (1986) Cognitive Dyadic Synchronization & Gottman Shared Meaning',
+    scoringNoteAr: 'يقيم ميل الفرد نحو الشورى المنظمة مقابل التلقائية الحدسية أو التوزيع الوظيفي عند حسم القرارات.',
     icon: 'Brain',
     options: [
       {

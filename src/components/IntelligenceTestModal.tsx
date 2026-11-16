@@ -45,10 +45,6 @@ import { useAppTheme } from '../utils/theme';
 import { db, doc, setDoc } from '../firebase';
 import { saveUnifiedTestRecord } from '../services/userHistoryService';
 import {
-  exportPsychometricReportAsPDF,
-  generateExecutiveSummary,
-} from '../utils/pdfReportGenerator';
-import {
   PsychometricAcademicIntro,
   PsychometricAcademicConclusion,
   ScientificClinicalDisclaimerBanner,
@@ -61,6 +57,14 @@ interface Props {
 }
 
 type StepMode = 'welcome' | 'instructions' | 'test' | 'results';
+
+function buildExecutiveSummaryText(
+  iqLevel: string,
+  topEQSkill: string,
+  topMISkill: string
+): string {
+  return `بناءً على التقييم السيكومتري الشامل، يتمتع المختبَر بقدرة بارزة في "${topMISkill}" مدعومة بمهارة متميزة في "${topEQSkill}"، ومستوى أداء معرفي (${iqLevel}). هذا المزيج يشكل بصمة معرفية ووجدانية تؤهله للتميز في البيئات التي تتطلب تحليلاً عميقاً، قيادة متزنة، وتواصلاً إنسانياً ذكياً، مع قدرة عالية على تحويل الأفكار المعقدة إلى إنجازات عملية ملموسة.`;
+}
 type RunnerViewMode = 'paged_5' | 'single_1' | 'all_list';
 
 const STORAGE_RESULT_KEY = 'mirat_intelligence_test_result';
@@ -501,7 +505,10 @@ export const IntelligenceTestModal: React.FC<Props> = ({
     setTimeout(() => setIsSavedToProfile(false), 3000);
   };
 
-  const triggerMIPDFExport = (res: IntelligenceTestResult) => {
+  const triggerMIPDFExport = async (res: IntelligenceTestResult) => {
+    const { exportPsychometricReportAsPDF, generateExecutiveSummary } = await import(
+      '../utils/pdfReportGenerator'
+    );
     const primaryMeta = INTELLIGENCE_CATEGORIES[res.primaryIntelligence];
     const secondMeta = INTELLIGENCE_CATEGORIES[res.topThree[1]];
     const execSummary = generateExecutiveSummary(
@@ -542,10 +549,11 @@ export const IntelligenceTestModal: React.FC<Props> = ({
     });
   };
 
-  const triggerObjectivePDFExport = (
+  const triggerObjectivePDFExport = async (
     res: ObjectiveBatteryResult,
     meta: (typeof INTELLIGENCE_BATTERIES_CATALOG)[number]
   ) => {
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     exportPsychometricReportAsPDF({
       reportTitle: res.batteryTitleAr,
       subTitle: `${res.classificationTitleAr} — (${res.correctOrHighCount}/${res.totalQuestions} إجابة صحيحة)`,
@@ -594,12 +602,12 @@ export const IntelligenceTestModal: React.FC<Props> = ({
     });
   };
 
-  const handleDownloadPDFReport = () => {
+  const handleDownloadPDFReport = async () => {
     soundManager.playTap();
     if (isMultipleIntelligences && testResult) {
-      triggerMIPDFExport(testResult);
+      await triggerMIPDFExport(testResult);
     } else if (!isMultipleIntelligences && objResult) {
-      triggerObjectivePDFExport(objResult, currentBatteryMeta);
+      await triggerObjectivePDFExport(objResult, currentBatteryMeta);
     }
   };
 
@@ -1037,6 +1045,8 @@ export const IntelligenceTestModal: React.FC<Props> = ({
 
             <button
               onClick={onClose}
+              aria-label="إغلاق نافذة اختبار الذكاء"
+              title="إغلاق"
               className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -1720,7 +1730,7 @@ export const IntelligenceTestModal: React.FC<Props> = ({
                   </span>
                 </h3>
                 <p className="text-xs text-gray-300 max-w-xl leading-relaxed">
-                  {generateExecutiveSummary(
+                  {buildExecutiveSummaryText(
                     `${testResult.overallAverage}%`,
                     INTELLIGENCE_CATEGORIES[testResult.topThree[1]].titleAr,
                     INTELLIGENCE_CATEGORIES[testResult.primaryIntelligence].titleAr

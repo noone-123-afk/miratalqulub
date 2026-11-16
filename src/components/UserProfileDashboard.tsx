@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ResponsiveContainer,
@@ -7,6 +7,12 @@ import {
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
   Tooltip,
 } from 'recharts';
 import {
@@ -72,10 +78,16 @@ import {
   fetchPublicCommunityProfiles,
   saveUserPsychologyReport,
   savePersistentUserProfile,
+  buildTemporalEvolutionSummary,
   UnifiedTestRecord,
 } from '../services/userHistoryService';
-import { exportPsychometricReportAsPDF } from '../utils/pdfReportGenerator';
 import { SkeletonLoader } from './SkeletonLoader';
+
+const LazyScientificVisualDashboards = lazy(() =>
+  import('./ScientificVisualDashboards').then((m) => ({
+    default: m.ScientificVisualDashboards,
+  }))
+);
 
 export type DashboardTabKey =
   | 'overview'
@@ -150,8 +162,18 @@ export const UserProfileDashboard: React.FC<Props> = ({
   const [testHistory, setTestHistory] = useState<UnifiedTestRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [historyFilter, setHistoryFilter] = useState<
-    'all' | 'intelligence' | 'psychology' | 'partner_compatibility'
+    | 'all'
+    | 'tiered_assessment'
+    | 'personality_comparison'
+    | 'intelligence'
+    | 'psychology'
+    | 'partner_compatibility'
   >('all');
+  const [historyTierFilter, setHistoryTierFilter] = useState<
+    'all' | 'quick' | 'advanced' | 'professional'
+  >('all');
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
+  const [reopenedRecord, setReopenedRecord] = useState<UnifiedTestRecord | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Latest General Psychometric Report
@@ -381,8 +403,9 @@ export const UserProfileDashboard: React.FC<Props> = ({
   };
 
   // Export Full Psychometric Profile Dashboard as PDF
-  const handleExportFullDashboardPDF = () => {
+  const handleExportFullDashboardPDF = async () => {
     soundManager.playTap();
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     const activeRep = cattellReport.isCompleted ? cattellReport : report;
     exportPsychometricReportAsPDF({
       reportTitle: `الملف الشخصي السيكومتري والزوجي الشامل — ${userName}`,
@@ -464,9 +487,82 @@ export const UserProfileDashboard: React.FC<Props> = ({
   };
 
   // Export any historical test record as PDF
-  const handleDownloadHistoryRecordPDF = (rec: UnifiedTestRecord) => {
+  const handleDownloadHistoryRecordPDF = async (rec: UnifiedTestRecord) => {
     soundManager.playTap();
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     const snap = rec.snapshot;
+
+    if (rec.testType === 'tiered_assessment' && snap && snap.subscales) {
+      exportPsychometricReportAsPDF({
+        reportTitle: `${snap.tierTitleAr || rec.testTitleAr} — سجل تقاريري`,
+        subTitle: `${snap.archetypeTitleAr || rec.scoreOrArchetype}`,
+        scientificBasis: (snap.scientificReferences || []).join(' • ') || 'النماذج السيكومترية الثمانية',
+        userName: snap.userName || userName,
+        completedAt: new Date(rec.createdAt).toLocaleDateString('ar-JO'),
+        overallScoreLabel: 'مؤشر النضج السيكومتري',
+        overallScoreValue: `${snap.overallMaturityIndex || rec.percentage}%`,
+        cognitiveFingerprintTitle: `اتساق ${snap.consistencyIndex || 90}% • المئين ${snap.overallPercentile || rec.percentage}%`,
+        executiveSummary: snap.executiveSummaryAr || rec.testCategoryAr,
+        metrics: (snap.subscales || []).slice(0, 14).map((s: any) => ({
+          label: s.labelAr,
+          scorePercent: s.percentage,
+          levelLabel: `Sten ${s.stenScore}/10`,
+          rawText: s.interpretationAr,
+          color: s.color || '#8b5cf6',
+        })),
+        sections: [
+          {
+            title: 'بنية الشخصية والتحليل النوعي',
+            content: `${snap.personalityDescriptionAr || ''} ${snap.communicationStyleAr || ''}`,
+            items: snap.strengthsAr || rec.keyInsights || [],
+          },
+          ...(snap.thinkingStyleAnalysisAr
+            ? [{ title: 'نمط التفكير واتخاذ القرار والتعلق', content: `${snap.thinkingStyleAnalysisAr} ${snap.attachmentAnalysisAr || ''}` }]
+            : []),
+          ...(snap.valuesAndBeliefsAr
+            ? [{ title: 'الملف الاحترافي طويل الأمد', content: `${snap.valuesAndBeliefsAr} ${snap.longTermMaritalCompatibilityAr || ''}` }]
+            : []),
+        ],
+        careersOrRecommendations: snap.improvementAreasAr || rec.keyInsights || [],
+        disclaimerText: snap.scientificDisclaimerAr,
+        visualCharts: snap.visualCharts,
+      });
+      return;
+    }
+
+    if (rec.testType === 'personality_comparison' && snap && snap.nineAxesBreakdown) {
+      exportPsychometricReportAsPDF({
+        reportTitle: rec.testTitleAr,
+        subTitle: snap.compatibilityClassificationAr || 'مقارنة شخصيتين علمياً',
+        scientificBasis: (snap.scientificReferences || []).join(' • '),
+        userName: `${snap.personA?.personName || ''} ✕ ${snap.personB?.personName || ''}`,
+        completedAt: new Date(rec.createdAt).toLocaleDateString('ar-JO'),
+        overallScoreLabel: 'التوافق الموزون الكلي',
+        overallScoreValue: `${snap.overallWeightedCompatibility || rec.percentage}%`,
+        cognitiveFingerprintTitle: 'مقارنة 9 محاور سيكومترية و6 مؤشرات توافقية',
+        executiveSummary: snap.executiveSummaryAr || rec.scoreOrArchetype,
+        metrics: (snap.subIndices || []).map((sub: any) => ({
+          label: sub.titleAr,
+          scorePercent: sub.score,
+          levelLabel: `وزن ${Math.round((sub.weight || 0.16) * 100)}%`,
+          rawText: sub.interpretationAr,
+          color: '#059669',
+        })),
+        sections: (snap.nineAxesBreakdown || []).map((ax: any) => ({
+          title: ax.axisNameAr,
+          badge: `توافق ${ax.matchScore}%`,
+          content: ax.scientificNoteAr,
+        })),
+        careersOrRecommendations: [...(snap.sharedStrengthsAr || []), ...(snap.growthRecommendationsAr || [])],
+        comparisonDualRadar: {
+          personAName: snap.personA?.personName || 'الشخص الأول',
+          personBName: snap.personB?.personName || 'الشخص الثاني',
+          axes: snap.nineAxesBreakdown,
+        },
+      });
+      return;
+    }
+
     if (rec.testType === 'psychology' && snap && snap.dimensionScores) {
       exportPsychometricReportAsPDF({
         reportTitle: snap.testTitleAr || rec.testTitleAr,
@@ -1214,7 +1310,7 @@ export const UserProfileDashboard: React.FC<Props> = ({
                   </span>
                 </div>
 
-                <div className="w-full h-64 my-auto">
+                <div className="w-full h-64 my-auto ltr-preserve" dir="ltr" data-keep-dir="true">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={activeRadarSource} outerRadius="72%">
                       <PolarGrid stroke="rgba(255,255,255,0.15)" strokeDasharray="3 3" />
@@ -1374,6 +1470,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
                 <div>
                   <label className="block text-gray-300 mb-1 font-bold">الجنس:</label>
                   <select
+                    aria-label="الجنس"
+                    title="الجنس"
                     value={questionnaire.userGender}
                     onChange={(e) =>
                       setQuestionnaire({
@@ -1454,6 +1552,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
                     1. كيف تتعامل سلوكياً عند مواجهة ضغوط أو أزمات مفاجئة؟
                   </label>
                   <select
+                    aria-label="طريقة التعامل السلوكي مع الضغوط والأزمات"
+                    title="طريقة التعامل السلوكي مع الضغوط والأزمات"
                     value={questionnaire.stressResponseStyle}
                     onChange={(e) =>
                       setQuestionnaire({ ...questionnaire, stressResponseStyle: e.target.value })
@@ -1473,6 +1573,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
                     2. ما هو أسلوبك المفضل في اتخاذ القرارات المهمة؟
                   </label>
                   <select
+                    aria-label="الأسلوب المفضل في اتخاذ القرارات المهمة"
+                    title="الأسلوب المفضل في اتخاذ القرارات المهمة"
                     value={questionnaire.decisionMakingStyle}
                     onChange={(e) =>
                       setQuestionnaire({ ...questionnaire, decisionMakingStyle: e.target.value })
@@ -1610,6 +1712,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
                     1. ما هي الأجواء العامة التي تتطلع لبنائها في بيتك الزوجي؟
                   </label>
                   <select
+                    aria-label="الأجواء العامة للبيت الزوجي"
+                    title="الأجواء العامة للبيت الزوجي"
                     value={questionnaire.maritalHomeAtmosphere}
                     onChange={(e) =>
                       setQuestionnaire({
@@ -1632,6 +1736,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
                     2. ما هي رؤيتك للإدارة المالية والميزانية في الأسرة؟
                   </label>
                   <select
+                    aria-label="رؤية الإدارة المالية والميزانية في الأسرة"
+                    title="رؤية الإدارة المالية والميزانية في الأسرة"
                     value={questionnaire.financialManagementVision}
                     onChange={(e) =>
                       setQuestionnaire({
@@ -1654,6 +1760,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
                     3. ما هو بروتوكول حل الخلافات الزوجية الذي ترتاح له؟
                   </label>
                   <select
+                    aria-label="بروتوكول حل الخلافات الزوجية"
+                    title="بروتوكول حل الخلافات الزوجية"
                     value={questionnaire.conflictResolutionProtocol}
                     onChange={(e) =>
                       setQuestionnaire({
@@ -1676,6 +1784,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
                     4. ما هي لغة الحب والتقدير الأساسية التي تسعد قلبك؟
                   </label>
                   <select
+                    aria-label="لغة الحب والتقدير الأساسية"
+                    title="لغة الحب والتقدير الأساسية"
                     value={questionnaire.primaryLoveLanguage}
                     onChange={(e) =>
                       setQuestionnaire({
@@ -1923,8 +2033,9 @@ export const UserProfileDashboard: React.FC<Props> = ({
 
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     soundManager.playTap();
+                    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
                     exportPsychometricReportAsPDF({
                       reportTitle: 'تقرير مقياس كاتل للعوامل الـ 16 للشخصية (Cattell 16PF)',
                       subTitle: '16PF Fifth Edition — Simplified Non-Specialist Report',
@@ -2490,6 +2601,8 @@ export const UserProfileDashboard: React.FC<Props> = ({
 
               <div className="flex items-center gap-2">
                 <select
+                  aria-label="تصفية الأعضاء حسب الجنس"
+                  title="تصفية الأعضاء حسب الجنس"
                   value={genderFilter}
                   onChange={(e) => setGenderFilter(e.target.value as any)}
                   className="px-2.5 py-1.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white outline-none"
@@ -2777,14 +2890,14 @@ export const UserProfileDashboard: React.FC<Props> = ({
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <h3 className="font-black text-lg sm:text-xl text-white font-['Alexandria'] flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    <span>سجل وتطور اختباراتي (مع تحميل تقارير PDF)</span>
+                    <span>سجل تقاريري وتطور اختباراتي (مع التتبع الزمني وPDF)</span>
                   </h3>
                   <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     محفوظ وموثق 🔒
                   </span>
                 </div>
                 <p className="text-xs text-gray-300 max-w-xl">
-                  تتبع جميع اختبارات الذكاء ومقاييس الشخصية وتوافق الشريك التي أجريتها، مع إمكانية تحميل أي تقرير سابق بصيغة PDF حقيقية في أي وقت.
+                  تتبع جميع تقاريرك النفسية ومستويات التحليل (سريع، متقدم، احترافي) ومقارنات الشخصيتين، مع إعادة فتح أي تقرير كامل وتصوّر التطور الزمني.
                 </p>
               </div>
 
@@ -2865,10 +2978,109 @@ export const UserProfileDashboard: React.FC<Props> = ({
               </div>
             </div>
 
+            {/* Temporal Evolution Chart: Today vs Last Month vs Last Year (AC-23, AC-24) */}
+            {(() => {
+              const evolution = buildTemporalEvolutionSummary(testHistory);
+              return (
+                <div className="p-4 sm:p-5 rounded-3xl bg-black/45 border border-white/10 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h4 className="font-extrabold text-sm text-white flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-emerald-400" />
+                        <span>منحنى تتبع التغير مع الزمن (العام الماضي ← الشهر الماضي ← اليوم)</span>
+                      </h4>
+                      <p className="text-[11px] text-gray-300 mt-0.5">
+                        {evolution.trendInsightAr}
+                      </p>
+                    </div>
+                    {onOpenCoupleInvite && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundManager.playTap();
+                          onOpenCoupleInvite();
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition cursor-pointer"
+                      >
+                        مقارنة شخصيتين من سجل تقاريري ⚖️
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    {evolution.buckets.map((b) => (
+                      <div
+                        key={b.periodKey}
+                        className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-center"
+                      >
+                        <div className="text-[11px] text-gray-400 font-bold">{b.periodLabelAr}</div>
+                        <div className="text-lg font-black text-emerald-400 tabular-nums">
+                          {b.count > 0 ? `${b.avgScore}%` : '—'}
+                        </div>
+                        <div className="text-[10px] text-gray-400">{b.count} اختبار</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {testHistory.length > 0 && (
+                    <div className="w-full h-52 ltr-preserve" dir="ltr" data-keep-dir="true">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={evolution.buckets} margin={{ top: 8, right: 16, left: -12, bottom: 4 }}>
+                          <CartesianGrid stroke="rgba(255,255,255,0.08)" />
+                          <XAxis dataKey="periodLabelAr" tick={{ fill: '#cbd5e1', fontSize: 11 }} />
+                          <YAxis domain={[0, 100]} tick={{ fill: '#cbd5e1', fontSize: 10 }} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#0f172a',
+                              border: '1px solid rgba(139,92,246,0.45)',
+                              borderRadius: '12px',
+                              color: '#f8fafc',
+                              fontSize: '12px',
+                            }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: '11px' }} />
+                          <Line type="monotone" dataKey="avgScore" name="المعدل العام %" stroke="#10b981" strokeWidth={2.5} dot={{ r: 4 }} />
+                          <Line type="monotone" dataKey="emotionalAvg" name="النضج النفسي %" stroke="#ec4899" strokeWidth={2} />
+                          <Line type="monotone" dataKey="relationalAvg" name="التوافق العلائقي %" stroke="#8b5cf6" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Search & Multi-Criteria Filters (AC-20) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="relative sm:col-span-2">
+                <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  aria-label="ابحث في سجل تقاريري"
+                  placeholder="ابحث باسم الاختبار، النمط السيكومتري، أو المستوى..."
+                  value={historySearchQuery}
+                  onChange={(e) => setHistorySearchQuery(e.target.value)}
+                  className="w-full pr-9 pl-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <select
+                aria-label="تصفية حسب مستوى التحليل"
+                value={historyTierFilter}
+                onChange={(e) => setHistoryTierFilter(e.target.value as any)}
+                className="px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white focus:outline-none focus:border-purple-400"
+              >
+                <option value="all">كل مستويات التحليل</option>
+                <option value="quick">التحليل السريع (32)</option>
+                <option value="advanced">التحليل المتقدم (144)</option>
+                <option value="professional">التحليل الاحترافي (288)</option>
+              </select>
+            </div>
+
             {/* Filter Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-bold">
               <span className="text-gray-400 text-xs shrink-0 flex items-center gap-1">
-                <Filter className="w-3.5 h-3.5" /> تصفية:
+                <Filter className="w-3.5 h-3.5" /> تصنيف:
               </span>
               <button
                 onClick={() => setHistoryFilter('all')}
@@ -2879,6 +3091,26 @@ export const UserProfileDashboard: React.FC<Props> = ({
                 }`}
               >
                 الكل ({testHistory.length})
+              </button>
+              <button
+                onClick={() => setHistoryFilter('tiered_assessment')}
+                className={`px-3 py-1.5 rounded-xl transition cursor-pointer shrink-0 ${
+                  historyFilter === 'tiered_assessment'
+                    ? 'bg-indigo-600 text-white font-black'
+                    : 'bg-white/5 text-gray-400 hover:text-white'
+                }`}
+              >
+                التحليل متعدد المستويات ({testHistory.filter((t) => t.testType === 'tiered_assessment').length})
+              </button>
+              <button
+                onClick={() => setHistoryFilter('personality_comparison')}
+                className={`px-3 py-1.5 rounded-xl transition cursor-pointer shrink-0 ${
+                  historyFilter === 'personality_comparison'
+                    ? 'bg-teal-600 text-white font-black'
+                    : 'bg-white/5 text-gray-400 hover:text-white'
+                }`}
+              >
+                مقارنة شخصيتين ({testHistory.filter((t) => t.testType === 'personality_comparison').length})
               </button>
               <button
                 onClick={() => setHistoryFilter('intelligence')}
@@ -2925,7 +3157,7 @@ export const UserProfileDashboard: React.FC<Props> = ({
                 <div className="space-y-1">
                   <h4 className="font-bold text-base text-white">لا توجد اختبارات مسجلة حتى الآن</h4>
                   <p className="text-xs text-gray-400 max-w-md mx-auto">
-                    ابدأ رحلتك المعرفية الآن بإجراء أحد اختبارات الذكاء أو مقاييس الشخصية المعتمدة أو مقياس كاتل (16PF)؛ ليتم حفظ سجلك الشخصي وتحميل تقاريرك بصيغة PDF.
+                    ابدأ رحلتك المعرفية الآن بإجراء أحد اختبارات الذكاء أو مقاييس الشخصية المعتمدة أو مستويات التحليل؛ ليتم حفظ سجلك الشخصي وتحميل تقاريرك بصيغة PDF.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
@@ -2958,7 +3190,7 @@ export const UserProfileDashboard: React.FC<Props> = ({
                       }}
                       className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition cursor-pointer"
                     >
-                      🧠 مقاييس الشخصية المعتمدة
+                      🧠 مقاييس الشخصية ومستويات التحليل
                     </button>
                   )}
                 </div>
@@ -2969,6 +3201,18 @@ export const UserProfileDashboard: React.FC<Props> = ({
                   .filter((rec) =>
                     historyFilter === 'all' ? true : rec.testType === historyFilter
                   )
+                  .filter((rec) =>
+                    historyTierFilter === 'all' ? true : rec.analysisTier === historyTierFilter
+                  )
+                  .filter((rec) => {
+                    const q = historySearchQuery.trim().toLowerCase();
+                    if (!q) return true;
+                    return (
+                      rec.testTitleAr.toLowerCase().includes(q) ||
+                      rec.scoreOrArchetype.toLowerCase().includes(q) ||
+                      rec.testCategoryAr.toLowerCase().includes(q)
+                    );
+                  })
                   .map((rec) => {
                     const dateFormatted = new Date(rec.createdAt).toLocaleDateString('ar-SA', {
                       year: 'numeric',
@@ -2995,7 +3239,7 @@ export const UserProfileDashboard: React.FC<Props> = ({
                             >
                               {rec.testType === 'intelligence' ? (
                                 <Sparkles className="w-5 h-5" />
-                              ) : rec.testType === 'psychology' ? (
+                              ) : rec.testType === 'psychology' || rec.testType === 'tiered_assessment' ? (
                                 <Brain className="w-5 h-5" />
                               ) : (
                                 <Heart className="w-5 h-5" />
@@ -3006,7 +3250,7 @@ export const UserProfileDashboard: React.FC<Props> = ({
                                 <h4 className="font-extrabold text-sm sm:text-base text-white font-['Alexandria']">
                                   {rec.testTitleAr}
                                 </h4>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/15">
+                                <span className="text-[11px] text-gray-300 font-semibold">
                                   {rec.testCategoryAr}
                                 </span>
                               </div>
@@ -3017,9 +3261,9 @@ export const UserProfileDashboard: React.FC<Props> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span
-                              className="px-3 py-1 rounded-xl text-xs font-black shrink-0 border font-mono"
+                              className="px-3 py-1 rounded-xl text-xs font-black shrink-0 border tabular-nums"
                               style={{
                                 backgroundColor: `${rec.badgeColor || '#059669'}25`,
                                 borderColor: `${rec.badgeColor || '#059669'}40`,
@@ -3028,6 +3272,18 @@ export const UserProfileDashboard: React.FC<Props> = ({
                             >
                               {rec.scoreOrArchetype}
                             </span>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundManager.playTap();
+                                setReopenedRecord(rec);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-400/40 text-indigo-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>فتح التقرير الكامل</span>
+                            </button>
 
                             <button
                               type="button"
@@ -3042,6 +3298,7 @@ export const UserProfileDashboard: React.FC<Props> = ({
                             <button
                               onClick={() => handleDeleteHistoryItem(rec.id)}
                               disabled={deletingId === rec.id}
+                              aria-label="حذف هذا السجل"
                               title="حذف هذا السجل"
                               className="p-2 rounded-xl bg-white/5 hover:bg-rose-500/20 text-gray-400 hover:text-rose-300 transition cursor-pointer"
                             >
@@ -3065,6 +3322,101 @@ export const UserProfileDashboard: React.FC<Props> = ({
                       </div>
                     );
                   })}
+              </div>
+            )}
+
+            {/* Re-opened Saved Report Full Modal with Charts (AC-20, TEST-10) */}
+            {reopenedRecord && (
+              <div
+                className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto"
+                dir="rtl"
+              >
+                <div className="w-full max-w-4xl rounded-3xl bg-slate-900 border border-white/20 p-5 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto text-white shadow-2xl">
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-white/10">
+                    <div>
+                      <div className="text-xs text-purple-300 font-bold">
+                        {reopenedRecord.testCategoryAr} · {new Date(reopenedRecord.createdAt).toLocaleDateString('ar-JO')}
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-black font-['Alexandria'] mt-0.5">
+                        {reopenedRecord.testTitleAr}
+                      </h3>
+                      <div className="text-sm font-extrabold text-emerald-400 mt-1">
+                        {reopenedRecord.scoreOrArchetype}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadHistoryRecordPDF(reopenedRecord)}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold cursor-pointer flex items-center gap-1.5"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        <span>PDF</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReopenedRecord(null)}
+                        aria-label="إغلاق التقرير المحفوظ"
+                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {reopenedRecord.snapshot?.executiveSummaryAr && (
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs sm:text-sm leading-relaxed space-y-2">
+                      <p>{reopenedRecord.snapshot.executiveSummaryAr}</p>
+                      {reopenedRecord.snapshot.personalityDescriptionAr && (
+                        <p className="text-slate-300">{reopenedRecord.snapshot.personalityDescriptionAr}</p>
+                      )}
+                      {reopenedRecord.snapshot.valuesAndBeliefsAr && (
+                        <p className="text-purple-200">{reopenedRecord.snapshot.valuesAndBeliefsAr}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {reopenedRecord.keyInsights && reopenedRecord.keyInsights.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/25 space-y-1.5 text-xs">
+                      <div className="font-extrabold text-emerald-300">أبرز المؤشرات المستخلصة:</div>
+                      {reopenedRecord.keyInsights.map((k, idx) => (
+                        <div key={idx}>• {k}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {reopenedRecord.snapshot?.visualCharts && (
+                    <Suspense
+                      fallback={
+                        <div className="p-6 text-center text-xs text-slate-300">
+                          جارٍ تحميل الرسوم البيانية المحفوظة...
+                        </div>
+                      }
+                    >
+                      <LazyScientificVisualDashboards
+                        charts={reopenedRecord.snapshot.visualCharts}
+                        userName={reopenedRecord.snapshot.userName || userName}
+                      />
+                    </Suspense>
+                  )}
+
+                  {reopenedRecord.testType === 'personality_comparison' &&
+                    reopenedRecord.snapshot?.nineAxesBreakdown && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                          {(reopenedRecord.snapshot.subIndices || []).map((sub: any) => (
+                            <div key={sub.key} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                              <div className="flex justify-between font-bold">
+                                <span>{sub.titleAr}</span>
+                                <span className="text-emerald-400 tabular-nums">{sub.score}%</span>
+                              </div>
+                              <p className="text-[11px] text-slate-300 mt-1">{sub.interpretationAr}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
               </div>
             )}
           </div>

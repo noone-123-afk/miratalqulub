@@ -1,11 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ADSENSE_STORAGE_KEY,
-  DEFAULT_ADSENSE_CLIENT_TAG,
-  DEFAULT_ADSENSE_PUB_ID,
-  applyAdSenseHeadTags,
-} from './AdSenseModal';
-import { db, doc, getDoc, setDoc } from '../firebase';
+
+const ADSENSE_STORAGE_KEY = 'mirat_adsense_config_v2';
+const DEFAULT_ADSENSE_PUB_ID = 'pub-7880718645976012';
+const DEFAULT_ADSENSE_CLIENT_TAG = 'ca-pub-7880718645976012';
+
+function applyAdSenseHeadTags(publisherId: string = DEFAULT_ADSENSE_PUB_ID) {
+  if (typeof document === 'undefined') return;
+  const cleanPubId = publisherId.replace(/^ca-/, '').replace(/^pub-/, '');
+  const fullClientTag = `ca-pub-${cleanPubId}`;
+
+  let meta = document.querySelector('meta[name="google-adsense-account"]') as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.name = 'google-adsense-account';
+    document.head.appendChild(meta);
+  }
+  meta.content = fullClientTag;
+}
 
 interface Props {
   slot?: string;
@@ -62,54 +73,6 @@ export const AdSenseBanner: React.FC<Props> = ({
     } catch {
       applyAdSenseHeadTags(DEFAULT_ADSENSE_PUB_ID);
     }
-
-    fetch('/api/adsense-config')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d) syncConfig(d);
-      })
-      .catch(() => {});
-
-    getDoc(doc(db, 'site_config', 'adsense'))
-      .then((snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data.publisherId && !String(data.publisherId).includes('9846513204859123')) {
-            syncConfig(data);
-          } else {
-            // Upgrade Firestore document immediately to the new publisher ID
-            setDoc(
-              doc(db, 'site_config', 'adsense'),
-              {
-                publisherId: DEFAULT_ADSENSE_PUB_ID,
-                clientTag: DEFAULT_ADSENSE_CLIENT_TAG,
-                adsTxtLine: 'google.com, pub-7880718645976012, DIRECT, f08c47fec0942fa0',
-                customDomain: 'miratalqulub.com',
-                updatedAt: new Date().toISOString(),
-              },
-              { merge: true }
-            ).catch(() => {});
-          }
-        } else {
-          // Seed Firestore with the official publisher ID & domain
-          setDoc(
-            doc(db, 'site_config', 'adsense'),
-            {
-              publisherId: DEFAULT_ADSENSE_PUB_ID,
-              clientTag: DEFAULT_ADSENSE_CLIENT_TAG,
-              headerSlot: '1234567890',
-              inArticleSlot: '2345678901',
-              footerSlot: '3456789012',
-              autoAdsEnabled: true,
-              adsTxtLine: 'google.com, pub-7880718645976012, DIRECT, f08c47fec0942fa0',
-              customDomain: 'miratalqulub.com',
-              updatedAt: new Date().toISOString(),
-            },
-            { merge: true }
-          ).catch(() => {});
-        }
-      })
-      .catch(() => {});
 
     const handleUpdate = (e: Event) => {
       const custom = e as CustomEvent;

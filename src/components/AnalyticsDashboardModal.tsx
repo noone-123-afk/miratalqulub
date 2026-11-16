@@ -204,6 +204,7 @@ export const AnalyticsDashboardModal: React.FC<Props> = ({ isOpen, onClose }) =>
                 type="button"
                 onClick={loadData}
                 disabled={loading}
+                aria-label="تحديث البيانات"
                 className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
                 title="تحديث البيانات"
               >

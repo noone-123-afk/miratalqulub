@@ -201,3 +201,34 @@ html.light textarea::placeholder {
 .pt-safe {
   padding-top: env(safe-area-inset-top, 1rem);
 }
+
+/* ========================================================
+   BILINGUAL & MULTI-LANGUAGE RTL / LTR INFRASTRUCTURE
+   ======================================================== */
+html[dir="rtl"],
+html.lang-ar body {
+  direction: rtl;
+  font-family: 'Alexandria', 'Tajawal', system-ui, -apple-system, sans-serif;
+}
+
+html[dir="ltr"],
+html.lang-en body {
+  direction: ltr;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Preserve LTR geometry for Recharts SVGs, mathematical formulas, emails, and numeric badges */
+.ltr-preserve,
+[data-keep-dir="true"] {
+  direction: ltr !important;
+}
+
+.rtl-preserve {
+  direction: rtl !important;
+}
+
+/* Ensure logical text alignment when switching between RTL and LTR */
+html[dir="ltr"] .text-right:not(.rtl-preserve) {
+  text-align: left;
+}
+

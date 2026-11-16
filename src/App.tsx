@@ -1,8 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Navbar } from './components/Navbar';
-import { Footer } from './components/Footer';
-import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { HomePage } from './pages/HomePage';
 import { UserProfile, PartnerAnalysisResult } from './types';
 import type { WebsiteTabKey } from './components/WebsiteSectionsModal';
@@ -14,14 +11,13 @@ import { isPinLockEnabled } from './utils/privacyLock';
 import { useAppTheme } from './utils/theme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { trackSiteVisit } from './services/analyticsService';
-import {
-  loadPersistentUserSession,
-  savePersistentUserProfile,
-  saveTestResultToHistory,
-  fetchUserSavedResults,
-  fetchUnifiedTestHistory,
-} from './services/userHistoryService';
+
+const Footer = lazy(() =>
+  import('./components/Footer').then((m) => ({ default: m.Footer }))
+);
+const CookieConsentBanner = lazy(() =>
+  import('./components/CookieConsentBanner').then((m) => ({ default: m.CookieConsentBanner }))
+);
 
 // Code-Split Lazy Loaded Pages & Compatibility Flow Steps (Reduces main JS bundle payload & Main Thread work)
 const ProfileStep = lazy(() =>
@@ -163,33 +159,6 @@ export type SitePage =
   | 'articles'
   | 'compatibility';
 type AppStep = 'profile' | 'quiz' | 'analyzing' | 'result';
-
-// Smooth springy page variants for step transitions
-const pageVariants = {
-  initial: {
-    opacity: 0,
-    y: 20,
-    scale: 0.985,
-  },
-  animate: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -16,
-    scale: 0.985,
-    transition: {
-      duration: 0.28,
-      ease: [0.4, 0, 1, 1] as const,
-    },
-  },
-};
 
 function SectionLoadingFallback() {
   return (
@@ -376,27 +345,31 @@ function AppContent() {
   // Defer site analytics tracking & session loading to idle time to keep Main Thread fast on initial load
   useEffect(() => {
     let isMounted = true;
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (!isMounted) return;
-      trackSiteVisit();
-      Promise.all([
-        loadPersistentUserSession(user),
-        fetchUserSavedResults(user),
-        fetchUnifiedTestHistory(user),
-      ])
-        .then(([session, savedResults, unifiedHistory]) => {
-          if (!isMounted) return;
-          if (session.profile) {
-            setProfile((prev) => prev || session.profile);
-          }
-          const totalSaved = Math.max(
-            savedResults?.length || 0,
-            unifiedHistory?.length || 0
-          );
-          setSavedTestsCount(totalSaved);
-        })
-        .catch(() => {});
-    }, 900);
+      try {
+        const [{ trackSiteVisit }, historySvc] = await Promise.all([
+          import('./services/analyticsService'),
+          import('./services/userHistoryService'),
+        ]);
+        if (!isMounted) return;
+        trackSiteVisit();
+        const [session, savedResults, unifiedHistory] = await Promise.all([
+          historySvc.loadPersistentUserSession(user),
+          historySvc.fetchUserSavedResults(user),
+          historySvc.fetchUnifiedTestHistory(user),
+        ]);
+        if (!isMounted) return;
+        if (session.profile) {
+          setProfile((prev) => prev || session.profile);
+        }
+        const totalSaved = Math.max(
+          savedResults?.length || 0,
+          unifiedHistory?.length || 0
+        );
+        setSavedTestsCount(totalSaved);
+      } catch {}
+    }, 1200);
 
     return () => {
       isMounted = false;
@@ -493,7 +466,9 @@ function AppContent() {
   const handleStart = async (userProfile: UserProfile) => {
     soundManager.playPageTransition();
     setProfile(userProfile);
-    savePersistentUserProfile(userProfile, user);
+    import('./services/userHistoryService').then((m) =>
+      m.savePersistentUserProfile(userProfile, user)
+    );
     if (quizQuestions.length === 0) {
       const m = await import('./data/questions');
       setQuizQuestions(m.QUIZ_QUESTIONS);
@@ -548,7 +523,8 @@ function AppContent() {
     };
 
     setProfile(activeProfile);
-    savePersistentUserProfile(activeProfile, user);
+    const historySvc = await import('./services/userHistoryService');
+    historySvc.savePersistentUserProfile(activeProfile, user);
 
     // 1. Pick authentic curated photorealistic portrait for this ethnicity, gender, age & geography
     const curated = getRealisticPortrait(
@@ -639,7 +615,7 @@ function AppContent() {
       analysisData.imageUrl = finalImageUrl;
 
       // Persist result automatically to database for returning visitor/user
-      saveTestResultToHistory(user, activeProfile, analysisData).then(() => {
+      historySvc.saveTestResultToHistory(user, activeProfile, analysisData).then(() => {
         setSavedTestsCount((prev) => prev + 1);
       });
 
@@ -699,7 +675,7 @@ function AppContent() {
       };
 
       // Persist fallback result automatically to database for returning visitor/user
-      saveTestResultToHistory(user, activeProfile, fallbackResult).then(() => {
+      historySvc.saveTestResultToHistory(user, activeProfile, fallbackResult).then(() => {
         setSavedTestsCount((prev) => prev + 1);
       });
 
@@ -977,16 +953,9 @@ function AppContent() {
             )}
 
             {currentPage === 'compatibility' && (
-              <AnimatePresence mode="wait">
+              <div className="w-full transition-opacity duration-300">
                 {step === 'profile' && (
-                  <motion.div
-                    key="profile"
-                    variants={pageVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    className="w-full"
-                  >
+                  <div key="profile" className="w-full">
                     <ProfileStep
                       onStart={handleStart}
                       initialProfile={profile}
@@ -1003,51 +972,33 @@ function AppContent() {
                       onOpenContactFeedback={handleOpenContactFeedback}
                       onBackToHome={() => handleNavigatePage('home')}
                     />
-                  </motion.div>
+                  </div>
                 )}
 
                 {step === 'quiz' && quizQuestions.length > 0 && (
-                  <motion.div
-                    key="quiz"
-                    variants={pageVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    className="w-full"
-                  >
+                  <div key="quiz" className="w-full">
                     <QuizStep
                       questions={quizQuestions}
                       profile={profile}
                       onComplete={handleQuizComplete}
                       onBackToProfile={() => setStep('profile')}
                     />
-                  </motion.div>
+                  </div>
                 )}
 
                 {step === 'analyzing' && profile && (
-                  <motion.div
-                    key="analyzing"
-                    variants={pageVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    className="w-full"
-                  >
+                  <div key="analyzing" className="w-full">
                     <AnalyzingStep profile={profile} />
-                  </motion.div>
+                  </div>
                 )}
 
                 {step === 'result' && result && profile && (
-                  <motion.div
+                  <div
                     key={
                       !isResultUnlocked && isPinLockEnabled()
                         ? 'result-locked'
                         : 'result-unlocked'
                     }
-                    variants={pageVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
                     className="w-full"
                   >
                     {!isResultUnlocked && isPinLockEnabled() ? (
@@ -1081,9 +1032,9 @@ function AppContent() {
                         }}
                       />
                     )}
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              </div>
             )}
           </Suspense>
         )}
@@ -1268,30 +1219,32 @@ function AppContent() {
         )}
       </Suspense>
 
-      {/* Global GDPR & AdSense Cookie Consent Banner */}
-      <CookieConsentBanner
-        onOpenPrivacyPolicy={handleOpenPrivacyPolicy}
-        onOpenTermsOfService={handleOpenTermsOfService}
-      />
+      <Suspense fallback={null}>
+        {/* Global GDPR & AdSense Cookie Consent Banner */}
+        <CookieConsentBanner
+          onOpenPrivacyPolicy={handleOpenPrivacyPolicy}
+          onOpenTermsOfService={handleOpenTermsOfService}
+        />
 
-      {/* Structured Bilingual & Theme-Aware Footer (3 Pathways + My Profile & Permanent Data Deletion) */}
-      <Footer
-        currentPage={currentPage}
-        onNavigatePage={handleNavigatePage}
-        onResetHome={handleReset}
-        onOpenBlindDate={() => setIsBlindDateOpen(true)}
-        onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
-        onOpenIntelligenceTests={handleOpenIntelligenceTests}
-        onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
-        onOpenHistory={() => handleOpenUserDashboard('history')}
-        onOpenArticles={handleOpenArticles}
-        onOpenNovels={handleOpenNovels}
-        onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
-        onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
-        onOpenAdSense={isOwner ? () => setIsAdSenseOpen(true) : undefined}
-        onOpenAnalytics={handleOpenAnalytics}
-        onDataDeleted={() => setSavedTestsCount(0)}
-      />
+        {/* Structured Bilingual & Theme-Aware Footer (3 Pathways + My Profile & Permanent Data Deletion) */}
+        <Footer
+          currentPage={currentPage}
+          onNavigatePage={handleNavigatePage}
+          onResetHome={handleReset}
+          onOpenBlindDate={() => setIsBlindDateOpen(true)}
+          onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+          onOpenIntelligenceTests={handleOpenIntelligenceTests}
+          onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
+          onOpenHistory={() => handleOpenUserDashboard('history')}
+          onOpenArticles={handleOpenArticles}
+          onOpenNovels={handleOpenNovels}
+          onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
+          onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
+          onOpenAdSense={isOwner ? () => setIsAdSenseOpen(true) : undefined}
+          onOpenAnalytics={handleOpenAnalytics}
+          onDataDeleted={() => setSavedTestsCount(0)}
+        />
+      </Suspense>
     </div>
   );
 }

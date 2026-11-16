@@ -32,6 +32,18 @@ service cloud.firestore {
         && data.createdAt is string && data.createdAt.size() <= 64;
     }
 
+    function isValidTestHistory(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'testType', 'testTitleAr', 'percentage', 'createdAt'])
+        && data.id is string && data.id.size() <= 128
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.testType in ['partner_compatibility', 'psychology', 'intelligence', 'tiered_assessment', 'personality_comparison']
+        && data.testTitleAr is string && data.testTitleAr.size() > 0 && data.testTitleAr.size() <= 240
+        && data.percentage is number && data.percentage >= 0 && data.percentage <= 100
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('analysisTier' in data) || data.analysisTier in ['quick', 'advanced', 'professional']);
+    }
+
     match /users/{userId} {
       allow get: if isOwner(userId) && isValidId(userId);
       allow create: if isOwner(userId) && isValidId(userId) && isValidUser(request.resource.data, userId);
@@ -47,7 +59,8 @@ service cloud.firestore {
 
       match /test_history/{historyId} {
         allow get, list: if isOwner(userId) && isValidId(userId);
-        allow create, update: if isOwner(userId) && isValidId(userId) && isValidId(historyId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(historyId) && isValidTestHistory(request.resource.data, userId);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(historyId) && isValidTestHistory(request.resource.data, userId);
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(historyId);
       }
     }
@@ -85,7 +98,8 @@ service cloud.firestore {
     }
 
     match /visitor_sessions/{visitorId} {
-      allow get, list: if true;
+      allow get: if isValidId(visitorId);
+      allow list: if false;
       allow create, update, delete: if isValidId(visitorId);
     }
 

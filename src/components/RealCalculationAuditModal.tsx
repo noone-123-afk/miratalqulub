@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { RealScoringBreakdown } from '../types';
 import { soundManager } from '../utils/sound';
-import { exportPsychometricReportAsPDF } from '../utils/pdfReportGenerator';
 
 interface Props {
   isOpen: boolean;
@@ -55,8 +54,9 @@ export const RealCalculationAuditModal: React.FC<Props> = ({
     setExpandedDimension((prev) => (prev === key ? null : key));
   };
 
-  const handleExportAuditPdf = () => {
+  const handleExportAuditPdf = async () => {
     soundManager.playTap();
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     exportPsychometricReportAsPDF({
       reportTitle: `تقرير التدقيق السيكومتري للتوافق الزواجي (25 محوراً علمياً)`,
       subTitle: `تحليل التوافق الرياضي الموزون مع الشريك المقترح «${partnerName}»`,

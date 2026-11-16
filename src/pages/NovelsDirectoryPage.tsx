@@ -379,6 +379,8 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
                 {language === 'ar' ? 'الترتيب:' : 'Sort:'}
               </span>
               <select
+                aria-label={language === 'ar' ? 'ترتيب الروايات' : 'Sort novels'}
+                title={language === 'ar' ? 'ترتيب الروايات' : 'Sort novels'}
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'popular' | 'rating' | 'words')}
                 className={`border text-xs rounded-xl px-3 py-2.5 focus:outline-none ${

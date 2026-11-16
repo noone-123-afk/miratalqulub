@@ -159,6 +159,8 @@ export const OnboardingWizardModal: React.FC<Props> = ({
 
           <button
             onClick={onClose}
+            aria-label="إغلاق الدليل التفاعلي"
+            title="إغلاق"
             className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />

@@ -26,7 +26,6 @@ import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { AdSenseBanner } from './AdSenseBanner';
-import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 export interface FooterProps {
@@ -78,6 +77,7 @@ export const Footer: React.FC<FooterProps> = ({
     soundManager.playTap();
     setIsDeleting(true);
     try {
+      const { purgeAllUserDataPermanently } = await import('../services/userHistoryService');
       await purgeAllUserDataPermanently(user);
       setIsDeleting(false);
       setConfirmDelete(false);

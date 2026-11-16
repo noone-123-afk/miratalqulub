@@ -740,6 +740,7 @@ export const NovelsSectionModal: React.FC<Props> = ({
                   {isAmbiencePlaying && (
                     <button
                       onClick={stopAmbience}
+                      aria-label="كتم الصوت"
                       className="p-1 rounded-lg text-rose-400 hover:text-white"
                       title="كتم الصوت"
                     >

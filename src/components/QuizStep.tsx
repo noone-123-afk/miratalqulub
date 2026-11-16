@@ -388,6 +388,8 @@ export const QuizStep: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleResetQuiz}
+                aria-label={isAr ? 'إعادة الاختبار من الأول' : 'Reset quiz from start'}
+                title={isAr ? 'إعادة الاختبار من الأول' : 'Reset quiz from start'}
                 className={`py-1 px-2 rounded-lg border text-[10px] transition cursor-pointer ${
                   isLight
                     ? 'bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border-slate-200'

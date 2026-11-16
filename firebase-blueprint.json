@@ -185,6 +185,28 @@
         "createdAt": { "type": "string" }
       },
       "required": ["visitorId", "updatedAt"]
+    },
+    "TestHistoryDoc": {
+      "title": "TestHistoryDoc",
+      "description": "Unified psychometric report record saved in user private test_history subcollection",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "testType": { "type": "string" },
+        "testTitleAr": { "type": "string" },
+        "testCategoryAr": { "type": "string" },
+        "scoreOrArchetype": { "type": "string" },
+        "percentage": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "badgeColor": { "type": "string" },
+        "keyInsights": { "type": "array" },
+        "analysisTier": { "type": "string" },
+        "rawScores": { "type": "object" },
+        "standardizedScores": { "type": "object" },
+        "snapshot": { "type": "object" }
+      },
+      "required": ["id", "userId", "testType", "testTitleAr", "percentage", "createdAt"]
     }
   },
   "firestore": {
@@ -195,6 +217,10 @@
     "/users/{userId}/results/{resultId}": {
       "schema": "SavedTestResult",
       "description": "Stores saved historical partner compatibility test results for the user"
+    },
+    "/users/{userId}/test_history/{historyId}": {
+      "schema": "TestHistoryDoc",
+      "description": "Stores saved tiered psychometric assessments, comparison reports, psychology, and intelligence history"
     },
     "/public_profiles/{profileId}": {
       "schema": "PublicProfileDoc",

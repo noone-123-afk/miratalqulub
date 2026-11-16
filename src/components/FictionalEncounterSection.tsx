@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { jsPDF } from 'jspdf';
-import { toPng } from 'html-to-image';
 import {
   BookOpen,
   Sparkles,
@@ -67,6 +65,10 @@ export const FictionalEncounterSection: React.FC<Props> = ({ profile, result }) 
     setIsExportingPdf(true);
 
     try {
+      const [{ toPng }, { jsPDF }] = await Promise.all([
+        import('html-to-image'),
+        import('jspdf'),
+      ]);
       // 1. Convert the styled document element to a high-resolution PNG
       const dataUrl = await toPng(storyPrintRef.current, {
         quality: 0.98,

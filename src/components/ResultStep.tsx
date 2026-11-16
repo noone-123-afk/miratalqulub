@@ -49,7 +49,6 @@ import { CompatibilityFlipCard, CompatibilityCardData } from './CompatibilityFli
 import { SmartRecommendationsSection } from './SmartRecommendationsSection';
 import { isPinLockEnabled } from '../utils/privacyLock';
 import { calculateRealCompatibility } from '../utils/realScoringEngine';
-import { exportPsychometricReportAsPDF } from '../utils/pdfReportGenerator';
 
 interface Props {
   result: PartnerAnalysisResult;
@@ -306,8 +305,9 @@ export const ResultStep: React.FC<Props> = ({
     `أتممت التقييم السيكومتري العلمي للتوافق الأسري عبر منصة مِـرآة القـلوب بنسبة توافق موزون ${result.compatibilityScore}%! 📊🔬`
   )}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`;
 
-  const handleExportScientificPDF = () => {
+  const handleExportScientificPDF = async () => {
     soundManager.playTap();
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     const subscales = effectiveBreakdown.scientificSubscales || [];
     exportPsychometricReportAsPDF({
       reportTitle: 'التقرير السيكومتري العلمي الشامل للتوافق الأسري والزواجي',
@@ -799,7 +799,7 @@ export const ResultStep: React.FC<Props> = ({
                   className="text-xs text-gray-400 hover:text-rose-300 transition flex items-center justify-center sm:justify-start gap-1 mt-1 cursor-pointer disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isRegeneratingImage ? 'animate-spin text-rose-400' : ''}`} />
-                  <span>{isRegeneratingImage ? t('regenerating_now') : (language === 'ar' ? 'توليد ملامح بديلة' : 'Regenerate Alternative Features')}</span>
+                  <span>{isRegeneratingImage ? t('regenerating_now') : t('regenerate_image_btn')}</span>
                 </motion.button>
               </motion.div>
             )}

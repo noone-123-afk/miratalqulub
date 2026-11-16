@@ -4,7 +4,108 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(() => {
+function manualChunkMatcher(id: string): string | undefined {
+  // Always keep Vite's dynamic import preload helper in vendor-react so index.js never imports from lazy chunks
+  if (id.includes('preload-helper')) {
+    return 'vendor-react';
+  }
+
+  if (id.includes('node_modules')) {
+    // 1. Core React runtime FIRST
+    if (
+      id.includes('/react-dom/') ||
+      id.includes('/react/') ||
+      id.includes('/scheduler/') ||
+      id.includes('/react-is/') ||
+      id.includes('/prop-types/')
+    ) {
+      return 'vendor-react';
+    }
+    // 2. Icons
+    if (id.includes('lucide-react')) {
+      return 'vendor-icons';
+    }
+    // 3. Animation engine (lazy loaded with interactive steps & modals)
+    if (
+      id.includes('framer-motion') ||
+      id.includes('motion-dom') ||
+      id.includes('motion-utils')
+    ) {
+      return 'vendor-motion';
+    }
+    // 4. Firebase Firestore (lazy loaded only when cloud DB is accessed)
+    if (id.includes('@firebase/firestore') || id.includes('firebase/firestore')) {
+      return 'vendor-firebase-firestore';
+    }
+    // 5. Firebase Auth & App core (lazy loaded after initial render)
+    if (id.includes('firebase') || id.includes('@firebase')) {
+      return 'vendor-firebase-auth';
+    }
+    // 6. Charting libraries (lazy loaded only in Result / Analytics / Psychometrics)
+    if (
+      id.includes('recharts') ||
+      id.includes('d3-') ||
+      id.includes('victory-vendor') ||
+      id.includes('internmap') ||
+      id.includes('es-toolkit') ||
+      id.includes('clsx') ||
+      id.includes('tiny-invariant') ||
+      id.includes('eventemitter3') ||
+      id.includes('decimal.js-light')
+    ) {
+      return 'vendor-charts';
+    }
+    // 7. PDF & Canvas export engines (lazy loaded only when user clicks Export PDF/Image)
+    if (
+      id.includes('jspdf') ||
+      id.includes('html2canvas') ||
+      id.includes('dompurify') ||
+      id.includes('canvg') ||
+      id.includes('fflate')
+    ) {
+      return 'vendor-pdf';
+    }
+  }
+
+  // Fine-grained splitting for heavy application data & engines
+  if (id.includes('src/data/tieredPsychologyBank')) {
+    return 'data-tiered-assessment';
+  }
+  if (
+    id.includes('src/utils/tieredScoringEngine') ||
+    id.includes('src/utils/personalityComparisonEngine')
+  ) {
+    return 'engine-comparison';
+  }
+  if (
+    id.includes('src/data/psychologyTestData') ||
+    id.includes('src/data/intelligenceTestData')
+  ) {
+    return 'data-psychometrics';
+  }
+  if (
+    id.includes('src/data/articlesData') ||
+    id.includes('src/data/novelsData')
+  ) {
+    return 'data-content';
+  }
+  if (id.includes('src/data/translations') || id.includes('src/i18n')) {
+    return 'data-translations';
+  }
+  if (
+    id.includes('src/data/questions') ||
+    id.includes('src/data/communityProfiles')
+  ) {
+    return 'data-compatibility';
+  }
+  return undefined;
+}
+
+export default defineConfig(({ command }) => {
+  if (command === 'build') {
+    process.env.NODE_ENV = 'production';
+  }
+
   return {
     plugins: [
       react(),
@@ -25,7 +126,8 @@ export default defineConfig(() => {
           id: '/',
           name: 'مرآة القلوب | كاشف شريك الحياة والتحليل السيكومتري',
           short_name: 'مرآة القلوب',
-          description: 'منصة تفاعلية لتحليل الشخصية وكشف ملامح ومواصفات شريك الحياة الواقعية وفق أسس علمية معتمدة',
+          description:
+            'منصة تفاعلية لتحليل الشخصية وكشف ملامح ومواصفات شريك الحياة الواقعية وفق أسس علمية معتمدة',
           theme_color: '#0f0c20',
           background_color: '#0f0c20',
           display: 'standalone',
@@ -75,28 +177,33 @@ export default defineConfig(() => {
     build: {
       target: 'es2020',
       cssCodeSplit: true,
+      chunkSizeWarningLimit: 600,
+      modulePreload: {
+        resolveDependencies(_filename, deps) {
+          return deps.filter(
+            (dep) =>
+              !dep.includes('vendor-firebase') &&
+              !dep.includes('vendor-charts') &&
+              !dep.includes('vendor-pdf') &&
+              !dep.includes('vendor-motion') &&
+              !dep.includes('data-') &&
+              !dep.includes('engine-')
+          );
+        },
+      },
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('firebase') || id.includes('@firebase')) {
-                return 'vendor-firebase';
-              }
-              if (id.includes('framer-motion') || id.includes('motion')) {
-                return 'vendor-motion';
-              }
-              if (id.includes('lucide-react')) {
-                return 'vendor-icons';
-              }
-              if (id.includes('recharts') || id.includes('d3-')) {
-                return 'vendor-charts';
-              }
-              if (id.includes('react-dom') || id.includes('react/')) {
-                return 'vendor-react';
-              }
-            }
+          codeSplitting: {
+            includeDependenciesRecursively: false,
+            groups: [
+              {
+                name(id: string) {
+                  return manualChunkMatcher(id);
+                },
+              },
+            ],
           },
-        },
+        } as any,
       },
     },
     resolve: {

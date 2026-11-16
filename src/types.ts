@@ -80,6 +80,8 @@ export interface QuizQuestion {
   subtitle: string;
   category: string;
   scientificDimension: string;
+  scientificReference?: string;
+  scoringNoteAr?: string;
   icon: string;
   options: {
     id: string;
@@ -334,6 +336,225 @@ export interface VoiceToneAnalysisResult {
   audioBlobUrl?: string;
   durationSeconds?: number;
 }
+
+// ================= MULTI-TIER PSYCHOMETRIC ASSESSMENT & VISUALIZATION TYPES =================
+
+export type AnalysisTier = 'quick' | 'advanced' | 'professional';
+
+export type QuestionFormat = 'likert' | 'forced_choice';
+
+export type PsychologicalConstructKey =
+  | 'big_five'
+  | 'hexaco'
+  | 'attachment'
+  | 'emotional_intelligence'
+  | 'self_regulation'
+  | 'interpersonal'
+  | 'communication'
+  | 'positive_psychology';
+
+export interface ForcedChoiceOption {
+  id: 'A' | 'B';
+  textAr: string;
+  textEn: string;
+  targetSubscale: string;
+  scoreValue: number; // Mapped contribution (1..5 equivalent)
+  traitTagAr: string;
+  traitTagEn: string;
+}
+
+export interface TieredAssessmentQuestion {
+  id: string;
+  index: number;
+  construct: PsychologicalConstructKey;
+  subscale: string; // e.g., 'openness', 'honesty_humility', 'anxiety', 'avoidance', 'empathy', etc.
+  facetAr: string;
+  facetEn: string;
+  format: QuestionFormat;
+  direction: 1 | -1; // 1 = direct, -1 = reverse-scored
+  textAr: string;
+  textEn: string;
+  scientificReference: string;
+  dimensionExplanationAr: string;
+  dimensionExplanationEn: string;
+  forcedOptions?: [ForcedChoiceOption, ForcedChoiceOption];
+  minTier: AnalysisTier; // 'quick' appears in all, 'advanced' in advanced+pro, 'professional' in pro only
+}
+
+export interface SubscaleScoreResult {
+  key: string;
+  construct: PsychologicalConstructKey;
+  labelAr: string;
+  labelEn: string;
+  rawScore: number; // sum of points
+  maxRawScore: number;
+  percentage: number; // 0..100
+  stenScore: number; // 1..10
+  percentile: number; // 1..99
+  tScore: number; // mean 50, sd 10 (clamped 20..80)
+  scientificReference: string;
+  dimensionExplanationAr: string;
+  interpretationAr: string;
+  interpretationEn: string;
+  color: string;
+}
+
+export interface VisualChartsPayload {
+  overallRadar: Array<{ subject: string; score: number; fullMark: 100 }>;
+  bigFiveRadar: Array<{ trait: string; score: number; benchmark: number; fullMark: 100 }>;
+  hexacoRadar: Array<{ trait: string; score: number; fullMark: 100 }>;
+  emotionalIntelligence: Array<{ branch: string; score: number; color: string }>;
+  attachment: {
+    anxiety: number; // 0..100
+    avoidance: number; // 0..100
+    styleKey: 'secure' | 'anxious' | 'avoidant' | 'fearful';
+    styleAr: string;
+    styleEn: string;
+  };
+  communicationStyles: Array<{ style: string; score: number; color: string }>;
+  conflictModes: Array<{ mode: string; score: number; fullMark: 100 }>;
+  lifeGoalsAlignment: Array<{ domain: string; userScore: number; targetBenchmark: number }>;
+  compatibilityMatrix: Array<{
+    axisA: string;
+    axisB: string;
+    synergyScore: number;
+    labelAr: string;
+  }>;
+}
+
+export interface TieredAssessmentReport {
+  id: string;
+  tier: AnalysisTier;
+  tierTitleAr: string;
+  tierTitleEn: string;
+  questionCount: number;
+  answeredCount: number;
+  isComplete: boolean;
+  completionRate: number;
+  consistencyIndex: number; // 0..100 test-retest internal consistency check
+  createdAt: string;
+  userName: string;
+  overallMaturityIndex: number; // 0..100
+  overallPercentile: number;
+  overallSten: number;
+  archetypeTitleAr: string;
+  archetypeTitleEn: string;
+  executiveSummaryAr: string;
+  personalityDescriptionAr: string;
+  strengthsAr: string[];
+  improvementAreasAr: string[];
+  communicationStyleAr: string;
+  emotionalMaturitySummaryAr: string;
+  // Advanced & Professional sections
+  thinkingStyleAnalysisAr?: string;
+  decisionMakingAnalysisAr?: string;
+  attachmentAnalysisAr?: string;
+  conflictResolutionAnalysisAr?: string;
+  expectedEmotionalCompatibilityAr?: string;
+  familySuccessIndicatorsAr?: string[];
+  // Professional-only multi-section dossiers
+  valuesAndBeliefsAr?: string;
+  lifeGoalsAnalysisAr?: string;
+  stressManagementCapacityAr?: string;
+  empathyAnalysisAr?: string;
+  longTermMaritalCompatibilityAr?: string;
+  subscales: SubscaleScoreResult[];
+  visualCharts: VisualChartsPayload;
+  scientificDisclaimerAr: string;
+  scientificReferences: string[];
+  rawAnswersSnapshot?: Record<string, number | string>;
+}
+
+// ================= TWO-PERSON PSYCHOMETRIC COMPARISON ENGINE TYPES =================
+
+export interface IndividualPsychometricProfile {
+  personName: string;
+  personLabelAr: string;
+  sourceType: 'tiered_report' | 'saved_record' | 'live_assessment' | 'profile_questionnaire';
+  bigFive: {
+    openness: number;
+    conscientiousness: number;
+    extraversion: number;
+    agreeableness: number;
+    emotionalStability: number;
+  };
+  hexaco: {
+    honestyHumility: number;
+    emotionality: number;
+    extraversion: number;
+    agreeableness: number;
+    conscientiousness: number;
+    openness: number;
+  };
+  attachment: {
+    anxiety: number;
+    avoidance: number;
+    styleAr: string;
+  };
+  emotionalIntelligence: number;
+  communicationStyle: {
+    assertive: number;
+    reflective: number;
+    analytical: number;
+    expressive: number;
+    primaryAr: string;
+  };
+  conflictResolution: {
+    collaborating: number;
+    compromising: number;
+    accommodating: number;
+    competing: number;
+    avoiding: number;
+    primaryAr: string;
+  };
+  valuesScore: number;
+  lifeGoals: {
+    familyStability: number;
+    careerGrowth: number;
+    intellectualDepth: number;
+    socialHarmony: number;
+    financialSecurity: number;
+  };
+  parentingOrientation: number;
+}
+
+export interface ComparisonSubIndex {
+  key: 'intellectual' | 'emotional' | 'social' | 'family' | 'values' | 'goals';
+  titleAr: string;
+  titleEn: string;
+  score: number; // 0..100
+  weight: number;
+  scientificReference: string;
+  interpretationAr: string;
+  strengthsAr: string[];
+  risksAr: string[];
+}
+
+export interface NineAxisComparisonRow {
+  axisKey: string;
+  axisNameAr: string;
+  personAScore: number;
+  personBScore: number;
+  delta: number;
+  matchScore: number;
+  scientificNoteAr: string;
+}
+
+export interface TwoPersonComparisonReport {
+  id: string;
+  createdAt: string;
+  personA: IndividualPsychometricProfile;
+  personB: IndividualPsychometricProfile;
+  overallWeightedCompatibility: number;
+  compatibilityClassificationAr: string;
+  subIndices: ComparisonSubIndex[]; // 6 distinct compatibility metrics with interpretations
+  nineAxesBreakdown: NineAxisComparisonRow[]; // Big Five, HEXACO, Attachment, EI, Communication, Conflict, Values, Life Goals, Parenting
+  sharedStrengthsAr: string[];
+  growthRecommendationsAr: string[];
+  executiveSummaryAr: string;
+  scientificReferences: string[];
+}
+
 
 
 

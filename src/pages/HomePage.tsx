@@ -22,9 +22,8 @@ import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { UserProfile } from '../types';
-import { WebsiteTabKey } from '../components/WebsiteSectionsModal';
+import type { WebsiteTabKey } from '../components/WebsiteSectionsModal';
 import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
-import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 
 export interface HomePageProps {
   onStart: (profile: UserProfile) => void;
@@ -70,6 +69,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
     soundManager.playTap();
     setIsDeleting(true);
     try {
+      const { purgeAllUserDataPermanently } = await import('../services/userHistoryService');
       await purgeAllUserDataPermanently(user);
       setIsDeleting(false);
       setConfirmDelete(false);

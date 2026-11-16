@@ -355,7 +355,7 @@ export const CompatibilityHeatmap: React.FC<Props> = ({
 
       {/* Main Heatmap Visualization (Recharts Scatter Matrix) */}
       <div className="w-full h-80 sm:h-96 relative z-10 my-1 overflow-x-auto">
-        <div className="min-w-[580px] h-full">
+        <div className="min-w-[580px] h-full ltr-preserve" dir="ltr" data-keep-dir="true">
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart
               margin={{ top: 20, right: 30, bottom: 25, left: 110 }}

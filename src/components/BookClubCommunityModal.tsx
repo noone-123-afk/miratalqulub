@@ -639,6 +639,8 @@ export const BookClubCommunityModal: React.FC<Props> = ({ isOpen, onClose }) => 
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="font-extrabold">{isAr ? 'حالة الجلسة' : 'Session Status'}</label>
                     <select
+                      aria-label={isAr ? 'حالة الجلسة' : 'Session Status'}
+                      title={isAr ? 'حالة الجلسة' : 'Session Status'}
                       value={adminForm.status}
                       onChange={(e) => setAdminForm({ ...adminForm, status: e.target.value as any })}
                       className={`w-full px-3 py-2.5 rounded-xl border outline-none ${

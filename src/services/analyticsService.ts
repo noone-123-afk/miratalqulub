@@ -74,90 +74,105 @@ export async function trackSiteVisit(): Promise<void> {
   if (hasTrackedSession) return;
   hasTrackedSession = true;
 
-  if (isAutomatedAuditEnvironment()) {
+  if (typeof window === 'undefined' || isAutomatedAuditEnvironment()) {
     return;
   }
 
-  const today = getTodayString();
-  const month = getMonthString();
-  const year = getYearString();
-  const device = detectDevice();
-  const now = new Date().toISOString();
+  const runTracking = () => {
+    const today = getTodayString();
+    const month = getMonthString();
+    const year = getYearString();
+    const device = detectDevice();
+    const now = new Date().toISOString();
 
-  // Use GET query string so both Express app.all('/api/analytics/track') and static CDN edges return 200 OK (never 405 Method Not Allowed)
-  try {
-    const params = new URLSearchParams({
-      type: 'visit',
-      today,
-      month,
-      year,
-      device,
-    });
-    fetch(`/api/analytics/track?${params.toString()}`, {
-      method: 'GET',
-      keepalive: true,
-    }).catch(() => {});
-  } catch {}
-
-  // Defer Firestore persistence to idle time with strict timeout so initial load is never delayed
-  const persistToFirestore = async () => {
+    // Use GET query string so both Express app.all('/api/analytics/track') and static CDN edges return 200 OK (never 405 Method Not Allowed)
     try {
-      const overviewRef = doc(db, 'site_analytics', 'overview');
-      const overviewSnap = await withTimeout(getDoc(overviewRef), 2500);
-      const existing = overviewSnap.exists() ? overviewSnap.data() : {};
+      const params = new URLSearchParams({
+        type: 'visit',
+        today,
+        month,
+        year,
+        device,
+      });
+      fetch(`/api/analytics/track?${params.toString()}`, {
+        method: 'GET',
+        keepalive: true,
+      }).catch(() => {});
+    } catch {}
 
-      const currentTotal = (existing.totalVisitors || 0) + 1;
-      const currentViews = (existing.pageViews || 0) + 1;
-      const devices = existing.deviceBreakdown || { mobile: 0, desktop: 0, tablet: 0 };
-      devices[device] = (devices[device] || 0) + 1;
+    const persistToFirestore = async () => {
+      try {
+        const overviewRef = doc(db, 'site_analytics', 'overview');
+        const overviewSnap = await withTimeout(getDoc(overviewRef), 2500);
+        const existing = overviewSnap.exists() ? overviewSnap.data() : {};
 
-      await withTimeout(
-        setDoc(
-          overviewRef,
-          {
-            id: 'overview',
-            type: 'overview',
-            totalVisitors: currentTotal,
-            pageViews: currentViews,
-            deviceBreakdown: devices,
-            updatedAt: now,
-          },
-          { merge: true }
-        ),
-        2500
-      );
+        const currentTotal = (existing.totalVisitors || 0) + 1;
+        const currentViews = (existing.pageViews || 0) + 1;
+        const devices = existing.deviceBreakdown || { mobile: 0, desktop: 0, tablet: 0 };
+        devices[device] = (devices[device] || 0) + 1;
 
-      // Update Daily Doc
-      const dailyRef = doc(db, 'site_analytics', `daily_${today}`);
-      const dailySnap = await withTimeout(getDoc(dailyRef), 2500);
-      const dailyData = dailySnap.exists() ? dailySnap.data() : {};
-      await withTimeout(
-        setDoc(
-          dailyRef,
-          {
-            id: `daily_${today}`,
-            type: 'daily',
-            period: today,
-            visitorCount: (dailyData.visitorCount || 0) + 1,
-            pageViews: (dailyData.pageViews || 0) + 1,
-            updatedAt: now,
-          },
-          { merge: true }
-        ),
-        2500
-      );
-    } catch {
-      // Silently fallback to local/server tracking
+        await withTimeout(
+          setDoc(
+            overviewRef,
+            {
+              id: 'overview',
+              type: 'overview',
+              totalVisitors: currentTotal,
+              pageViews: currentViews,
+              deviceBreakdown: devices,
+              updatedAt: now,
+            },
+            { merge: true }
+          ),
+          2500
+        );
+
+        const dailyRef = doc(db, 'site_analytics', `daily_${today}`);
+        const dailySnap = await withTimeout(getDoc(dailyRef), 2500);
+        const dailyData = dailySnap.exists() ? dailySnap.data() : {};
+        await withTimeout(
+          setDoc(
+            dailyRef,
+            {
+              id: `daily_${today}`,
+              type: 'daily',
+              period: today,
+              visitorCount: (dailyData.visitorCount || 0) + 1,
+              pageViews: (dailyData.pageViews || 0) + 1,
+              updatedAt: now,
+            },
+            { merge: true }
+          ),
+          2500
+        );
+      } catch {
+        // Silently fallback to local/server tracking
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => {
+        setTimeout(persistToFirestore, 1000);
+      });
+    } else {
+      setTimeout(persistToFirestore, 1500);
     }
   };
 
-  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => {
-      setTimeout(persistToFirestore, 2500);
-    });
-  } else {
-    setTimeout(persistToFirestore, 3500);
-  }
+  // Trigger analytics only after real user interaction so initial page load & PageSpeed have zero background network contention
+  let triggered = false;
+  const onFirstInteraction = () => {
+    if (triggered) return;
+    triggered = true;
+    window.removeEventListener('pointerdown', onFirstInteraction);
+    window.removeEventListener('keydown', onFirstInteraction);
+    window.removeEventListener('touchstart', onFirstInteraction);
+    runTracking();
+  };
+
+  window.addEventListener('pointerdown', onFirstInteraction, { once: true, passive: true });
+  window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
+  window.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
 }
 
 /**

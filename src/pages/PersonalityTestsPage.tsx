@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -36,9 +36,20 @@ import {
   PsychometricAcademicConclusion,
   ScientificClinicalDisclaimerBanner,
 } from '../components/PsychometricAcademicFraming';
-import { IntelligenceTestModal } from '../components/IntelligenceTestModal';
 import { PsychologyTestsModal } from '../components/PsychologyTestsModal';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+
+const LazyIntelligenceTestModal = lazy(() =>
+  import('../components/IntelligenceTestModal').then((m) => ({
+    default: m.IntelligenceTestModal,
+  }))
+);
+
+const LazyTieredAssessmentModule = lazy(() =>
+  import('../components/TieredAssessmentModule').then((m) => ({
+    default: m.TieredAssessmentModule,
+  }))
+);
 
 interface Props {
   onBackToHome: () => void;
@@ -592,6 +603,17 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
 
             {/* Clinical & Scientific Exploratory Disclaimer Notice */}
             <ScientificClinicalDisclaimerBanner testType="personality" />
+
+            {/* Multi-Tier Psychometric Assessment System (Quick / Advanced / Professional) */}
+            <Suspense
+              fallback={
+                <div className="p-6 text-center text-xs font-bold opacity-75">
+                  جارٍ تجهيز مستويات التحليل السيكومتري المتعددة...
+                </div>
+              }
+            >
+              <LazyTieredAssessmentModule userName={user?.displayName || undefined} />
+            </Suspense>
 
             {/* Primary Personality Assessment Cards Grid (MBTI & Big Five) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1436,12 +1458,13 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
         <PsychometricAcademicConclusion variant="page" />
       </div>
 
-      {/* Embedded Intelligence & Psychometric Modals */}
       {isIntelligenceModalOpen && (
-        <IntelligenceTestModal
-          isOpen={isIntelligenceModalOpen}
-          onClose={() => setIsIntelligenceModalOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <LazyIntelligenceTestModal
+            isOpen={isIntelligenceModalOpen}
+            onClose={() => setIsIntelligenceModalOpen(false)}
+          />
+        </Suspense>
       )}
       {isPsychModalOpen && (
         <PsychologyTestsModal

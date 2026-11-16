@@ -1,20 +1,181 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { SupportedLanguage, TRANSLATIONS, translateDynamicField } from '../data/translations';
+import type {
+  SupportedLanguage,
+  TextDirection,
+  LanguageMetadata,
+  TailwindDirectionClasses,
+  Translations,
+} from '../i18n';
 import { soundManager } from '../utils/sound';
 
 interface LanguageContextType {
   language: SupportedLanguage;
-  direction: 'rtl' | 'ltr';
+  direction: TextDirection;
   isRTL: boolean;
+  languageMetadata: LanguageMetadata;
+  supportedLanguages: LanguageMetadata[];
+  tailwindClasses: TailwindDirectionClasses;
   setLanguage: (lang: SupportedLanguage) => void;
   toggleLanguage: () => void;
   t: (key: string, fallback?: string) => string;
   translateText: (text: string) => string;
+  formatNumber: (value: number) => string;
+  formatDate: (isoOrDate: string | Date, options?: Intl.DateTimeFormatOptions) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LANG_STORAGE_KEY = 'mirat_al_quloob_lang';
+
+const FALLBACK_LANG_METADATA: Record<SupportedLanguage, LanguageMetadata> = {
+  ar: {
+    code: 'ar',
+    name: 'Arabic',
+    nativeName: 'العربية',
+    dir: 'rtl',
+    isRTL: true,
+    locale: 'ar-JO',
+    flag: '🇸🇦',
+    fontFamily: "'Alexandria', 'Tajawal', system-ui, sans-serif",
+  },
+  en: {
+    code: 'en',
+    name: 'English',
+    nativeName: 'English',
+    dir: 'ltr',
+    isRTL: false,
+    locale: 'en-US',
+    flag: '🇺🇸',
+    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  },
+};
+
+function computeTailwindClasses(lang: SupportedLanguage): TailwindDirectionClasses {
+  const isRTL = lang === 'ar';
+  return {
+    dirClass: isRTL ? 'dir-rtl' : 'dir-ltr',
+    textAlignClass: isRTL ? 'text-right' : 'text-left',
+    oppositeTextAlignClass: isRTL ? 'text-left' : 'text-right',
+    fontClass: isRTL
+      ? "font-['Alexandria','Tajawal',system-ui,sans-serif]"
+      : 'font-sans',
+    headingFontClass: isRTL ? "font-['Alexandria']" : 'font-sans tracking-tight',
+    flexRowClass: 'flex-row',
+    containerClass: isRTL
+      ? "dir-rtl text-right font-['Alexandria','Tajawal',system-ui,sans-serif]"
+      : 'dir-ltr text-left font-sans',
+  };
+}
+
+// Lightweight inline dictionary for instant initial rendering without blocking on the full i18n JSON bundle
+const CORE_TRANSLATIONS: Translations = {
+  brand_name: {
+    ar: 'مِـرآة القـلوب',
+    en: 'Mirror of Hearts',
+  },
+  brand_tagline: {
+    ar: 'موقع كاشف شريك الحياة والتوافق النفسي',
+    en: 'Partner & Psychometric Compatibility Hub',
+  },
+  footer_rights: {
+    ar: '© 2026 مِـرآة القـلوب. جميع الحقوق محفوظة.',
+    en: '© 2026 Mirror of Hearts. All Rights Reserved.',
+  },
+  cloud_status: {
+    ar: 'خوادم سحابية تعمل 99.9%',
+    en: 'Cloud Uptime 99.9%',
+  },
+  ssl_verified: {
+    ar: '🔒 شهادة SSL مدارة من Google',
+    en: '🔒 Google-Managed SSL Certificate',
+  },
+  light_mode: {
+    ar: 'نمط النور ☀️',
+    en: 'Light Mode ☀️',
+  },
+  dark_mode: {
+    ar: 'نمط الليل 🌙',
+    en: 'Dark Mode 🌙',
+  },
+  result_badge_success: {
+    ar: 'تم إعداد تقرير التوافق الفكري والمجتمعي بنجاح',
+    en: 'Intellectual & Sociological Compatibility Report Prepared Successfully',
+  },
+  result_title_main: {
+    ar: 'ملامح ومواصفات',
+    en: 'Features & Traits of',
+  },
+  result_title_partner: {
+    ar: 'شريك حياتك',
+    en: 'Your Life Partner',
+  },
+  result_subtitle_desc: {
+    ar: 'تحليل علمي ومجتمعي مبني على سمات شخصيتك وتوافقك مع بيئة',
+    en: 'Scientific & sociological analysis grounded in your personality and synergy in',
+  },
+  pin_security_enabled: {
+    ar: 'قفل الأمان: مُفـعّـل (PIN 4 أرقام) 🔒',
+    en: 'Security Lock: Enabled (4-Digit PIN) 🔒',
+  },
+  pin_security_disabled: {
+    ar: 'قفل الأمان: غير مفعل (مكشوف)',
+    en: 'Security Lock: Disabled',
+  },
+  lock_now: {
+    ar: 'قفل الآن 🔒',
+    en: 'Lock Now 🔒',
+  },
+  pin_settings: {
+    ar: 'إعدادات الرمز',
+    en: 'PIN Settings',
+  },
+  enable_pin: {
+    ar: '🛡️ تفعيل قفل PIN',
+    en: '🛡️ Enable PIN',
+  },
+  save_to_account: {
+    ar: 'حفظ النتيجة في حسابي 💾',
+    en: 'Save Result to Account 💾',
+  },
+  saved_in_account: {
+    ar: 'تم الحفظ في حسابك ✓',
+    en: 'Saved to Account ✓',
+  },
+  saving_progress: {
+    ar: 'جارٍ الحفظ...',
+    en: 'Saving...',
+  },
+  history_btn: {
+    ar: 'السجل 📂',
+    en: 'History 📂',
+  },
+  ultra_hd_badge: {
+    ar: 'دقة تصوير 4K واقعية',
+    en: 'Photorealistic 4K Quality',
+  },
+  proposed_partner_badge: {
+    ar: 'الاسم المقترح للشريك المتوافق',
+    en: 'Proposed Compatible Partner Name',
+  },
+  overall_compatibility_label: {
+    ar: 'مؤشر التوافق الكلي العام',
+    en: 'Overall Calculated Compatibility',
+  },
+  mathematical_audit_btn: {
+    ar: 'تدقيق حسابي حقيقي 🧮',
+    en: 'Mathematical Audit 🧮',
+  },
+  regenerating_now: {
+    ar: 'جارٍ التوليد...',
+    en: 'Regenerating...',
+  },
+  regenerate_image_btn: {
+    ar: 'توليد ملامح جديدة',
+    en: 'Regenerate Portrait',
+  },
+};
+
+let loadedI18nModule: typeof import('../i18n') | null = null;
 
 export function getInitialLanguage(): SupportedLanguage {
   if (typeof window === 'undefined') return 'ar';
@@ -31,16 +192,22 @@ export function getInitialLanguage(): SupportedLanguage {
 
 export function applyLanguageSettings(lang: SupportedLanguage) {
   if (typeof document === 'undefined') return;
+  const meta = FALLBACK_LANG_METADATA[lang] || FALLBACK_LANG_METADATA.ar;
+  const tw = computeTailwindClasses(lang);
   const root = document.documentElement;
-  root.lang = lang;
-  root.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  root.lang = meta.code;
+  root.dir = meta.dir;
 
-  if (lang === 'ar') {
-    root.classList.add('lang-ar');
-    root.classList.remove('lang-en');
-  } else {
-    root.classList.add('lang-en');
-    root.classList.remove('lang-ar');
+  root.classList.remove('lang-ar', 'lang-en', 'dir-rtl', 'dir-ltr', 'text-right', 'text-left');
+  root.classList.add(`lang-${meta.code}`, `dir-${meta.dir}`, tw.textAlignClass);
+
+  if (document.body) {
+    document.body.dir = meta.dir;
+    document.body.classList.remove('dir-rtl', 'dir-ltr', 'text-right', 'text-left', 'font-sans');
+    document.body.classList.add(tw.dirClass, tw.textAlignClass);
+    if (!meta.isRTL) {
+      document.body.classList.add('font-sans');
+    }
   }
 
   try {
@@ -51,87 +218,40 @@ export function applyLanguageSettings(lang: SupportedLanguage) {
   }
 }
 
-// High-coverage phrase & UI dictionary for instant bilingual DOM localization across all modals & sections
-const UI_PHRASE_MAP: Array<[string, string]> = [
-  // User Profile Dashboard & 16PF
-  ['لوحة الملف الشخصي السيكومتري والزوجي الشامل', 'Comprehensive Psychometric & Marital Profile Dashboard'],
-  ['لوحة ملفي الشخصي والمتوافقين للتواصل', 'My Psychometric Profile & Compatible Matches Hub'],
-  ['نظرة عامة وملفي الشخصي', 'Overview & My Profile'],
-  ['استبيان بياناتي وتفضيلاتي الدقيقة', 'My Personal Data & Preferences Questionnaire'],
-  ['مقياس كاتل لـ 16 سمة (16PF)', 'Cattell 16PF Personality Profile'],
-  ['المتوافقون والمتشابهون للتواصل', 'Compatible & Similar Matches to Connect'],
-  ['سجل وتطور اختباراتي', 'My Test History & Progress'],
-  ['تصدير ملفي السيكومتري الكامل (PDF)', 'Export Complete Psychometric Dossier (PDF)'],
-  ['تصدير التقرير بصيغة PDF', 'Export PDF Report'],
-  ['تحميل التقرير بصيغة PDF', 'Download PDF Report'],
-  ['تصدير ملف PDF', 'Export PDF File'],
-  ['صفاتي ونقاط قوتي السلوكية', 'My Behavioral Strengths & Traits'],
-  ['اهتماماتي وشغفي اليومي', 'My Daily Interests & Passions'],
-  ['تطلعاتي المستقبلية للعش الزوجي', 'My Future Marital Nest Aspirations'],
-  ['معلومات شريك الحياة المناسب', 'Ideal Life Partner Specifications'],
-  ['اكتشف من يشبهك أو يتوافق معك للتواصل', 'Discover Similar or Compatible Matches to Connect'],
-  ['تقرير مبسط لغير المختصين', 'Simplified Non-Specialist Report'],
-  ['العوامل العالمية الخمسة الكبرى', 'The 5 Global Second-Order Factors'],
-  ['السمات الـ 16 الأولية لريموند كاتل', 'Raymond Cattell’s 16 Primary Personality Factors'],
-  ['حفظ وتحديث بياناتي وتفضيلاتي', 'Save & Update My Profile & Preferences'],
-  ['إجراء أو تحديث مقياس كاتل (16PF) الآن', 'Take or Update Cattell 16PF Assessment Now'],
-
-  // Psychology Tests Modal
-  ['مختبر مقاييس وتحليل الشخصية العلمي المعتمد', 'Certified Scientific Personality Assessment Lab'],
-  ['اختر المقياس العلمي لبدء التقييم السيكومتري', 'Select a Certified Scale to Begin Psychometric Assessment'],
-  ['ابدأ الاختبار الآن', 'Start Assessment Now'],
-  ['استئناف الاختبار', 'Resume Assessment'],
-  ['عرض التقرير المحفوظ', 'View Saved Report'],
-  ['إعادة ضبط الإجابات', 'Reset Answers'],
-  ['اعتماد الإجابات وإصدار التقرير السيكومتري', 'Submit Answers & Generate Psychometric Report'],
-  ['جدول التدقيق السيكومتري التفصيلي لإجاباتك', 'Detailed Item-by-Item Psychometric Audit Table'],
-
-  // Intelligence Tests Modal
-  ['مختبر الذكاءات المتعددة والقدرات المعرفية', 'Multiple Intelligences & Cognitive Abilities Lab'],
-  ['مقياس الذكاءات المتعددة (جاردنر وماكينزي - 45 سؤالاً)', 'Multiple Intelligences Inventory (Gardner & McKenzie - 45 Items)'],
-  ['الذكاء اللغوي اللفظي', 'Verbal-Linguistic Intelligence'],
-  ['الذكاء المنطقي الرياضي', 'Logical-Mathematical Intelligence'],
-  ['الذكاء البصري المكاني', 'Visual-Spatial Intelligence'],
-  ['الذكاء الحركي الجسدي', 'Bodily-Kinesthetic Intelligence'],
-  ['الذكاء الموسيقي الإيقاعي', 'Musical-Rhythmic Intelligence'],
-  ['الذكاء الاجتماعي التفاعلي', 'Interpersonal Intelligence'],
-  ['الذكاء الذاتي التأملي', 'Intrapersonal Intelligence'],
-  ['الذكاء الطبيعي البيئي', 'Naturalist Intelligence'],
-  ['الذكاء الوجودي الفلسفي', 'Existential-Philosophical Intelligence'],
-  ['إنهاء الاختبار وعرض التقرير السيكومتري', 'Finish Test & View Psychometric Report'],
-
-  // Blind Date, Articles, Novels, Live Chat, Couple Invite
-  ['تجربة التعارف المتدرج وراء الستار', 'Progressive Blind Date Behind the Curtain'],
-  ['موسوعة المقالات والدراسات النفسية والزوجية', 'Encyclopedia of Psychological & Marital Studies'],
-  ['مكتبة الروايات البوليسية والتحقيقات الجنائية', 'Mystery Novels & Criminal Investigations Library'],
-  ['دعوة شريك حقيقي لاختبار التوافق المشترك', 'Invite a Real Partner for Joint Compatibility Testing'],
-  ['سجل نتائج الاختبارات المحفوظة في قاعدة البيانات', 'Saved Test Results History in Database'],
-  ['فتح التقرير', 'Open Report'],
-  ['حذف من السجل', 'Delete from History'],
-  ['تسجيل الخروج', 'Sign Out'],
-  ['ربط بحساب', 'Link Account'],
-  ['لا توجد نتائج محفوظة بعد', 'No Saved Results Yet'],
-];
-
 const originalNodeTextMap = new WeakMap<Node, string>();
 const originalElementAttrMap = new WeakMap<Element, Record<string, string>>();
+let hasEverLocalizedToEnglish = false;
 
 function translateRawArabicToEnglish(input: string): string {
   if (!input || !/[\u0600-\u06FF]/.test(input)) return input;
+  if (!loadedI18nModule) return input;
+  return loadedI18nModule.translateDynamicField(input, 'en');
+}
 
-  let out = translateDynamicField(input, 'en');
-  for (const [ar, en] of UI_PHRASE_MAP) {
-    if (out.includes(ar)) {
-      out = out.split(ar).join(en);
-    }
+function shouldPreserveElementDirection(el: Element): boolean {
+  if (
+    el.hasAttribute('data-keep-dir') ||
+    el.hasAttribute('data-dir-lock') ||
+    el.classList.contains('ltr-preserve') ||
+    el.classList.contains('rtl-preserve') ||
+    el.classList.contains('recharts-wrapper') ||
+    el.classList.contains('recharts-responsive-container') ||
+    el.querySelector(':scope > .recharts-wrapper, :scope > .recharts-responsive-container, :scope > svg.recharts-surface') !== null
+  ) {
+    return true;
   }
-  return out;
+  return false;
 }
 
 function applyDomLocalization(lang: SupportedLanguage) {
   if (typeof document === 'undefined' || !document.body) return;
+  if (lang === 'ar' && !hasEverLocalizedToEnglish) return;
+  if (lang === 'en') {
+    hasEverLocalizedToEnglish = true;
+  }
 
-  // Walk text nodes
+  const targetDir: TextDirection = (FALLBACK_LANG_METADATA[lang] || FALLBACK_LANG_METADATA.ar).dir;
+
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement;
@@ -140,8 +260,7 @@ function applyDomLocalization(lang: SupportedLanguage) {
       if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'TEXTAREA') {
         return NodeFilter.FILTER_REJECT;
       }
-      // Skip PDF preview modal which handles its own bilingual toggle
-      if (parent.closest('#mirat-pdf-preview-overlay')) {
+      if (parent.closest('#mirat-pdf-preview-overlay, [data-no-translate="true"]')) {
         return NodeFilter.FILTER_REJECT;
       }
       return NodeFilter.FILTER_ACCEPT;
@@ -171,22 +290,29 @@ function applyDomLocalization(lang: SupportedLanguage) {
     currentNode = walker.nextNode();
   }
 
-  // Handle elements with dir="rtl" inside modals and attributes like placeholder/title
-  const allElements = document.body.querySelectorAll('[dir], [placeholder], [title]');
+  const allElements = document.body.querySelectorAll('[dir], [placeholder], [title], [aria-label]');
   allElements.forEach((el) => {
-    if (el.closest('#mirat-pdf-preview-overlay')) return;
+    if (el.closest('#mirat-pdf-preview-overlay, [data-no-translate="true"]')) return;
 
-    if (el.hasAttribute('dir')) {
+    const savedAttrs = originalElementAttrMap.get(el) || {};
+
+    if (el.hasAttribute('dir') && !shouldPreserveElementDirection(el)) {
       const currentDir = el.getAttribute('dir');
-      const targetDir = lang === 'ar' ? 'rtl' : 'ltr';
-      if (currentDir && currentDir !== targetDir) {
+      if (!savedAttrs.dir && currentDir) {
+        savedAttrs.dir = currentDir;
+        originalElementAttrMap.set(el, savedAttrs);
+      }
+      if (lang === 'ar') {
+        const restoreDir = savedAttrs.dir || 'rtl';
+        if (currentDir !== restoreDir) {
+          el.setAttribute('dir', restoreDir);
+        }
+      } else if (currentDir && currentDir !== targetDir) {
         el.setAttribute('dir', targetDir);
       }
     }
 
-    const attrsToTranslate = ['placeholder', 'title'];
-    const savedAttrs = originalElementAttrMap.get(el) || {};
-
+    const attrsToTranslate = ['placeholder', 'title', 'aria-label'];
     for (const attr of attrsToTranslate) {
       const attrVal = el.getAttribute(attr);
       if (!attrVal) continue;
@@ -211,10 +337,36 @@ function applyDomLocalization(lang: SupportedLanguage) {
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<SupportedLanguage>(getInitialLanguage);
+  const [, setDictLoaded] = useState(Boolean(loadedI18nModule));
 
   useEffect(() => {
     applyLanguageSettings(language);
-    applyDomLocalization(language);
+
+    let rafId: number | null = null;
+    let observer: MutationObserver | null = null;
+
+    if (language === 'en') {
+      import('../i18n').then((mod) => {
+        loadedI18nModule = mod;
+        setDictLoaded(true);
+        applyDomLocalization('en');
+
+        if (typeof document !== 'undefined' && document.body) {
+          observer = new MutationObserver(() => {
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => {
+              applyDomLocalization('en');
+            });
+          });
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+          });
+        }
+      });
+    } else {
+      applyDomLocalization('ar');
+    }
 
     const handleLangChange = (e: Event) => {
       const customEvent = e as CustomEvent<{ language: SupportedLanguage }>;
@@ -225,25 +377,9 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     window.addEventListener('app-language-changed', handleLangChange);
 
-    // Observe dynamic modals/tabs opening so they also localize seamlessly
-    let rafId: number | null = null;
-    const observer = new MutationObserver(() => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        applyDomLocalization(language);
-      });
-    });
-
-    if (typeof document !== 'undefined' && document.body) {
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
     return () => {
       window.removeEventListener('app-language-changed', handleLangChange);
-      observer.disconnect();
+      if (observer) observer.disconnect();
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [language]);
@@ -262,7 +398,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const t = (key: string, fallback?: string): string => {
-    const entry = TRANSLATIONS[key];
+    const fullDict = loadedI18nModule?.TRANSLATIONS || CORE_TRANSLATIONS;
+    const entry = fullDict[key] || CORE_TRANSLATIONS[key];
     if (entry && entry[language]) {
       return entry[language];
     }
@@ -270,11 +407,43 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const translateText = (text: string): string => {
-    return translateDynamicField(text, language);
+    if (language === 'ar' || !loadedI18nModule) return text;
+    return loadedI18nModule.translateDynamicField(text, language);
   };
 
-  const isRTL = language === 'ar';
-  const direction = isRTL ? 'rtl' : 'ltr';
+  const languageMetadata =
+    loadedI18nModule?.getLanguageMetadata(language) ||
+    FALLBACK_LANG_METADATA[language] ||
+    FALLBACK_LANG_METADATA.ar;
+
+  const supportedLanguages =
+    loadedI18nModule?.SUPPORTED_LANGUAGES || Object.values(FALLBACK_LANG_METADATA);
+
+  const isRTL = languageMetadata.isRTL;
+  const direction: TextDirection = languageMetadata.dir;
+  const tailwindClasses =
+    loadedI18nModule?.getTailwindLayoutClasses(language) || computeTailwindClasses(language);
+
+  const formatNumber = (value: number): string => {
+    if (!Number.isFinite(value)) return '0';
+    try {
+      return new Intl.NumberFormat(languageMetadata.locale).format(value);
+    } catch {
+      return String(value);
+    }
+  };
+
+  const formatDate = (isoOrDate: string | Date, options?: Intl.DateTimeFormatOptions): string => {
+    try {
+      const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate;
+      return d.toLocaleDateString(
+        languageMetadata.locale,
+        options || { year: 'numeric', month: 'short', day: 'numeric' }
+      );
+    } catch {
+      return String(isoOrDate);
+    }
+  };
 
   return (
     <LanguageContext.Provider
@@ -282,13 +451,23 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         language,
         direction,
         isRTL,
+        languageMetadata,
+        supportedLanguages,
+        tailwindClasses,
         setLanguage,
         toggleLanguage,
         t,
         translateText,
+        formatNumber,
+        formatDate,
       }}
     >
-      {children}
+      <div
+        dir={direction}
+        className={`min-h-screen w-full transition-colors duration-200 ${tailwindClasses.containerClass}`}
+      >
+        {children}
+      </div>
     </LanguageContext.Provider>
   );
 };

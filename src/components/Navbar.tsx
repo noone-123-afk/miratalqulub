@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import {
   Heart,
   Volume2,
@@ -32,14 +31,15 @@ import {
   Cpu,
 } from 'lucide-react';
 import { soundManager } from '../utils/sound';
-import { PWAInstallModal } from './PWAInstallModal';
-import { WebsiteTabKey } from './WebsiteSectionsModal';
+import type { WebsiteTabKey } from './WebsiteSectionsModal';
 import { useAppTheme } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
-import { downloadOwnerProtectedZip } from '../utils/ownerDownload';
+
+const PWAInstallModal = lazy(() =>
+  import('./PWAInstallModal').then((m) => ({ default: m.PWAInstallModal }))
+);
 
 export interface NavbarProps {
   onReset?: () => void;
@@ -146,6 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     soundManager.playTap();
     setIsDeletingData(true);
     try {
+      const { purgeAllUserDataPermanently } = await import('../services/userHistoryService');
       await purgeAllUserDataPermanently(user);
       setIsDeletingData(false);
       setConfirmDeleteStep(false);
@@ -261,13 +262,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               </button>
 
-              <AnimatePresence>
-                {activeDropdown === 'self' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                    transition={{ duration: 0.16 }}
+              {activeDropdown === 'self' && (
+                  <div
                     className={`absolute top-full mt-2 w-80 rounded-2xl border p-2.5 shadow-2xl z-50 space-y-1.5 ${
                       isAr ? 'right-0 text-right' : 'left-0 text-left'
                     } ${
@@ -378,9 +374,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                       </button>
                     )}
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
             </div>
 
             {/* ================= PATHWAY 2: اكتشف التوافق (Discover Compatibility) ================= */}
@@ -408,13 +403,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               </button>
 
-              <AnimatePresence>
-                {activeDropdown === 'compatibility' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                    transition={{ duration: 0.16 }}
+              {activeDropdown === 'compatibility' && (
+                  <div
                     className={`absolute top-full mt-2 w-80 rounded-2xl border p-2.5 shadow-2xl z-50 space-y-1.5 ${
                       isAr ? 'right-0 text-right' : 'left-0 text-left'
                     } ${
@@ -524,9 +514,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                       </button>
                     )}
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
             </div>
 
             {/* ================= PATHWAY 3: هدية الواحة المعرفية والمقالات والروايات ================= */}
@@ -558,13 +547,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               </button>
 
-              <AnimatePresence>
-                {activeDropdown === 'oasis' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                    transition={{ duration: 0.16 }}
+              {activeDropdown === 'oasis' && (
+                  <div
                     className={`absolute top-full mt-2 w-84 rounded-2xl border p-2.5 shadow-2xl z-50 space-y-1.5 ${
                       isAr ? 'right-0 text-right' : 'left-0 text-left'
                     } ${
@@ -679,9 +663,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                       </button>
                     )}
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
             </div>
           </nav>
 
@@ -712,13 +695,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               </button>
 
-              <AnimatePresence>
-                {activeDropdown === 'profile' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                    transition={{ duration: 0.16 }}
+              {activeDropdown === 'profile' && (
+                  <div
                     className={`absolute top-full mt-2 w-80 rounded-2xl border p-3 shadow-2xl z-50 space-y-2 ${
                       isAr ? 'left-0 text-right' : 'right-0 text-left'
                     } ${
@@ -930,9 +908,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
             </div>
 
             {/* Language Switcher Button (AR / EN) */}
@@ -947,8 +924,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-800'
                   : 'bg-sky-500/15 hover:bg-sky-500/25 border-sky-400/35 text-sky-200'
               }`}
-              title={t('lang_switch_tooltip')}
-              aria-label={t('lang_toggle_label')}
+              title={isAr ? 'تبديل اللغة إلى الإنجليزية' : 'Switch language to Arabic'}
+              aria-label={isAr ? 'تبديل اللغة إلى الإنجليزية' : 'Switch language to Arabic'}
             >
               <Languages className="w-3.5 h-3.5 shrink-0" />
               <span className="font-['Alexandria',sans-serif]">
@@ -968,8 +945,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800'
                   : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-400/30 text-amber-300'
               }`}
-              title={theme === 'dark' ? t('light_mode') : t('dark_mode')}
-              aria-label={theme === 'dark' ? t('light_mode') : t('dark_mode')}
+              title={
+                theme === 'dark'
+                  ? isAr
+                    ? 'التبديل إلى الوضع النهاري'
+                    : 'Switch to Light Mode'
+                  : isAr
+                  ? 'التبديل إلى الوضع الليلي'
+                  : 'Switch to Dark Mode'
+              }
+              aria-label={
+                theme === 'dark'
+                  ? isAr
+                    ? 'التبديل إلى الوضع النهاري'
+                    : 'Switch to Light Mode'
+                  : isAr
+                  ? 'التبديل إلى الوضع الليلي'
+                  : 'Switch to Dark Mode'
+              }
             >
               {theme === 'dark' ? (
                 <Sun className="w-3.5 h-3.5 text-amber-400" />
@@ -1005,12 +998,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <ChevronDown className="w-3 h-3" />
                 </button>
 
-                <AnimatePresence>
-                  {activeDropdown === 'owner' && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: 6 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: 6 }}
+                {activeDropdown === 'owner' && (
+                    <div
                       className={`absolute top-full mt-2 w-72 p-2.5 rounded-2xl border shadow-2xl z-50 space-y-1.5 ${
                         isAr ? 'left-0 text-right' : 'right-0 text-left'
                       } ${
@@ -1022,12 +1011,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <button
                         type="button"
                         onClick={() =>
-                          handleNavAction(() => {
-                            downloadOwnerProtectedZip(
-                              '/api/download-cloudflare-zip',
-                              'miratalqulub-cloudflare-ready.zip',
-                              user
-                            ).catch(() => {});
+                          handleNavAction(async () => {
+                            try {
+                              const { downloadOwnerProtectedZip } = await import('../utils/ownerDownload');
+                              await downloadOwnerProtectedZip(
+                                '/api/download-cloudflare-zip',
+                                'miratalqulub-cloudflare-ready.zip',
+                                user
+                              );
+                            } catch {}
                           })
                         }
                         className="w-full p-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-400 flex items-center gap-2 text-xs font-extrabold cursor-pointer text-start"
@@ -1042,12 +1034,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <button
                         type="button"
                         onClick={() =>
-                          handleNavAction(() => {
-                            downloadOwnerProtectedZip(
-                              '/api/download-source-zip',
-                              'miratalqulub-full-source.zip',
-                              user
-                            ).catch(() => {});
+                          handleNavAction(async () => {
+                            try {
+                              const { downloadOwnerProtectedZip } = await import('../utils/ownerDownload');
+                              await downloadOwnerProtectedZip(
+                                '/api/download-source-zip',
+                                'miratalqulub-full-source.zip',
+                                user
+                              );
+                            } catch {}
                           })
                         }
                         className="w-full p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 flex items-center gap-2 text-xs font-bold cursor-pointer text-start"
@@ -1099,9 +1094,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <span>{isAr ? 'إحصائيات الزوار' : 'Visitor Analytics'}</span>
                         </button>
                       )}
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </div>
             )}
 
@@ -1114,8 +1108,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
                   : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300'
               }`}
-              aria-label={soundOn ? t('sound_mute') : t('sound_unmute')}
-              title={soundOn ? t('sound_mute') : t('sound_unmute')}
+              aria-label={
+                soundOn
+                  ? isAr
+                    ? 'كتم المؤثرات الصوتية'
+                    : 'Mute sound effects'
+                  : isAr
+                  ? 'تفعيل المؤثرات الصوتية'
+                  : 'Unmute sound effects'
+              }
+              title={
+                soundOn
+                  ? isAr
+                    ? 'كتم المؤثرات الصوتية'
+                    : 'Mute sound effects'
+                  : isAr
+                  ? 'تفعيل المؤثرات الصوتية'
+                  : 'Unmute sound effects'
+              }
             >
               {soundOn ? (
                 <Volume2 className="w-4 h-4 text-rose-500" />
@@ -1134,8 +1144,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
                     : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300'
                 }`}
-                title={t('reset_test')}
-                aria-label={t('reset_test')}
+                title={isAr ? 'إعادة الاختبار من البداية' : 'Reset assessment'}
+                aria-label={isAr ? 'إعادة الاختبار من البداية' : 'Reset assessment'}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -1153,7 +1163,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-slate-100 border-slate-200 text-slate-800'
                   : 'bg-white/5 border-white/10 text-slate-200'
               }`}
-              aria-label="Menu"
+              aria-label={isAr ? 'فتح أو إغلاق القائمة الرئيسية' : 'Toggle navigation menu'}
+              title={isAr ? 'فتح أو إغلاق القائمة الرئيسية' : 'Toggle navigation menu'}
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
@@ -1161,12 +1172,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* ================= MOBILE NAVIGATION DRAWER (Organized by the 3 Pathways + My Profile) ================= */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+        {mobileMenuOpen && (
+            <div
               className={`lg:hidden mt-3 pt-3 border-t overflow-hidden text-xs space-y-3 ${
                 isLight ? 'border-slate-200' : 'border-white/10'
               }`}
@@ -1409,12 +1416,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </header>
 
-      <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
+      {showPwaModal && (
+        <Suspense fallback={null}>
+          <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
+        </Suspense>
+      )}
     </>
   );
 };

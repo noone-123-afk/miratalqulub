@@ -362,6 +362,7 @@ export const VoiceToneAnalysisModal: React.FC<Props> = ({
 
                   <button
                     onClick={handleReset}
+                    aria-label="إعادة التسجيل من جديد"
                     className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer"
                     title="إعادة التسجيل من جديد"
                   >

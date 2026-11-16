@@ -365,7 +365,11 @@ export const CompatibilityCharts: React.FC<Props> = ({
       </div>
 
       {/* Main Chart Canvas */}
-      <div className="w-full h-80 sm:h-96 flex items-center justify-center relative z-10 py-1">
+      <div
+        className="w-full h-80 sm:h-96 flex items-center justify-center relative z-10 py-1 ltr-preserve"
+        dir="ltr"
+        data-keep-dir="true"
+      >
         {mounted && (
           <ResponsiveContainer width="100%" height="100%">
             {chartType === 'radar' ? (

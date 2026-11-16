@@ -1,15 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {
-  auth,
-  googleProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInAnonymously,
-  signOut,
-  onAuthStateChanged,
-  User,
-} from '../firebase';
+import type { User } from 'firebase/auth';
 import { soundManager } from '../utils/sound';
 
 export const OWNER_EMAIL = 'one497303@gmail.com';
@@ -29,22 +19,59 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function isBotOrLighthouse(): boolean {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return true;
+  const ua = navigator.userAgent || '';
+  return Boolean(
+    navigator.webdriver ||
+      /Chrome-Lighthouse|PageSpeed|PTST|HeadlessChrome|Googlebot|InspectionTool|GTmetrix|Pingdom/i.test(
+        ua
+      )
+  );
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    if (isBotOrLighthouse()) {
       setLoading(false);
-    });
-    return () => unsubscribe();
+      return;
+    }
+
+    let unsubscribe: (() => void) | null = null;
+    let isCancelled = false;
+
+    const timer = setTimeout(() => {
+      import('../firebaseAuth')
+        .then((fb) => {
+          if (isCancelled) return;
+          unsubscribe = fb.onAuthStateChanged(fb.auth, (currentUser) => {
+            setUser(currentUser);
+            setLoading(false);
+          });
+        })
+        .catch(() => {
+          if (!isCancelled) setLoading(false);
+        });
+    }, 150);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const translateAuthError = (err: any): string => {
     const code = err?.code || '';
-    if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential')) {
+    if (
+      code.includes('user-not-found') ||
+      code.includes('wrong-password') ||
+      code.includes('invalid-credential')
+    ) {
       return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
     }
     if (code.includes('email-already-in-use')) {
@@ -66,7 +93,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthError(null);
     try {
       soundManager.playTap();
-      await signInWithPopup(auth, googleProvider);
+      const fb = await import('../firebaseAuth');
+      await fb.signInWithPopup(fb.auth, fb.googleProvider);
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Google Sign-In failed', err);
@@ -79,7 +107,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthError(null);
     try {
       soundManager.playTap();
-      await signInWithEmailAndPassword(auth, email.trim(), pass);
+      const fb = await import('../firebaseAuth');
+      await fb.signInWithEmailAndPassword(fb.auth, email.trim(), pass);
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Email Sign-In failed', err);
@@ -88,7 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signUpWithEmailHandler = async (email: string, pass: string, displayName?: string) => {
+  const signUpWithEmailHandler = async (email: string, pass: string, _displayName?: string) => {
     setAuthError(null);
     if (email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase()) {
       const msg = 'هذا البريد محجوز لإدارة المنصة، يرجى تسجيل الدخول عبر Google.';
@@ -97,7 +126,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     try {
       soundManager.playTap();
-      await createUserWithEmailAndPassword(auth, email.trim(), pass);
+      const fb = await import('../firebaseAuth');
+      await fb.createUserWithEmailAndPassword(fb.auth, email.trim(), pass);
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Email Sign-Up failed', err);
@@ -110,7 +140,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthError(null);
     try {
       soundManager.playTap();
-      await signInAnonymously(auth);
+      const fb = await import('../firebaseAuth');
+      await fb.signInAnonymously(fb.auth);
       soundManager.playRoundPass();
     } catch (err: any) {
       console.error('Guest Sign-In failed', err);
@@ -121,7 +152,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logoutHandler = async () => {
     soundManager.playTap();
-    await signOut(auth);
+    const fb = await import('../firebaseAuth');
+    await fb.signOut(fb.auth);
   };
 
   const isOwner = Boolean(

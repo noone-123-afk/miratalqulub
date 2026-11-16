@@ -17,6 +17,9 @@ export interface PersonalityQuestion {
   positivePole: string; // Dimension rewarded by high score
   weight: number;
   direction?: 1 | -1;
+  scientificReference?: string;
+  dimensionDescriptionAr?: string;
+  scoringRationaleAr?: string;
 }
 
 export interface PersonalityTestMeta {
@@ -27,6 +30,7 @@ export interface PersonalityTestMeta {
   subtitleEn: string;
   scientificOriginAr: string;
   scientificOriginEn: string;
+  nonClinicalDisclaimerAr?: string;
   badgeAr: string;
   badgeEn: string;
   badgeColor: string;

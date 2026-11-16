@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -43,12 +43,17 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { saveUserPsychologyReport } from '../services/userHistoryService';
-import { exportPsychometricReportAsPDF } from '../utils/pdfReportGenerator';
 import {
   PsychometricAcademicIntro,
   PsychometricAcademicConclusion,
   ScientificClinicalDisclaimerBanner,
 } from './PsychometricAcademicFraming';
+
+const LazyTieredAssessmentModule = lazy(() =>
+  import('./TieredAssessmentModule').then((m) => ({
+    default: m.TieredAssessmentModule,
+  }))
+);
 
 interface Props {
   isOpen: boolean;
@@ -259,7 +264,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
     }
   };
 
-  const triggerPdfExportForReport = (rep: PsychometricReport, e?: React.MouseEvent) => {
+  const triggerPdfExportForReport = async (rep: PsychometricReport, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     soundManager.playTap();
     const currentCatalog = ASSESSMENTS_CATALOG.find((c) => c.id === rep.testId);
@@ -298,6 +303,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
       });
     }
 
+    const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     exportPsychometricReportAsPDF({
       reportTitle: rep.testTitleAr,
       subTitle: currentCatalog?.titleEn || 'Psychometric Personality Assessment',
@@ -751,6 +757,17 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               </p>
             </div>
 
+            {/* Multi-Tier Psychometric Assessment Levels (Quick 32 / Advanced 144 / Professional 288) */}
+            <Suspense
+              fallback={
+                <div className="p-6 text-center text-xs font-bold text-slate-300">
+                  جارٍ تحميل مستويات التحليل العلمي المتعددة...
+                </div>
+              }
+            >
+              <LazyTieredAssessmentModule userName={userName} />
+            </Suspense>
+
             {/* Spotlight Banner for Cattell 16PF & Eysenck EPQ (Simplified for Non-Specialists) */}
             <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/50 to-pink-950/40 border border-purple-500/30">
               <div className="flex items-center justify-between mb-3">
@@ -1029,6 +1046,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   {answeredCount > 0 && (
                     <button
                       onClick={handleResetCurrentTest}
+                      aria-label="إعادة الاختبار من السؤال الأول"
                       title="إعادة الاختبار من السؤال الأول"
                       className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/20 text-gray-300 hover:text-rose-300 border border-white/10 text-[11px] transition cursor-pointer"
                     >
