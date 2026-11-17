@@ -106,7 +106,7 @@ export const NavbarOwnerControls: React.FC<NavbarOwnerControlsProps> = ({
               className="w-full p-2 rounded-xl hover:bg-rose-500/15 text-rose-500 flex items-center gap-2 text-xs font-bold cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span>{isAr ? 'مركز إدارة المحتوى و AdSense' : 'CMS & AdSense Audit'}</span>
+              <span>{isAr ? 'مركز إدارة المحتوى والمنصة' : 'CMS & Platform Audit'}</span>
             </button>
           )}
 
@@ -118,17 +118,6 @@ export const NavbarOwnerControls: React.FC<NavbarOwnerControlsProps> = ({
             >
               <Cloud className="w-4 h-4 shrink-0" />
               <span>{isAr ? 'الاستضافة والدومين وتحميل الحزمة' : 'Hosting & Domain'}</span>
-            </button>
-          )}
-
-          {onOpenAdSense && (
-            <button
-              type="button"
-              onClick={() => onNavAction(onOpenAdSense)}
-              className="w-full p-2 rounded-xl hover:bg-amber-500/15 text-amber-500 flex items-center gap-2 text-xs font-bold cursor-pointer"
-            >
-              <DollarSign className="w-4 h-4 shrink-0" />
-              <span>Google AdSense</span>
             </button>
           )}
 

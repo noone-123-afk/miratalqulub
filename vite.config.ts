@@ -85,7 +85,15 @@ function manualChunkMatcher(id: string): string | undefined {
   }
   if (
     id.includes('src/data/articlesData') ||
-    id.includes('src/data/novelsData')
+    id.includes('src/data/novelsData') ||
+    id.includes('src/data/userNovelsData') ||
+    id.includes('src/data/pdfFourBigFiveArticles') ||
+    id.includes('src/data/relationshipFourArticles') ||
+    id.includes('src/data/emotionalIntelligenceSeriesArticles') ||
+    id.includes('src/data/emotionalIntelligencePart2Articles') ||
+    id.includes('src/data/platformIntroductoryArticles') ||
+    id.includes('src/data/clinicalChildhoodAnxietyOverthinkingArticle') ||
+    id.includes('src/data/academicPapersData')
   ) {
     return 'data-content';
   }
@@ -154,6 +162,9 @@ export default defineConfig(({ command }) => {
           ],
         },
         workbox: {
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
           maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
           globIgnores: [
             '**/ai-catalog.json',

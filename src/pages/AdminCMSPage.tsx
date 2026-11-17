@@ -171,12 +171,12 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
         title={
           language === 'ar'
             ? 'لوحة تحكم الإدارة ونظام إدارة المحتوى CMS | مرآة القلوب'
-            : 'Admin CMS & AdSense Control Center | Mirror of Hearts'
+            : 'Admin CMS & Platform Control Center | Mirror of Hearts'
         }
         description={
           language === 'ar'
-            ? 'لوحة الإدارة والتحكم الشاملة في الروايات والبيانات العامة وتدقيق متطلبات Google AdSense.'
-            : 'Unified administration dashboard for novel management, dynamic CMS content, and AdSense readiness audit.'
+            ? 'لوحة الإدارة والتحكم الشاملة في الروايات والبيانات العامة وتدقيق جودة المنصة.'
+            : 'Unified administration dashboard for novel management, dynamic CMS content, and platform quality audit.'
         }
         canonicalPath="/#/admin-cms"
         language={language}
@@ -212,18 +212,18 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
               <span>مرآة القلوب CMS Admin Center</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black text-white">
-              {language === 'ar' ? 'مركز إدارة المحتوى وتدقيق AdSense' : 'Content CMS & AdSense Control'}
+              {language === 'ar' ? 'مركز إدارة المحتوى وتدقيق الجودة' : 'Content CMS & Quality Control'}
             </h1>
             <p className="text-sm text-slate-400 mt-1">
               {language === 'ar'
-                ? 'إدارة الروايات، تحرير النصوص، تدقيق الجاهزية لإعلانات Google، ومتابعة الإحصاءات.'
-                : 'Manage novels, edit dynamic site copy, audit AdSense compliance, and view metrics.'}
+                ? 'إدارة الروايات، تحرير النصوص، تدقيق جودة المنصة، ومتابعة الإحصاءات.'
+                : 'Manage novels, edit dynamic site copy, audit platform quality, and view metrics.'}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="text-center bg-slate-950 px-4 py-2.5 rounded-2xl border border-slate-800">
-              <span className="text-xs text-slate-400 block">{language === 'ar' ? 'جاهزية AdSense' : 'AdSense Score'}</span>
+              <span className="text-xs text-slate-400 block">{language === 'ar' ? 'جاهزية الجودة' : 'Quality Score'}</span>
               <span className="text-xl font-black text-emerald-400">{auditScore}%</span>
             </div>
             {onOpenAnalyticsModal && (
@@ -319,7 +319,7 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>{language === 'ar' ? 'تدقيق AdSense (14 معياراً)' : 'AdSense Audit (14 Points)'}</span>
+            <span>{language === 'ar' ? 'تدقيق الجودة (14 معياراً)' : 'Quality Audit (14 Points)'}</span>
             <span className="text-xs bg-black/30 px-2 py-0.5 rounded-full">{passedAuditCount}/{auditItems.length}</span>
           </button>
 
@@ -378,12 +378,12 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
                 <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
                 <div>
                   <h3 className="text-sm font-bold text-white">
-                    {language === 'ar' ? 'حالة موقع مرآة القلوب: جاهز بنسبة 100% لمراجعة Google AdSense' : 'Mirror of Hearts Status: 100% Ready for Google AdSense Review'}
+                    {language === 'ar' ? 'حالة موقع مرآة القلوب: مستوفٍ لمعايير الجودة التقنية والقانونية' : 'Mirror of Hearts Status: Technical & Legal Quality Standards Verified'}
                   </h3>
                   <p className="text-xs text-slate-300">
                     {language === 'ar'
-                      ? 'تم استيفاء جميع المتطلبات الصارمة: الدومين، SSL، صفحات السياسات المستقلة، ads.txt المعتمد، خلو من النسب الوهمية، ومحتوى غني أصلي.'
-                      : 'All requirements verified: custom domain, SSL, legal pages, certified ads.txt, no fake percentages, and rich original content.'}
+                      ? 'تم استيفاء جميع المتطلبات: الدومين، SSL، صفحات السياسات المستقلة، خلو من النسب الوهمية، ومحتوى غني أصلي.'
+                      : 'All requirements verified: custom domain, SSL, legal pages, no fake percentages, and rich original content.'}
                   </p>
                 </div>
               </div>
@@ -616,14 +616,13 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300">
-                  {language === 'ar' ? 'معرف الناشر Google AdSense' : 'AdSense Publisher ID'}
+                  {language === 'ar' ? 'معرف التوثيق التقني (Verification ID)' : 'Technical Verification ID'}
                 </label>
                 <input
                   type="text"
                   value={settings.adsensePubId}
                   onChange={(e) => setSettings({ ...settings, adsensePubId: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 text-sm text-white rounded-xl px-3.5 py-2.5 focus:border-rose-500 outline-none font-mono"
-                  required
                 />
               </div>
 
@@ -712,8 +711,8 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
 
             <div className="p-6 bg-slate-900/40 rounded-2xl border border-slate-800 text-xs text-slate-300 leading-relaxed">
               {language === 'ar'
-                ? 'نظام الروايات الأدبية في مرآة القلوب يوفر محتوى نصي معمق وموسع يضمن اجتياز الموقع لشروط AdSense الخاصة بالقيمة الإضافية الفريدة (High Original Value) وتفادي تصنيف المحتوى الهزيل (Thin Content).'
-                : 'The forensic novel system in Mirror of Hearts supplies significant original editorial and literary content, satisfying Google AdSense requirements for unique high-value textual pages.'}
+                ? 'نظام الروايات الأدبية في مرآة القلوب يوفر محتوى نصي معمق وموسع يعزز القيمة المعرفية والأدبية الفريدة للمنصة.'
+                : 'The forensic novel system in Mirror of Hearts supplies significant original editorial and literary content for readers.'}
             </div>
           </div>
         )}

@@ -1,4 +1,4 @@
-import { Novel } from './novelsData';
+import type { Novel } from './novelsData';
 
 // ============================================================================
 // 1. ROMANCE & CHIVALRIC SOCIAL NOVEL: "في بيتنا ياسمين" (In Our House There Is Jasmine)

@@ -97,9 +97,6 @@ const DomainHostingModal = lazy(() =>
 const WebsiteSectionsModal = lazy(() =>
   import('./components/WebsiteSectionsModal').then((m) => ({ default: m.WebsiteSectionsModal }))
 );
-const AdSenseModal = lazy(() =>
-  import('./components/AdSenseModal').then((m) => ({ default: m.AdSenseModal }))
-);
 const AuthModal = lazy(() =>
   import('./components/AuthModal').then((m) => ({ default: m.AuthModal }))
 );
@@ -189,7 +186,6 @@ function AppContent() {
   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   const [isBlindDateOpen, setIsBlindDateOpen] = useState(false);
   const [isDomainHostingOpen, setIsDomainHostingOpen] = useState(false);
-  const [isAdSenseOpen, setIsAdSenseOpen] = useState(false);
   const [isWebsiteSectionsOpen, setIsWebsiteSectionsOpen] = useState(false);
   const [websiteSectionTab, setWebsiteSectionTab] = useState<WebsiteTabKey>('about');
   const [isArticlesModalOpen, setIsArticlesModalOpen] = useState(false);
@@ -816,7 +812,6 @@ function AppContent() {
         onOpenBlindDate={() => setIsBlindDateOpen(true)}
         onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
         onOpenWebsiteSection={handleOpenWebsiteSection}
-        onOpenAdSense={isOwner ? () => setIsAdSenseOpen(true) : undefined}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenHistory={() => handleOpenUserDashboard('history')}
         onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
@@ -1139,15 +1134,6 @@ function AppContent() {
           <DomainHostingModal
             isOpen={isDomainHostingOpen}
             onClose={() => setIsDomainHostingOpen(false)}
-            onOpenAdSense={() => setIsAdSenseOpen(true)}
-          />
-        )}
-
-        {isOwner && isAdSenseOpen && (
-          <AdSenseModal
-            isOpen={isAdSenseOpen}
-            onClose={() => setIsAdSenseOpen(false)}
-            onOpenDomainHosting={() => setIsDomainHostingOpen(true)}
           />
         )}
 
@@ -1300,7 +1286,6 @@ function AppContent() {
           onOpenNovels={handleOpenNovels}
           onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
           onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
-          onOpenAdSense={isOwner ? () => setIsAdSenseOpen(true) : undefined}
           onOpenAnalytics={isOwner ? handleOpenAnalytics : undefined}
           onDataDeleted={() => setSavedTestsCount(0)}
         />

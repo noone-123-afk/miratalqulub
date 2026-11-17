@@ -4,11 +4,9 @@
     <meta charset="UTF-8" />
     <!-- Google AdSense Verification & Script -->
     <meta name="google-adsense-account" content="ca-pub-7880718645976012">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7880718645976012" crossorigin="anonymous"></script>
-
     <script>
       (function() {
-        // Suppress benign Vite HMR proxy WebSocket errors in the AI Studio cloud preview environment
+        // Suppress benign Vite HMR proxy WebSocket errors and cross-origin iframe TagError in preview environment
         var originalError = console.error;
         console.error = function() {
           var args = Array.prototype.slice.call(arguments);
@@ -19,7 +17,11 @@
               text += ' ' + (item.message || item.stack || item.toString());
             }
           }
-          if (text.indexOf('WebSocket') !== -1 && (text.indexOf('closed without opened') !== -1 || text.indexOf('[vite]') !== -1)) {
+          if (
+            (text.indexOf('WebSocket') !== -1 && (text.indexOf('closed without opened') !== -1 || text.indexOf('[vite]') !== -1)) ||
+            text.indexOf('adsbygoogle') !== -1 ||
+            text.indexOf('TagError') !== -1
+          ) {
             return;
           }
           return originalError.apply(console, args);
@@ -28,7 +30,7 @@
         window.addEventListener('unhandledrejection', function(event) {
           var reason = event.reason;
           var text = (reason && (reason.message || reason.stack || reason.toString())) || '';
-          if (text.indexOf('WebSocket') !== -1) {
+          if (text.indexOf('WebSocket') !== -1 || text.indexOf('adsbygoogle') !== -1 || text.indexOf('TagError') !== -1) {
             event.preventDefault();
             event.stopImmediatePropagation();
           }
@@ -36,13 +38,18 @@
 
         window.addEventListener('error', function(event) {
           var msg = event.message || (event.error && (event.error.message || event.error.stack)) || '';
-          if (typeof msg === 'string' && msg.indexOf('WebSocket') !== -1) {
+          if (typeof msg === 'string' && (msg.indexOf('WebSocket') !== -1 || msg.indexOf('adsbygoogle') !== -1 || msg.indexOf('TagError') !== -1)) {
             event.preventDefault();
             event.stopImmediatePropagation();
           }
         }, true);
+
+        window.addEventListener('vite:preloadError', function() {
+          window.location.reload();
+        });
       })();
     </script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7880718645976012" crossorigin="anonymous"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <title>مرآة القلوب | كاشف شريك الحياة والتوافق النفسي</title>
     <meta name="description" content="موقع ومنصة مرآة القلوب التفاعلية: اكتشف مواصفات وتوافق شريك الحياة وفق المقاييس النفسية والاجتماعية، وخض تجربة The Blind Date بمراحلها الأربع والدردشة المفتوحة." />

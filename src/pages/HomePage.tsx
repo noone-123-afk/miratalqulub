@@ -25,11 +25,10 @@ import { UserProfile } from '../types';
 import type { WebsiteTabKey } from '../components/WebsiteSectionsModal';
 import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
 import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
-import { CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES } from '../data/clinicalChildhoodAnxietyOverthinkingArticle';
-import { PLATFORM_INTRODUCTORY_ARTICLES } from '../data/platformIntroductoryArticles';
-import { EMOTIONAL_IQ_NARRATIVE_ARTICLES } from '../data/emotionalIntelligenceSeriesArticles';
-import { RELATIONSHIP_FOUR_NARRATIVE_ARTICLES } from '../data/relationshipFourArticles';
-import { NOVELS_CATALOG } from '../data/novelsData';
+import {
+  HOME_HIGHLIGHTED_ARTICLES,
+  HOME_HIGHLIGHTED_NOVELS,
+} from '../data/homeHighlightsData';
 
 export interface HomePageProps {
   onStart: (profile: UserProfile) => void;
@@ -104,17 +103,10 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
   };
 
   // المقالات المعروضة داخل قسم "المقالات المعرفية" الحالي (6 مقالات علمية وإكلينيكية متنوعة)
-  const highlightedArticles = [
-    CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES[1],
-    CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES[2],
-    CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES[3],
-    PLATFORM_INTRODUCTORY_ARTICLES[0],
-    EMOTIONAL_IQ_NARRATIVE_ARTICLES[4],
-    RELATIONSHIP_FOUR_NARRATIVE_ARTICLES[0],
-  ].filter(Boolean);
+  const highlightedArticles = HOME_HIGHLIGHTED_ARTICLES.filter(Boolean);
 
   // الروايات المعروضة داخل قسم "الروايات والقصص" الحالي (6 روايات أصلية)
-  const highlightedNovels = NOVELS_CATALOG.slice(0, 6);
+  const highlightedNovels = HOME_HIGHLIGHTED_NOVELS.filter(Boolean);
 
   // بطاقات الاختبارات والأدوات الـ 4 ضمن أقسام الموقع
   const interactiveToolCards = [
@@ -576,6 +568,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                     } else if (props.onOpenArticles) {
                       props.onOpenArticles();
                     }
+                    window.location.hash = `#/articles/${art.id}`;
                   }}
                   className={`group rounded-2xl border overflow-hidden transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-1 shadow-xs hover:shadow-lg ${
                     isLight
@@ -721,7 +714,7 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                             {displayGenre}
                           </span>
                           <span className={`text-[11px] font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                            {novel.chapters?.length || 0} {isAr ? 'فصول' : 'Chapters'}
+                            {novel.chaptersCount || 0} {isAr ? 'فصول' : 'Chapters'}
                           </span>
                         </div>
 

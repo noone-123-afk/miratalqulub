@@ -85,25 +85,25 @@ const HOSTING_PLANS = [
       'رابط عام مباشر للجمهور يعمل فوراً مع شهادة أمان Google SSL (TLS 1.3)',
       'توسع تلقائي (Auto-Scaling) من خادم واحد إلى 100 خادم حسب ضغط الزوار',
       'قاعدة بيانات سحابية حقيقية متصلة (Firestore: ai-studio-95101079)',
-      'متوافق 100% مع متطلبات ومراجعة Google AdSense وملف ads.txt',
+      'متوافق 100% مع معايير الأداء والفهرسة في محركات البحث العالمية',
     ],
   },
   {
     id: 'cloudflare-gcp-domain-bundle',
-    badgeAr: 'الأكثر توصية للربح من AdSense ⭐',
-    badgeEn: 'Recommended for AdSense Monetization ⭐',
+    badgeAr: 'الأكثر توصية للنطاقات الرسمية ⭐',
+    badgeEn: 'Recommended for Custom Domains ⭐',
     nameAr: 'باقة الدومين الرسمي (.com) + Cloudflare CDN + Google Cloud',
     nameEn: 'Official (.com) Domain + Cloudflare CDN + Google Cloud',
     priceAr: '$9.98 / سنوياً فقط (ثمن النطاق الرسمي بسعر التكلفة)',
     priceEn: '$9.98 / year (At-cost official domain registration)',
-    bestForAr: 'لربط اسم نطاق تجاري خاص بك (مثل miratalqulub.com) وتسريع القبول في Google AdSense',
-    bestForEn: 'For custom brand domain (e.g. miratalqulub.com) & fastest Google AdSense approval',
+    bestForAr: 'لربط اسم نطاق تجاري خاص بك (مثل miratalqulub.com) وتعزيز موثوقية المنصة',
+    bestForEn: 'For custom brand domain (e.g. miratalqulub.com) & maximum platform reliability',
     region: 'Global Anycast CDN (300+ Cities) + Europe-West2',
     featuresAr: [
       'دومين رسمي (.com أو .net) مسجل باسمك الكامل مع حماية خصوصية WHOIS مجاناً',
       'شبكة Cloudflare Global CDN + حماية ضد هجمات DDoS وجدار ناري ذكي WAF',
       'توجيه تلقائي للسجلات نحو خادم Google Cloud Run دون توقف',
-      'أولوية قصوى في أرشفة محرك بحث Google Search Console وقبول AdSense',
+      'أولوية قصوى في أرشفة محرك بحث Google Search Console',
     ],
   },
   {
@@ -416,10 +416,10 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             </div>
             <h2 className="text-xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-blue-100 to-rose-200 font-['Alexandria']">
-              مركز رفع الموقع للعامة، شراء الاستضافة والدومين وربط AdSense
+              مركز رفع الموقع للعامة، شراء الاستضافة وربط الدومين الرسمي
             </h2>
             <p className="text-gray-300 text-xs sm:text-sm mt-1.5 max-w-2xl mx-auto">
-              موقعك مرفوع فعلياً على خوادم Google Cloud الأوروبية ومتاح للزوار من كافة أنحاء العالم مع قاعدة بيانات سحابية حقيقية وتجهيز كامل لـ Google AdSense.
+              موقعك مرفوع فعلياً على خوادم Google Cloud الأوروبية ومتاح للزوار من كافة أنحاء العالم مع قاعدة بيانات سحابية حقيقية.
             </p>
           </div>
 
@@ -544,7 +544,7 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
 
                 <ol className="list-decimal list-inside space-y-1.5 text-xs text-gray-200 mb-4 bg-black/40 p-3.5 rounded-xl border border-white/10 leading-relaxed">
                   <li>
-                    اضغط على الزر الذهبي أدناه لتحميل <strong>حزمة الموقع الكاملة الجاهزة (`miratalqulub-cloudflare-ready.zip`)</strong> (تحتوي على الموقع بالكامل + كود AdSense <code>ca-pub-7880718645976012</code> + ملف <code>ads.txt</code> + قاعدة بيانات Firestore).
+                    اضغط على الزر الذهبي أدناه لتحميل <strong>حزمة الموقع الكاملة الجاهزة (`miratalqulub-cloudflare-ready.zip`)</strong> (تحتوي على الموقع بالكامل وجميع صفحات المحتوى وقاعدة بيانات Firestore).
                   </li>
                   <li>
                     افتح لوحة تحكم <strong>Cloudflare</strong> الخاصة بك $\leftarrow$ من القائمة الجانبية اختر <strong>Workers & Pages</strong> $\leftarrow$ اضغط <strong>Create</strong> $\leftarrow$ اختر تبويب <strong>Pages</strong> $\leftarrow$ اضغط <strong>Upload assets</strong>، وسمِّ المشروع <code>miratalqulub</code> ثم ارفع ملف الـ <code>.zip</code> واضغط <strong>Deploy site</strong>.
@@ -645,40 +645,8 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                 </div>
               </div>
 
-              {/* Quick Action Grid: AdSense & Buy Hosting */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Card A: Link Google AdSense */}
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-yellow-600/5 border border-amber-500/35 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold">
-                        تحقيق الدخل والأرباح 💰
-                      </span>
-                      <DollarSign className="w-5 h-5 text-amber-400" />
-                    </div>
-                    <h4 className="font-extrabold text-white text-sm sm:text-base mb-1 font-['Alexandria']">
-                      ربط الموقع بحساب Google AdSense
-                    </h4>
-                    <p className="text-xs text-gray-300 leading-relaxed mb-4">
-                      ملف البائعين المعتمدين <code>/ads.txt</code> وكود إعلانات Google التلقائية مدمجان في الموقع. اضغط هنا لإدخال معرف الناشر الخاص بك (<code>ca-pub-...</code>) وتفعيل الوحدات الإعلانية.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      soundManager.playTap();
-                      if (onOpenAdSense) {
-                        onClose();
-                        onOpenAdSense();
-                      }
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-extrabold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-amber-500/20"
-                  >
-                    <DollarSign className="w-4 h-4" />
-                    <span>فتح لوحة ربط Google AdSense وتفعيل الإعلانات</span>
-                  </button>
-                </div>
-
-                {/* Card B: Purchase / Upgrade Hosting & Domain */}
+              {/* Quick Action Card: Purchase / Upgrade Hosting & Domain */}
+              <div className="grid grid-cols-1 gap-4">
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border border-blue-500/35 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -714,7 +682,7 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
               <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
                 <h4 className="font-bold text-xs sm:text-sm text-white mb-3 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>فحص جاهزية الموقع للنشر العام وموافقة Google AdSense:</span>
+                  <span>فحص جاهزية الموقع للنشر العام والأمان التقني:</span>
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                   <div className="p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 flex items-center gap-2">
@@ -727,7 +695,7 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>ملف البائعين <code>/ads.txt</code> وملف <code>/sitemap.xml</code> مفعلان</span>
+                    <span>ملفات الفهرسة وخريطة الموقع <code>/sitemap.xml</code> مفعلة</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -755,7 +723,7 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                   <span className="text-[11px] text-blue-300 font-semibold">فحص مباشر عبر Google DNS</span>
                 </div>
                 <p className="text-xs text-gray-300 mb-3">
-                  لتعزيز فرص القبول والموثوقية لدى <strong>Google AdSense</strong>، يُنصح بشراء دومين رسمي (<code>.com</code> أو <code>.net</code>) وربطه باستضافتك السحابية الحالية:
+                  لتعزيز موثوقية المنصة في محركات البحث، يُنصح بشراء دومين رسمي (<code>.com</code> أو <code>.net</code>) وربطه باستضافتك السحابية الحالية:
                 </p>
 
                 <form onSubmit={handleCheckDomainAvailability} className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -1137,7 +1105,7 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                   </button>
                 </div>
                 <p className="text-gray-300 leading-relaxed">
-                  بمجرد شراء النطاق <code>{customDomain}</code> وربطه بحساب <strong>Cloudflare</strong> مجاني، أنشئ <strong>Worker</strong> والصق هذا الكود واربطه بمسار <code>{customDomain}/*</code> ليفتح موقعك فوراً على الدومين الرسمي مع تفعيل <code>/ads.txt</code> لـ AdSense.
+                  بمجرد شراء النطاق <code>{customDomain}</code> وربطه بحساب <strong>Cloudflare</strong> مجاني، أنشئ <strong>Worker</strong> والصق هذا الكود واربطه بمسار <code>{customDomain}/*</code> ليفتح موقعك فوراً على الدومين الرسمي.
                 </p>
               </div>
             </motion.div>
@@ -1196,7 +1164,7 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
               <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 leading-relaxed flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <span>
-                  جميع ملفات البنية التحتية السحابية (<code>Dockerfile</code>، <code>firebase.json</code>، <code>firestore.rules</code>، <code>cloudbuild.yaml</code>، و<code>ads.txt</code>) مجهزة ومفعّلة بالكامل في المشروع.
+                  جميع ملفات البنية التحتية السحابية (<code>Dockerfile</code>، <code>firebase.json</code>، <code>firestore.rules</code>، و<code>cloudbuild.yaml</code>) مجهزة ومفعّلة بالكامل في المشروع.
                 </span>
               </div>
             </motion.div>
@@ -1206,22 +1174,9 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
           <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
             <span className="text-[11px] text-gray-400 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              منصة سحابية عامة متوافقة مع معايير Google Cloud & AdSense
+              منصة سحابية عامة متوافقة مع معايير Google Cloud
             </span>
             <div className="flex items-center gap-2">
-              {onOpenAdSense && (
-                <button
-                  onClick={() => {
-                    soundManager.playTap();
-                    onClose();
-                    onOpenAdSense();
-                  }}
-                  className="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-                  <span>إعدادات Google AdSense</span>
-                </button>
-              )}
               <button
                 onClick={() => {
                   soundManager.playTap();
