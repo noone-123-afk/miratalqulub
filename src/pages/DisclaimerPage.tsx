@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
@@ -127,9 +126,6 @@ export const DisclaimerPage: React.FC<Props> = ({
               : 'Please review this notice carefully before utilizing Mirror of Hearts tools. Accessing our platform constitutes full understanding and acknowledgment of these provisions.'}
           </p>
         </div>
-
-        {/* AdSense In-Page Banner */}
-        <AdSenseBanner slot="7890123456" format="auto" />
 
         {/* Section 1: Core Non-Clinical Purpose */}
         <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">

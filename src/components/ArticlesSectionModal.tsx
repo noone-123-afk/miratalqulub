@@ -67,7 +67,7 @@ export const ArticlesSectionModal: React.FC<Props> = ({
   const [theme, toggleTheme] = useAppTheme();
   const isLight = theme === 'light';
 
-  const [activeTrack, setActiveTrack] = useState<ContentTrack>('academic');
+  const [activeTrack, setActiveTrack] = useState<ContentTrack>('narrative');
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeNarrative, setActiveNarrative] = useState<Article | null>(() => {

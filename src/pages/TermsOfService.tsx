@@ -25,7 +25,6 @@ import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
@@ -321,9 +320,6 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
               : '“All personality inventories, multiple intelligences batteries, compatibility calculators, and analytical reports provided on Mirror of Hearts are strictly educational, exploratory, and self-reflective tools. They do not constitute formal medical, psychiatric, or clinical diagnosis, nor do they replace consultation with a licensed psychologist, psychiatrist, or marriage counselor.”'}
           </p>
         </div>
-
-        {/* AdSense In-Page Banner */}
-        <AdSenseBanner slot="2345678901" format="auto" />
 
         {/* 1. Acceptance & Nature of the Platform */}
         <section

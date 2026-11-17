@@ -41,7 +41,6 @@ import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import {
   ReaderToolbar,
   FormattedContinuousManuscript,
@@ -90,29 +89,40 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
   const [readerViewMode, setReaderViewMode] = useState<ContinuousViewMode>('segmented_and_continuous');
 
   useEffect(() => {
-    try {
-      const targetId = sessionStorage.getItem('mirat_open_article_id');
-      if (targetId) {
-        sessionStorage.removeItem('mirat_open_article_id');
-        const foundNarrative = ARTICLES_CATALOG.find((a) => a.id === targetId);
-        if (foundNarrative) {
-          setActiveTrack('narrative');
-          setActiveAcademic(null);
-          setActiveNarrative(foundNarrative);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
+    const checkDeepLinkedArticle = () => {
+      try {
+        const hashParts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+        const hashArticleId =
+          (hashParts[0] === 'articles' || hashParts[0] === 'research') && hashParts[1]
+            ? decodeURIComponent(hashParts[1])
+            : null;
+        const targetId = hashArticleId || sessionStorage.getItem('mirat_open_article_id');
+        if (targetId) {
+          sessionStorage.removeItem('mirat_open_article_id');
+          const foundNarrative = ARTICLES_CATALOG.find((a) => a.id === targetId);
+          if (foundNarrative) {
+            setActiveTrack('narrative');
+            setActiveAcademic(null);
+            setActiveNarrative(foundNarrative);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+          const foundAcademic = ACADEMIC_PAPERS_CATALOG.find((p) => p.id === targetId);
+          if (foundAcademic) {
+            setActiveTrack('academic');
+            setActiveNarrative(null);
+            setActiveAcademic(foundAcademic);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         }
-        const foundAcademic = ACADEMIC_PAPERS_CATALOG.find((p) => p.id === targetId);
-        if (foundAcademic) {
-          setActiveTrack('academic');
-          setActiveNarrative(null);
-          setActiveAcademic(foundAcademic);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+      } catch {
+        // ignore storage errors
       }
-    } catch {
-      // ignore storage errors
-    }
+    };
+
+    checkDeepLinkedArticle();
+    window.addEventListener('hashchange', checkDeepLinkedArticle);
+    return () => window.removeEventListener('hashchange', checkDeepLinkedArticle);
   }, []);
 
   const featuredGccFamilyStudy =
@@ -2629,11 +2639,6 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
         article={fullScreenArticle}
         initialViewMode="continuous_only"
       />
-
-      {/* Bottom AdSense Banner */}
-      <div className="pt-4">
-        <AdSenseBanner slot="5678901234" format="auto" />
-      </div>
     </div>
   );
 };

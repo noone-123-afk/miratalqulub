@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
@@ -157,9 +156,6 @@ export const HowItWorksPage: React.FC<Props> = ({
             </button>
           </div>
         </div>
-
-        {/* AdSense In-Page Banner */}
-        <AdSenseBanner slot="4567890123" format="auto" />
 
         {/* Step-by-Step Methodology (Detailed Breakdown) */}
         <div className="space-y-6">

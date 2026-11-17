@@ -21,7 +21,6 @@ import { useAuth } from '../context/AuthContext';
 import { soundManager } from '../utils/sound';
 import { submitFeedbackMessage, OFFICIAL_EMAIL } from '../services/feedbackService';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
@@ -239,9 +238,6 @@ export const ContactUsPage: React.FC<Props> = ({
               : 'We welcome your feedback, psychometric inquiries, technical reports, and data privacy requests.'}
           </p>
         </div>
-
-        {/* AdSense In-Page Banner */}
-        <AdSenseBanner slot="3456789012" format="auto" />
 
         {/* Contact Info Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -2,32 +2,9 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <!-- Google AdSense Official Account Verification & Deferred Script Loader -->
+    <!-- Google AdSense Verification & Script -->
     <meta name="google-adsense-account" content="ca-pub-7880718645976012">
-    <script>
-      (function() {
-        var ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
-        var isAuditBot = Boolean(
-          (typeof navigator !== 'undefined' && navigator.webdriver) ||
-          /Chrome-Lighthouse|PageSpeed|PTST|HeadlessChrome|InspectionTool|GTmetrix/i.test(ua)
-        );
-        if (!isAuditBot) {
-          var adsLoaded = false;
-          var loadAdSense = function() {
-            if (adsLoaded) return;
-            adsLoaded = true;
-            var s = document.createElement('script');
-            s.async = true;
-            s.crossOrigin = 'anonymous';
-            s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7880718645976012';
-            document.head.appendChild(s);
-          };
-          ['scroll', 'pointerdown', 'touchstart', 'keydown'].forEach(function(evt) {
-            window.addEventListener(evt, loadAdSense, { once: true, passive: true });
-          });
-        }
-      })();
-    </script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7880718645976012" crossorigin="anonymous"></script>
 
     <script>
       (function() {

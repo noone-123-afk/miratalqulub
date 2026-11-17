@@ -18,7 +18,6 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
@@ -226,9 +225,6 @@ export const FAQPage: React.FC<Props> = ({
               : 'In commitment to scientific rigor and complete transparency, we provide candid, non-promotional answers regarding our methodology, data privacy, and ethical boundaries.'}
           </p>
         </div>
-
-        {/* AdSense In-Page Banner */}
-        <AdSenseBanner slot="5678901234" format="auto" />
 
         {/* Accordion Questions */}
         <div className="space-y-3">

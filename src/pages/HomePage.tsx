@@ -25,6 +25,11 @@ import { UserProfile } from '../types';
 import type { WebsiteTabKey } from '../components/WebsiteSectionsModal';
 import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
 import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
+import { CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES } from '../data/clinicalChildhoodAnxietyOverthinkingArticle';
+import { PLATFORM_INTRODUCTORY_ARTICLES } from '../data/platformIntroductoryArticles';
+import { EMOTIONAL_IQ_NARRATIVE_ARTICLES } from '../data/emotionalIntelligenceSeriesArticles';
+import { RELATIONSHIP_FOUR_NARRATIVE_ARTICLES } from '../data/relationshipFourArticles';
+import { NOVELS_CATALOG } from '../data/novelsData';
 
 export interface HomePageProps {
   onStart: (profile: UserProfile) => void;
@@ -98,8 +103,21 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
     }
   };
 
-  // أقسام الموقع الـ 6 المعتمدة - كل قسم يفتح في صفحته أو مختبره المخصص
-  const sectionCards = [
+  // المقالات المعروضة داخل قسم "المقالات المعرفية" الحالي (6 مقالات علمية وإكلينيكية متنوعة)
+  const highlightedArticles = [
+    CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES[1],
+    CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES[2],
+    CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES[3],
+    PLATFORM_INTRODUCTORY_ARTICLES[0],
+    EMOTIONAL_IQ_NARRATIVE_ARTICLES[4],
+    RELATIONSHIP_FOUR_NARRATIVE_ARTICLES[0],
+  ].filter(Boolean);
+
+  // الروايات المعروضة داخل قسم "الروايات والقصص" الحالي (6 روايات أصلية)
+  const highlightedNovels = NOVELS_CATALOG.slice(0, 6);
+
+  // بطاقات الاختبارات والأدوات الـ 4 ضمن أقسام الموقع
+  const interactiveToolCards = [
     {
       id: 'personality',
       titleAr: 'تحليل الشخصية',
@@ -138,40 +156,6 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
       action: () => {
         soundManager.playTap();
         if (props.onOpenIntelligenceTests) props.onOpenIntelligenceTests();
-      },
-    },
-    {
-      id: 'articles',
-      titleAr: 'المقالات المعرفية',
-      titleEn: 'Knowledge Articles',
-      descAr: 'محتوى متخصص في الشخصية والعلاقات والتطوير الذاتي.',
-      descEn: 'Specialized content in personality, relationships, and self-growth.',
-      icon: BookOpen,
-      color: 'from-emerald-500 to-teal-600',
-      action: () => {
-        soundManager.playTap();
-        if (props.onNavigatePage) {
-          props.onNavigatePage('articles');
-        } else if (props.onOpenArticles) {
-          props.onOpenArticles();
-        }
-      },
-    },
-    {
-      id: 'novels',
-      titleAr: 'الروايات والقصص',
-      titleEn: 'Novels & Stories',
-      descAr: 'قصص وتجارب إنسانية تحمل معاني ودروساً قيمة.',
-      descEn: 'Human stories and experiences carrying profound meaning and insight.',
-      icon: BookMarked,
-      color: 'from-cyan-500 to-blue-600',
-      action: () => {
-        soundManager.playTap();
-        if (props.onNavigatePage) {
-          props.onNavigatePage('novels');
-        } else if (props.onOpenNovels) {
-          props.onOpenNovels();
-        }
       },
     },
     {
@@ -533,67 +517,319 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
           </p>
         </div>
 
-        {/* Section Cards Grid - 6 بطاقات مختصرة بزر "دخول القسم" */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {sectionCards.map((card) => {
-            const IconComp = card.icon;
-            return (
-              <div
-                key={card.id}
-                onClick={card.action}
-                className={`group p-6 rounded-3xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4 hover:-translate-y-1 shadow-sm hover:shadow-xl ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-50/80 border-slate-200 hover:border-indigo-300'
-                    : 'bg-slate-900/70 hover:bg-slate-800/80 border-white/10 hover:border-indigo-400/50'
-                }`}
-              >
-                <div className="space-y-3">
-                  <div
-                    className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${card.color} text-white flex items-center justify-center shadow-md shrink-0`}
-                  >
-                    <IconComp className="w-6 h-6" />
-                  </div>
-
-                  <h3
-                    className={`text-lg sm:text-xl font-black font-['Alexandria'] ${
-                      isLight
-                        ? 'text-slate-900 group-hover:text-indigo-600'
-                        : 'text-white group-hover:text-indigo-300'
-                    } transition-colors`}
-                  >
-                    {isAr ? card.titleAr : card.titleEn}
+        <div className="space-y-7">
+          {/* 1. قسم المقالات المعرفية (القسم الحالي بعد تكبير مساحة العرض وإبراز البطاقات) */}
+          <div
+            className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 shadow-sm space-y-6 ${
+              isLight
+                ? 'bg-white border-emerald-200/90 text-slate-900'
+                : 'bg-slate-900/75 border-emerald-500/25 text-white'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shrink-0">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black font-['Alexandria']">
+                    {isAr ? 'المقالات المعرفية' : 'Knowledge Articles'}
                   </h3>
-
-                  <p
-                    className={`text-xs sm:text-sm leading-relaxed ${
-                      isLight ? 'text-slate-700' : 'text-slate-300'
-                    }`}
-                  >
-                    {isAr ? card.descAr : card.descEn}
+                  <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    {isAr
+                      ? 'محتوى متخصص في الشخصية والعلاقات والتطوير الذاتي.'
+                      : 'Specialized content in personality, relationships, and self-growth.'}
                   </p>
                 </div>
+              </div>
 
-                <div
-                  className={`pt-3 border-t flex items-center justify-between text-xs font-extrabold ${
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playTap();
+                  if (props.onNavigatePage) {
+                    props.onNavigatePage('articles');
+                  } else if (props.onOpenArticles) {
+                    props.onOpenArticles();
+                  }
+                }}
+                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 shadow-sm"
+              >
+                <span>{isAr ? 'دخول القسم' : 'Enter Section'}</span>
+                <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {highlightedArticles.map((art) => (
+                <article
+                  key={art.id}
+                  onClick={() => {
+                    soundManager.playTap();
+                    try {
+                      sessionStorage.setItem('mirat_open_article_id', art.id);
+                    } catch {
+                      // ignore
+                    }
+                    if (props.onNavigatePage) {
+                      props.onNavigatePage('articles');
+                    } else if (props.onOpenArticles) {
+                      props.onOpenArticles();
+                    }
+                  }}
+                  className={`group rounded-2xl border overflow-hidden transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-1 shadow-xs hover:shadow-lg ${
                     isLight
-                      ? 'border-slate-200 text-indigo-700 group-hover:text-indigo-800'
-                      : 'border-white/10 text-indigo-300 group-hover:text-indigo-200'
+                      ? 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-emerald-400'
+                      : 'bg-slate-950/60 hover:bg-slate-900 border-white/10 hover:border-emerald-400/50'
                   }`}
                 >
-                  <span>{isAr ? 'دخول القسم' : 'Enter Section'}</span>
-                  <ArrowRight
-                    className={`w-3.5 h-3.5 transition-transform group-hover:translate-x-1 ${
-                      isRTL ? 'rotate-180 group-hover:-translate-x-1' : ''
-                    }`}
-                  />
+                  <div>
+                    {/* صورة مصغرة بارزة للمقال */}
+                    <div className="relative h-28 w-full bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 p-4 flex flex-col justify-between overflow-hidden">
+                      <div className="flex items-center justify-between gap-2 relative z-10">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/15 text-emerald-200 backdrop-blur-xs border border-white/15">
+                          {isAr ? art.readTime : art.readTimeEn}
+                        </span>
+                        <span className="text-3xl drop-shadow-md group-hover:scale-110 transition-transform">
+                          {art.icon}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-bold text-emerald-100/90 truncate relative z-10">
+                        {isAr ? art.scientificFramework : art.scientificFrameworkEn}
+                      </span>
+                    </div>
+
+                    {/* عنوان وملخص المقال */}
+                    <div className="p-4 space-y-2.5">
+                      <h4
+                        className={`text-sm sm:text-base font-black font-['Alexandria'] leading-snug transition-colors ${
+                          isLight
+                            ? 'text-slate-900 group-hover:text-emerald-700'
+                            : 'text-white group-hover:text-emerald-300'
+                        }`}
+                      >
+                        {isAr ? art.title : art.titleEn}
+                      </h4>
+                      <p
+                        className={`text-xs leading-relaxed line-clamp-3 ${
+                          isLight ? 'text-slate-600' : 'text-slate-300'
+                        }`}
+                      >
+                        {isAr ? art.summary : art.summaryEn}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* زر قراءة المقال */}
+                  <div className="px-4 pb-4 pt-2">
+                    <div
+                      className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-extrabold flex items-center justify-between transition ${
+                        isLight
+                          ? 'bg-emerald-50 group-hover:bg-emerald-600 text-emerald-800 group-hover:text-white border border-emerald-200 group-hover:border-emerald-600'
+                          : 'bg-emerald-500/15 group-hover:bg-emerald-600 text-emerald-300 group-hover:text-white border border-emerald-500/30 group-hover:border-emerald-500'
+                      }`}
+                    >
+                      <span>{isAr ? 'قراءة المقال' : 'Read Article'}</span>
+                      <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. قسم الروايات والقصص (القسم الحالي بعد تكبير مساحة العرض وإبراز الأغلفة والملخصات) */}
+          <div
+            className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 shadow-sm space-y-6 ${
+              isLight
+                ? 'bg-white border-cyan-200/90 text-slate-900'
+                : 'bg-slate-900/75 border-cyan-500/25 text-white'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-md shrink-0">
+                  <BookMarked className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black font-['Alexandria']">
+                    {isAr ? 'الروايات والقصص' : 'Novels & Stories'}
+                  </h3>
+                  <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    {isAr
+                      ? 'قصص وتجارب إنسانية تحمل معاني ودروساً قيمة.'
+                      : 'Human stories and experiences carrying profound meaning and insight.'}
+                  </p>
                 </div>
               </div>
-            );
-          })}
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playTap();
+                  if (props.onNavigatePage) {
+                    props.onNavigatePage('novels');
+                  } else if (props.onOpenNovels) {
+                    props.onOpenNovels();
+                  }
+                }}
+                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs sm:text-sm font-extrabold transition cursor-pointer flex items-center gap-2 shadow-sm"
+              >
+                <span>{isAr ? 'دخول القسم' : 'Enter Section'}</span>
+                <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {highlightedNovels.map((novel) => {
+                const displayTitle = !isAr && novel.titleEn ? novel.titleEn : novel.titleAr;
+                const displaySubtitle = !isAr && novel.subtitleEn ? novel.subtitleEn : novel.subtitleAr;
+                const displaySynopsis = !isAr && novel.synopsisEn ? novel.synopsisEn : novel.synopsisAr;
+                const displayGenre = !isAr && novel.genreLabelEn ? novel.genreLabelEn : novel.genreLabelAr;
+
+                return (
+                  <article
+                    key={novel.id}
+                    onClick={() => {
+                      soundManager.playTap();
+                      window.location.hash = `#/novels/${novel.id}`;
+                    }}
+                    className={`group rounded-2xl border overflow-hidden transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-1 shadow-xs hover:shadow-lg ${
+                      isLight
+                        ? 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-cyan-400'
+                        : 'bg-slate-950/60 hover:bg-slate-900 border-white/10 hover:border-cyan-400/50'
+                    }`}
+                  >
+                    <div>
+                      {/* غلاف الرواية البارز */}
+                      <div
+                        className="relative w-full h-44 bg-slate-950 border-b border-slate-800/80 overflow-hidden flex items-center justify-center p-1 group-hover:scale-[1.01] transition-transform"
+                        dangerouslySetInnerHTML={{ __html: novel.coverIllustrationSvg }}
+                      />
+
+                      {/* عنوان الرواية والملخص */}
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
+                            style={{
+                              borderColor: `${novel.genreBadgeColor}55`,
+                              backgroundColor: `${novel.genreBadgeColor}18`,
+                              color: novel.genreBadgeColor,
+                            }}
+                          >
+                            {displayGenre}
+                          </span>
+                          <span className={`text-[11px] font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                            {novel.chapters?.length || 0} {isAr ? 'فصول' : 'Chapters'}
+                          </span>
+                        </div>
+
+                        <h4
+                          className={`text-base sm:text-lg font-black font-['Alexandria'] leading-snug transition-colors ${
+                            isLight
+                              ? 'text-slate-900 group-hover:text-cyan-700'
+                              : 'text-white group-hover:text-cyan-300'
+                          }`}
+                        >
+                          {displayTitle}
+                        </h4>
+
+                        <p className={`text-xs font-semibold ${isLight ? 'text-cyan-800' : 'text-cyan-300/90'}`}>
+                          {displaySubtitle}
+                        </p>
+
+                        <p
+                          className={`text-xs leading-relaxed line-clamp-3 ${
+                            isLight ? 'text-slate-600' : 'text-slate-300'
+                          }`}
+                        >
+                          {displaySynopsis}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* زر قراءة الرواية */}
+                    <div className="px-4 pb-4 pt-2">
+                      <div
+                        className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-extrabold flex items-center justify-between transition ${
+                          isLight
+                            ? 'bg-cyan-50 group-hover:bg-cyan-600 text-cyan-800 group-hover:text-white border border-cyan-200 group-hover:border-cyan-600'
+                            : 'bg-cyan-500/15 group-hover:bg-cyan-600 text-cyan-300 group-hover:text-white border border-cyan-500/30 group-hover:border-cyan-500'
+                        }`}
+                      >
+                        <span>{isAr ? 'قراءة الرواية' : 'Read Novel'}</span>
+                        <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. أقسام الاختبارات والأدوات التفاعلية الـ 4 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {interactiveToolCards.map((card) => {
+              const IconComp = card.icon;
+              return (
+                <div
+                  key={card.id}
+                  onClick={card.action}
+                  className={`group p-6 rounded-3xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4 hover:-translate-y-1 shadow-sm hover:shadow-xl ${
+                    isLight
+                      ? 'bg-white hover:bg-slate-50/80 border-slate-200 hover:border-indigo-300'
+                      : 'bg-slate-900/70 hover:bg-slate-800/80 border-white/10 hover:border-indigo-400/50'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div
+                      className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${card.color} text-white flex items-center justify-center shadow-md shrink-0`}
+                    >
+                      <IconComp className="w-6 h-6" />
+                    </div>
+
+                    <h3
+                      className={`text-lg sm:text-xl font-black font-['Alexandria'] ${
+                        isLight
+                          ? 'text-slate-900 group-hover:text-indigo-600'
+                          : 'text-white group-hover:text-indigo-300'
+                      } transition-colors`}
+                    >
+                      {isAr ? card.titleAr : card.titleEn}
+                    </h3>
+
+                    <p
+                      className={`text-xs sm:text-sm leading-relaxed ${
+                        isLight ? 'text-slate-700' : 'text-slate-300'
+                      }`}
+                    >
+                      {isAr ? card.descAr : card.descEn}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`pt-3 border-t flex items-center justify-between text-xs font-extrabold ${
+                      isLight
+                        ? 'border-slate-200 text-indigo-700 group-hover:text-indigo-800'
+                        : 'border-white/10 text-indigo-300 group-hover:text-indigo-200'
+                    }`}
+                  >
+                    <span>{isAr ? 'دخول القسم' : 'Enter Section'}</span>
+                    <ArrowRight
+                      className={`w-3.5 h-3.5 transition-transform group-hover:translate-x-1 ${
+                        isRTL ? 'rotate-180 group-hover:-translate-x-1' : ''
+                      }`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Visitor Trust & Scoring Transparency Callout */}
-        <div className="pt-2">
+        <div className="pt-4">
           <TestScoringTrustBanner onNavigatePage={props.onNavigatePage} />
         </div>
       </section>

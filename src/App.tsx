@@ -243,6 +243,13 @@ function AppContent() {
       } else if (section === 'admin' || section === 'admin-cms') {
         setCurrentPage('admin-cms');
       } else if (section === 'articles' || section === 'research') {
+        if (parts[1]) {
+          try {
+            sessionStorage.setItem('mirat_open_article_id', decodeURIComponent(parts[1]));
+          } catch {
+            // ignore
+          }
+        }
         setCurrentPage('articles');
       } else if (section === 'community' || section === 'book-club' || section === 'salon') {
         setIsBookClubOpen(true);

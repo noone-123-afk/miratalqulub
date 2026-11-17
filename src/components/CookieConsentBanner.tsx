@@ -103,13 +103,13 @@ export const CookieConsentBanner: React.FC<Props> = ({
                 </h4>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3" />
-                  <span>GDPR & Google AdSense Ready</span>
+                  <span>{isEn ? 'GDPR & TLS 1.3 Privacy Standard' : 'حماية الخصوصية وتشفير TLS 1.3'}</span>
                 </span>
               </div>
               <p className="text-xs text-slate-200 leading-relaxed max-w-2xl">
                 {isEn
-                  ? 'We use essential cookies and certified analytics to enhance your experience, safeguard platform security, and display compliant non-intrusive ads via Google AdSense.'
-                  : 'نحن نستخدم ملفات تعريف الارتباط وتقنيات القياس المعتمدة لتحسين تجربة التصفح، وضمان أمان المنصة، وعرض محتوى وإعلانات مخصصة عبر شبكة Google AdSense.'}
+                  ? 'We use essential cookies and performance technologies to enhance your browsing experience, save your reading preferences, and safeguard platform security.'
+                  : 'نحن نستخدم ملفات تعريف الارتباط الضرورية وتقنيات القياس المعتمدة لتحسين تجربة التصفح، وحفظ تفضيلات القراءة والمظهر، وضمان أمان المنصة.'}
                 <span className="text-emerald-300 font-semibold block mt-1">
                   {isEn
                     ? '🔒 All psychological assessments and test data are encrypted (TLS 1.3/AES-256), never sold or shared with advertisers, and comply strictly with Google privacy standards.'
@@ -222,23 +222,23 @@ export const CookieConsentBanner: React.FC<Props> = ({
                 />
               </div>
 
-              {/* 3. Advertising & Google AdSense */}
+              {/* 3. Personalization & Reading Preferences */}
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start justify-between">
                 <div className="space-y-1">
                   <span className="font-bold text-white block">
-                    {isEn ? 'Google AdSense' : 'إعلانات Google AdSense'}
+                    {isEn ? 'Personalization Preferences' : 'تفضيلات القراءة والتخصيص'}
                   </span>
                   <p className="text-[11px] text-slate-300 leading-snug">
                     {isEn
-                      ? 'Respectful, compliant advertising that keeps all psychometric tests free.'
-                      : 'تخصيص الإعلانات النظيفة غير المتطفلة لضمان استمرارية المنصة المجانية.'}
+                      ? 'Saves your preferred reading font size, theme mode, and customized interface settings.'
+                      : 'حفظ إعدادات القراءة وحجم الخط والوضع الليلي أو النهاري المفضل لديك.'}
                   </p>
                 </div>
                 <input
                   type="checkbox"
                   checked={allowPersonalizedAds}
                   onChange={(e) => setAllowPersonalizedAds(e.target.checked)}
-                  aria-label={isEn ? 'Google AdSense Cookies' : 'ملفات إعلانات Google AdSense'}
+                  aria-label={isEn ? 'Personalization Cookies' : 'ملفات التخصيص وتفضيلات القراءة'}
                   className="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer mx-2 mt-0.5"
                 />
               </div>

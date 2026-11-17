@@ -34,7 +34,6 @@ import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 import { PLATFORM_INTRODUCTORY_ARTICLES } from '../data/platformIntroductoryArticles';
@@ -576,9 +575,6 @@ export const AboutUsPage: React.FC<AboutUsProps> = ({
             </div>
           </div>
         </section>
-
-        {/* AdSense In-Page Banner */}
-        <AdSenseBanner slot="7890123456" format="auto" />
 
         {/* ========================================================
             2. رؤيتنا ورسالتنا (Vision & Mission)

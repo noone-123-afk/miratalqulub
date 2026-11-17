@@ -25,7 +25,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
-import { AdSenseBanner } from './AdSenseBanner';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 export interface FooterProps {
@@ -728,11 +727,6 @@ export const Footer: React.FC<FooterProps> = ({
                 : 'The results, assessments, and reports provided within Mirror of Hearts are strictly for educational, informational, and self-reflection purposes. They do not constitute licensed psychological, clinical, legal, or medical counseling.'}
             </p>
           </div>
-        </div>
-
-        {/* Global Google AdSense Responsive Footer Banner */}
-        <div className="pt-1">
-          <AdSenseBanner slot="3456789012" format="auto" />
         </div>
 
         {/* Bottom Copyright & Security Status Bar */}

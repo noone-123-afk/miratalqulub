@@ -26,7 +26,6 @@ import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
@@ -209,8 +208,8 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>
                   {isAr
-                    ? 'وثيقة رسمية معتمدة • تشفير TLS 1.3 • متوافقة مع GDPR و Google AdSense'
-                    : 'Official Certified Policy • TLS 1.3 Encrypted • GDPR & Google AdSense Compliant'}
+                    ? 'وثيقة رسمية معتمدة • تشفير TLS 1.3 • متوافقة مع معايير حماية البيانات العالمية (GDPR)'
+                    : 'Official Certified Policy • TLS 1.3 Encrypted • Global GDPR Data Protection Standard'}
                 </span>
               </div>
               <h1
@@ -430,9 +429,6 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
             </div>
           )}
         </div>
-
-        {/* AdSense In-Page Unit */}
-        <AdSenseBanner slot="1234567890" format="auto" />
 
         {/* Section 1: Data Minimization Principle */}
         <section
@@ -680,8 +676,8 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
               }`}
             >
               {isAr
-                ? '3. سياسة ملفات تعريف الارتباط (Cookies) وإعلانات Google AdSense'
-                : '3. Cookies Policy & Google AdSense Advertising Compliance'}
+                ? '3. سياسة ملفات تعريف الارتباط (Cookies) والخدمات الخارجية'
+                : '3. Cookies Policy & Third-Party Services Disclosure'}
             </h2>
           </div>
 
@@ -692,19 +688,19 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
           >
             <p>
               {isAr
-                ? 'لضمان استمرارية تقديم كافة المقاييس السيكومترية والمقالات والروايات مجاناً بالكامل دون أي اشتراكات مالية، تستعين المنصة بخدمة Google AdSense:'
-                : 'To keep all psychometric batteries, research encyclopedias, and literary novels 100% free without subscriptions, Mirror of Hearts utilizes Google AdSense:'}
+                ? 'لضمان استمرارية تقديم كافة المقاييس السيكومترية والمقالات والروايات مجاناً بالكامل وتحسين تجربة المستخدم:'
+                : 'To keep all psychometric batteries, research encyclopedias, and literary novels 100% free and improve user experience:'}
             </p>
             <ul className="space-y-2 list-disc list-inside">
               <li>
                 {isAr
-                  ? 'يستخدم موردون خارجيون، بما في ذلك شركة Google، ملفات تعريف الارتباط (Cookies مثل ملف DART / DoubleClick) لعرض الإعلانات استناداً إلى زيارات المستخدم السابقة لموقعنا أو لمواقع أخرى على شبكة الإنترنت.'
-                  : 'Third-party vendors, including Google, use cookies (such as the DoubleClick DART cookie) to serve ads based on a user’s prior visits to this website or other websites.'}
+                  ? 'قد يستخدم موردون خارجيون، بما في ذلك شركة Google، ملفات تعريف الارتباط (Cookies مثل ملف DART / DoubleClick) لعرض الإعلانات استناداً إلى زيارات المستخدم السابقة لموقعنا أو لمواقع أخرى على شبكة الإنترنت.'
+                  : 'Third-party vendors, including Google, may use cookies (such as the DoubleClick DART cookie) to serve ads based on a user’s prior visits to this website or other websites.'}
               </li>
               <li>
                 {isAr
-                  ? 'لا يتم إطلاقاً تمرير أي إجابات من مقاييس الشخصية أو اختبارات الذكاء أو كاشف التوافق إلى شبكة Google AdSense أو أي معلن خارجي.'
-                  : 'Zero responses from personality inventories, IQ tests, or compatibility calculators are ever transmitted to Google AdSense or external advertisers.'}
+                  ? 'لا يتم إطلاقاً تمرير أي إجابات من مقاييس الشخصية أو اختبارات الذكاء أو كاشف التوافق إلى أي شبكة إعلانية أو معلن خارجي.'
+                  : 'Zero responses from personality inventories, IQ tests, or compatibility calculators are ever transmitted to any advertising network or external advertisers.'}
               </li>
               <li>
                 {isAr

@@ -21,7 +21,6 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { PageSEO } from '../components/PageSEO';
-import { AdSenseBanner } from '../components/AdSenseBanner';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 
 interface Props {
@@ -289,9 +288,6 @@ export const SourcesMethodologyPage: React.FC<Props> = ({
               : 'Mirror of Hearts (miratalqulub.com) serves as a specialized empirical and research-grounded environment in compatibility psychology and modern psychometrics. Our compatibility engine and testing laboratories are engineered strictly from validated frameworks in cognitive psychology, family dynamics, and adult attachment theory, aligned with cryptographic privacy safeguards.'}
           </p>
         </div>
-
-        {/* AdSense In-Page Banner */}
-        <AdSenseBanner slot="6789012345" format="auto" />
 
         {/* ================= أولاً: المنهجية العلمية والأسس السيكومترية لقياس التوافق ================= */}
         <section
