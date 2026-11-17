@@ -38,6 +38,7 @@ import {
 } from '../components/PsychometricAcademicFraming';
 import { PsychologyTestsModal } from '../components/PsychologyTestsModal';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
 
 const LazyIntelligenceTestModal = lazy(() =>
   import('../components/IntelligenceTestModal').then((m) => ({
@@ -56,7 +57,7 @@ interface Props {
   onNavigatePage?: (page: string) => void;
 }
 
-export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
+export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigatePage }) => {
   const { language, isRTL, toggleLanguage } = useLanguage();
   const { user } = useAuth();
   const [theme, toggleTheme] = useAppTheme();
@@ -604,6 +605,9 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
             {/* Clinical & Scientific Exploratory Disclaimer Notice */}
             <ScientificClinicalDisclaimerBanner testType="personality" />
 
+            {/* Visitor Trust & Scoring Transparency Banner (كيف يتم حساب نتائج الاختبارات؟) */}
+            <TestScoringTrustBanner onNavigatePage={onNavigatePage} />
+
             {/* Multi-Tier Psychometric Assessment System (Quick / Advanced / Professional) */}
             <Suspense
               fallback={
@@ -856,6 +860,8 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
               compact
             />
 
+            <TestScoringTrustBanner onNavigatePage={onNavigatePage} compact />
+
             {/* Header with Progress Bar */}
             <div
               className={`border rounded-2xl p-5 space-y-4 ${
@@ -1035,6 +1041,8 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome }) => {
         {/* VIEW 3: Results & Scientific Disclaimer View */}
         {isCompleted && (
           <div className="space-y-8">
+            <TestScoringTrustBanner onNavigatePage={onNavigatePage} />
+
             {/* MBTI RESULT PRESENTATION */}
             {mbtiResult && (
               <div

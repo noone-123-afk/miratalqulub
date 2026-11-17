@@ -107,6 +107,24 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
                 : 'Specialized Clinical Scales (16PF • EPQ)'}
             </button>
           )}
+          {onNavigatePage && (
+            <button
+              type="button"
+              onClick={() =>
+                onNavAction(() => onNavigatePage('how-results-are-calculated'))
+              }
+              className={`p-2.5 rounded-xl border font-bold text-start sm:col-span-2 cursor-pointer ${
+                isLight
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+              }`}
+            >
+              🛡️{' '}
+              {isAr
+                ? 'كيف يتم حساب نتائج الاختبارات؟ (Big Five • HEXACO • Attachment • EQ)'
+                : 'How Are Test Results Calculated? (Big Five • HEXACO • Attachment • EQ)'}
+            </button>
+          )}
         </div>
       </div>
 

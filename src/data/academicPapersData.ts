@@ -1,3 +1,9 @@
+import { PDF_FOUR_ACADEMIC_PAPERS } from './pdfFourBigFiveArticles';
+import { RELATIONSHIP_FOUR_ACADEMIC_PAPERS } from './relationshipFourArticles';
+import { EMOTIONAL_IQ_ACADEMIC_PAPERS } from './emotionalIntelligenceSeriesArticles';
+import { PLATFORM_INTRODUCTORY_ACADEMIC_PAPERS } from './platformIntroductoryArticles';
+import { CLINICAL_CHILDHOOD_ANXIETY_ACADEMIC_PAPERS } from './clinicalChildhoodAnxietyOverthinkingArticle';
+
 export interface AcademicSection {
   sectionNumber: string;
   titleAr: string;
@@ -180,6 +186,11 @@ export function getFullContinuousAcademicText(paper: AcademicPaper, lang: 'ar' |
 }
 
 export const ACADEMIC_PAPERS_CATALOG: AcademicPaper[] = [
+  ...CLINICAL_CHILDHOOD_ANXIETY_ACADEMIC_PAPERS,
+  ...PLATFORM_INTRODUCTORY_ACADEMIC_PAPERS,
+  ...EMOTIONAL_IQ_ACADEMIC_PAPERS,
+  ...RELATIONSHIP_FOUR_ACADEMIC_PAPERS,
+  ...PDF_FOUR_ACADEMIC_PAPERS,
   {
     id: 'research-gcc-mental-health-systematic-review-burden-capacity-gap',
     articleType: 'academic',

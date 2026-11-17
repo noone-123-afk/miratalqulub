@@ -527,6 +527,30 @@ export const Footer: React.FC<FooterProps> = ({
                     type="button"
                     onClick={() => {
                       soundManager.playTap();
+                      onNavigatePage('how-results-are-calculated');
+                    }}
+                    className={`transition cursor-pointer flex items-center gap-2 ${
+                      currentPage === 'how-results-are-calculated'
+                        ? isLight
+                          ? 'text-purple-800'
+                          : 'text-purple-300'
+                        : isLight
+                        ? 'text-slate-700 hover:text-purple-800'
+                        : 'text-slate-200 hover:text-purple-300'
+                    }`}
+                  >
+                    <span>
+                      {isAr
+                        ? 'كيف يتم حساب نتائج الاختبارات؟ (Big Five • HEXACO • Attachment • EQ)'
+                        : 'How Are Test Results Calculated? (Big Five • HEXACO • Attachment • EQ)'}
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playTap();
                       onNavigatePage('how-it-works');
                     }}
                     className={`transition cursor-pointer flex items-center gap-2 ${

@@ -36,6 +36,7 @@ import { useAppTheme } from '../utils/theme';
 import { BehindTheScenesSection } from './BehindTheScenesSection';
 import { ScientificClinicalDisclaimerBanner } from './PsychometricAcademicFraming';
 import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
+import { TestScoringTrustBanner } from './TestScoringTrustBanner';
 import {
   detectUserLocationAndNationality,
   getNationalityEntryByCountry,
@@ -746,6 +747,9 @@ export const ProfileStep: React.FC<Props> = ({
             testTitleAr="حاسبة التوافق وكاشف الشريك (4 خطوات)"
             testTitleEn="4-Step Compatibility & Partner Detector"
           />
+
+          {/* Visitor Trust & Scoring Transparency Banner (كيف يتم حساب نتائج الاختبارات؟) */}
+          <TestScoringTrustBanner />
 
           {/* Cloud Persistence & Saved History Banner */}
           <div

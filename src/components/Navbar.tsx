@@ -161,7 +161,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  const isSelfActive = currentPage === 'personality-tests';
+  const isSelfActive =
+    currentPage === 'personality-tests' || currentPage === 'how-results-are-calculated';
   const isCompatibilityActive = currentPage === 'home';
   const isOasisActive =
     currentPage === 'articles' ||
@@ -368,6 +369,39 @@ export const Navbar: React.FC<NavbarProps> = ({
                           {isAr
                             ? '8 مقاييس إكلينيكية بدرجات معيارية Sten وتصدير PDF فوري'
                             : '8 clinical scales with normative Sten scores & direct PDF export'}
+                        </div>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Item 4: How Test Results Are Calculated (Trust & Scoring Guide) */}
+                  {onNavigatePage && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleNavAction(() => onNavigatePage('how-results-are-calculated'))
+                      }
+                      className={`w-full p-2.5 rounded-xl transition flex items-start gap-2.5 cursor-pointer border-t ${
+                        isLight
+                          ? 'hover:bg-emerald-50 border-slate-100'
+                          : 'hover:bg-white/10 border-white/10'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold text-xs">
+                          {isAr
+                            ? 'كيف يتم حساب نتائج الاختبارات؟'
+                            : 'How Are Test Results Calculated?'}
+                        </div>
+                        <div
+                          className={`text-[11px] font-normal mt-0.5 ${
+                            isLight ? 'text-slate-700' : 'text-slate-300'
+                          }`}
+                        >
+                          {isAr
+                            ? 'شرح مبسط لـ Big Five • HEXACO • Attachment • EQ'
+                            : 'Simplified guide to Big Five, HEXACO, Attachment & EQ'}
                         </div>
                       </div>
                     </button>

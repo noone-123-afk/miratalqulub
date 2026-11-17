@@ -32,6 +32,11 @@ import {
   ACADEMIC_PAPERS_CATALOG,
   getFullContinuousAcademicText,
 } from '../data/academicPapersData';
+import { PLATFORM_INTRODUCTORY_ARTICLES } from '../data/platformIntroductoryArticles';
+import { EMOTIONAL_IQ_NARRATIVE_ARTICLES } from '../data/emotionalIntelligenceSeriesArticles';
+import { RELATIONSHIP_FOUR_NARRATIVE_ARTICLES } from '../data/relationshipFourArticles';
+import { PDF_FOUR_NARRATIVE_ARTICLES } from '../data/pdfFourBigFiveArticles';
+import { CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES } from '../data/clinicalChildhoodAnxietyOverthinkingArticle';
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
@@ -315,6 +320,315 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                 exit={{ opacity: 0 }}
                 className="space-y-5"
               >
+                {/* Featured Spotlight Series: سلسلة علم النفس الإكلينيكي ونمو الطفل والقلق النفسي */}
+                <div
+                  className={`p-3.5 sm:p-4 rounded-2xl border space-y-2.5 ${
+                    isLight
+                      ? 'bg-gradient-to-r from-teal-50/90 via-white to-emerald-50/80 border-teal-300'
+                      : 'bg-gradient-to-r from-teal-950/55 via-slate-900/85 to-emerald-950/45 border-teal-500/35'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-teal-500/15 text-teal-800 dark:text-teal-300 border border-teal-500/30">
+                        🩺 {language === 'ar' ? `سلسلة علم النفس الإكلينيكي ونمو الطفل (${CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES.length} دراسات)` : `Clinical Psychology & Child Development (${CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES.length})`}
+                      </span>
+                      <h3
+                        className={`text-xs sm:text-sm font-black font-['Alexandria'] ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {language === 'ar'
+                          ? 'تأثير الطفولة على البلوغ، تشريح القلق النفسي، والتفكير الزائد في ضوء الخصوصية الثقافية'
+                          : 'Childhood Impact on Adulthood, Anatomy of Anxiety & Overthinking'}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                    {CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES.map((art, index) => (
+                      <button
+                        key={art.id}
+                        type="button"
+                        onClick={() => {
+                          soundManager.playTap();
+                          setSelectedCategory(art.category);
+                          setActiveTrack('narrative');
+                          setActiveAcademic(null);
+                          setActiveNarrative(art);
+                        }}
+                        className={`p-2.5 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                          isLight
+                            ? 'bg-white hover:bg-teal-50 border-slate-200 hover:border-teal-400 text-slate-900'
+                            : 'bg-slate-950/70 hover:bg-teal-950/50 border-white/10 hover:border-teal-400/50 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-base">{art.icon}</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
+                              isLight
+                                ? 'bg-teal-100 text-teal-800'
+                                : 'bg-teal-500/20 text-teal-300'
+                            }`}
+                          >
+                            {language === 'ar' ? `دراسة ${index + 1}` : `Study ${index + 1}`}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-black font-['Alexandria'] leading-snug line-clamp-2">
+                          {language === 'ar' ? art.title : art.titleEn}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Featured Series 0: المقالات التعريفية عن الموقع (2 Introductory Articles) */}
+                <div
+                  className={`p-3.5 sm:p-4 rounded-2xl border space-y-2.5 ${
+                    isLight
+                      ? 'bg-gradient-to-r from-cyan-50/90 via-white to-indigo-50/80 border-cyan-200'
+                      : 'bg-gradient-to-r from-cyan-950/50 via-slate-900/80 to-indigo-950/40 border-cyan-500/30'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
+                        🔬 {language === 'ar' ? 'المقالات التعريفية عن الموقع (مقالان)' : 'Platform Introductory Articles (2)'}
+                      </span>
+                      <h3
+                        className={`text-xs sm:text-sm font-black font-['Alexandria'] ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {language === 'ar'
+                          ? 'الأسس العلمية لاختبارات مرآة القلوب وكيف تُبنى الاختبارات النفسية المعتمدة علمياً؟'
+                          : 'Scientific Foundations of Mirror of Hearts & How Validated Psychological Tests Are Built'}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {PLATFORM_INTRODUCTORY_ARTICLES.map((art, index) => (
+                      <button
+                        key={art.id}
+                        type="button"
+                        onClick={() => {
+                          soundManager.playTap();
+                          setSelectedCategory('applied_psychology');
+                          setActiveTrack('narrative');
+                          setActiveAcademic(null);
+                          setActiveNarrative(art);
+                        }}
+                        className={`p-2.5 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                          isLight
+                            ? 'bg-white hover:bg-cyan-50 border-slate-200 hover:border-cyan-400 text-slate-900'
+                            : 'bg-slate-950/70 hover:bg-cyan-950/50 border-white/10 hover:border-cyan-400/50 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-base">{art.icon}</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
+                              isLight
+                                ? 'bg-cyan-100 text-cyan-800'
+                                : 'bg-cyan-500/20 text-cyan-300'
+                            }`}
+                          >
+                            {language === 'ar' ? `المقال التعريفي ${index + 1}` : `Intro ${index + 1}`}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-black font-['Alexandria'] leading-snug line-clamp-2">
+                          {language === 'ar' ? art.title : art.titleEn}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Featured Series 1: 6 Emotional Intelligence Articles (سلسلة مقالات الذكاء العاطفي) */}
+                <div
+                  className={`p-3.5 sm:p-4 rounded-2xl border space-y-2.5 ${
+                    isLight
+                      ? 'bg-gradient-to-r from-amber-50/90 via-white to-violet-50/80 border-amber-200'
+                      : 'bg-gradient-to-r from-amber-950/50 via-slate-900/80 to-violet-950/40 border-amber-500/30'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                        🧠 {language === 'ar' ? 'قسم الذكاء العاطفي — 6 مقالات شاملة' : 'Emotional IQ — 6 Articles Series'}
+                      </span>
+                      <h3
+                        className={`text-xs sm:text-sm font-black font-['Alexandria'] ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {language === 'ar'
+                          ? 'سلسلة الذكاء العاطفي: المفهوم العصبي، التشريح، القياس، الزواج، الثقة بالنفس، وإدارة الضغوط'
+                          : 'Emotional Intelligence Series: Concept, Anatomy, Measurement, Marriage, Confidence & Stress'}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {EMOTIONAL_IQ_NARRATIVE_ARTICLES.map((art, index) => (
+                      <button
+                        key={art.id}
+                        type="button"
+                        onClick={() => {
+                          soundManager.playTap();
+                          setSelectedCategory('emotional_iq');
+                          setActiveTrack('narrative');
+                          setActiveAcademic(null);
+                          setActiveNarrative(art);
+                        }}
+                        className={`p-2.5 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                          isLight
+                            ? 'bg-white hover:bg-amber-50 border-slate-200 hover:border-amber-400 text-slate-900'
+                            : 'bg-slate-950/70 hover:bg-amber-950/50 border-white/10 hover:border-amber-400/50 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-base">{art.icon}</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
+                              isLight
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-amber-500/20 text-amber-300'
+                            }`}
+                          >
+                            {language === 'ar' ? `المقال ${index + 1}` : `Part ${index + 1}`}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-black font-['Alexandria'] leading-snug line-clamp-2">
+                          {language === 'ar' ? art.title : art.titleEn}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Featured Series 2: 4 Relationship Articles (موضوع العلاقات) */}
+                <div
+                  className={`p-3.5 sm:p-4 rounded-2xl border space-y-2.5 ${
+                    isLight
+                      ? 'bg-gradient-to-r from-rose-50/90 via-white to-amber-50/80 border-rose-200'
+                      : 'bg-gradient-to-r from-rose-950/50 via-slate-900/80 to-purple-950/40 border-rose-500/30'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                        💞 {language === 'ar' ? 'قسم العلاقات — 4 مقالات' : 'Relationships — 4 Articles'}
+                      </span>
+                      <h3
+                        className={`text-xs sm:text-sm font-black font-['Alexandria'] ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {language === 'ar'
+                          ? 'موسوعة العلاقات الواعية: التوافق العاطفي، أنماط التعلق، الحب الصحي، وأسباب فشل العلاقات'
+                          : 'Conscious Relationships: Compatibility, Attachment, Healthy Love & Why Relationships Fail'}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                    {RELATIONSHIP_FOUR_NARRATIVE_ARTICLES.map((art, index) => (
+                      <button
+                        key={art.id}
+                        type="button"
+                        onClick={() => {
+                          soundManager.playTap();
+                          setSelectedCategory('relationships');
+                          setActiveTrack('narrative');
+                          setActiveAcademic(null);
+                          setActiveNarrative(art);
+                        }}
+                        className={`p-2.5 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                          isLight
+                            ? 'bg-white hover:bg-rose-50 border-slate-200 hover:border-rose-400 text-slate-900'
+                            : 'bg-slate-950/70 hover:bg-rose-950/50 border-white/10 hover:border-rose-400/50 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-base">{art.icon}</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
+                              isLight
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-rose-500/20 text-rose-300'
+                            }`}
+                          >
+                            {language === 'ar' ? `مقال ${index + 1}` : `Part ${index + 1}`}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-black font-['Alexandria'] leading-snug line-clamp-2">
+                          {language === 'ar' ? art.title : art.titleEn}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Featured Series 3: 4 Big Five Articles from PDF: من النفس الباطنة إلى العقل القيادي */}
+                <div
+                  className={`p-3.5 sm:p-4 rounded-2xl border space-y-2.5 ${
+                    isLight
+                      ? 'bg-gradient-to-r from-indigo-50/90 via-white to-emerald-50/80 border-indigo-200'
+                      : 'bg-gradient-to-r from-indigo-950/50 via-slate-900/80 to-emerald-950/40 border-indigo-500/30'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30">
+                        📚 {language === 'ar' ? 'سلسلة العوامل الخمسة (4 مقالات)' : 'Big Five Series (4 Articles)'}
+                      </span>
+                      <h3
+                        className={`text-xs sm:text-sm font-black font-['Alexandria'] ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {language === 'ar'
+                          ? 'من النفس الباطنة إلى العقل القيادي: تحليل علمي متكامل لأنواع الشخصية عبر العوامل الخمسة'
+                          : 'From the Inner Psyche to the Leadership Mind: Big Five Series'}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                    {PDF_FOUR_NARRATIVE_ARTICLES.map((art, index) => (
+                      <button
+                        key={art.id}
+                        type="button"
+                        onClick={() => {
+                          soundManager.playTap();
+                          setActiveTrack('narrative');
+                          setActiveAcademic(null);
+                          setActiveNarrative(art);
+                        }}
+                        className={`p-2.5 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                          isLight
+                            ? 'bg-white hover:bg-indigo-50 border-slate-200 hover:border-indigo-400 text-slate-900'
+                            : 'bg-slate-950/70 hover:bg-indigo-950/50 border-white/10 hover:border-indigo-400/50 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-base">{art.icon}</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
+                              isLight
+                                ? 'bg-indigo-100 text-indigo-800'
+                                : 'bg-indigo-500/20 text-indigo-300'
+                            }`}
+                          >
+                            {language === 'ar' ? `مقال ${index + 1}` : `Part ${index + 1}`}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-black font-['Alexandria'] leading-snug line-clamp-2">
+                          {language === 'ar' ? art.title : art.titleEn}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Dual-Track Switcher Banner — Track 1: Academic Research FIRST */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button

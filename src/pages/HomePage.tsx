@@ -24,6 +24,7 @@ import { soundManager } from '../utils/sound';
 import { UserProfile } from '../types';
 import type { WebsiteTabKey } from '../components/WebsiteSectionsModal';
 import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
+import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
 
 export interface HomePageProps {
   onStart: (profile: UserProfile) => void;
@@ -589,6 +590,11 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               </div>
             );
           })}
+        </div>
+
+        {/* Visitor Trust & Scoring Transparency Callout */}
+        <div className="pt-2">
+          <TestScoringTrustBanner onNavigatePage={props.onNavigatePage} />
         </div>
       </section>
 

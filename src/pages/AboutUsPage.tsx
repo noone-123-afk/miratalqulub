@@ -37,6 +37,7 @@ import { PageSEO } from '../components/PageSEO';
 import { AdSenseBanner } from '../components/AdSenseBanner';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import { PLATFORM_INTRODUCTORY_ARTICLES } from '../data/platformIntroductoryArticles';
 
 export interface AboutUsProps {
   onBackToHome: () => void;
@@ -64,6 +65,9 @@ export const AboutUsPage: React.FC<AboutUsProps> = ({
   const isLight = theme === 'light';
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [expandedIntroId, setExpandedIntroId] = useState<string | null>(
+    PLATFORM_INTRODUCTORY_ARTICLES[0]?.id || null
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
@@ -1282,6 +1286,173 @@ export const AboutUsPage: React.FC<AboutUsProps> = ({
               );
             })}
           </div>
+        </section>
+
+        {/* ========================================================
+            9.5 المقالات التعريفية عن الموقع وأسسه العلمية (Platform Introductory Articles)
+        ======================================================== */}
+        <section
+          className={`p-6 sm:p-8 rounded-3xl border shadow-sm space-y-6 ${
+            isLight
+              ? 'bg-gradient-to-br from-cyan-50/80 via-white to-indigo-50/70 border-cyan-200'
+              : 'bg-gradient-to-br from-cyan-950/40 via-slate-900/85 to-indigo-950/40 border-cyan-500/30'
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
+                  isLight
+                    ? 'bg-cyan-100 border border-cyan-300 text-cyan-800'
+                    : 'bg-cyan-500/20 border border-cyan-500/30 text-cyan-300'
+                }`}
+              >
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border border-cyan-500/30 mb-1">
+                  🔬{' '}
+                  {isAr
+                    ? 'المقالات التعريفية عن الموقع (مقالان علميان متكاملان)'
+                    : 'Platform Introductory Articles (2 Full Scientific Guides)'}
+                </span>
+                <h2
+                  className={`text-xl sm:text-2xl font-black font-['Alexandria'] ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isAr
+                    ? 'المقالات التعريفية عن منصة مرآة القلوب وأسسها السيكومترية'
+                    : 'Introductory Articles About Mirror of Hearts & Its Psychometric Foundations'}
+                </h2>
+              </div>
+            </div>
+
+            {onOpenArticles && (
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playTap();
+                  onOpenArticles();
+                }}
+                className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                  isLight
+                    ? 'bg-cyan-100 hover:bg-cyan-200 text-cyan-900 border-cyan-300'
+                    : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border-cyan-500/40'
+                }`}
+              >
+                {isAr ? 'فتح في موسوعة المقالات الكاملة ←' : 'Open in Articles Encyclopedia →'}
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {PLATFORM_INTRODUCTORY_ARTICLES.map((art, index) => {
+              const isSelected = expandedIntroId === art.id;
+              return (
+                <button
+                  key={art.id}
+                  type="button"
+                  onClick={() => {
+                    soundManager.playTap();
+                    setExpandedIntroId(isSelected ? null : art.id);
+                  }}
+                  className={`p-4 rounded-2xl border text-start transition cursor-pointer flex flex-col justify-between gap-2.5 ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-cyan-50 border-cyan-500 text-slate-900 shadow-md ring-2 ring-cyan-400/40'
+                        : 'bg-cyan-950/60 border-cyan-400 text-white shadow-lg ring-2 ring-cyan-500/30'
+                      : isLight
+                        ? 'bg-white hover:bg-cyan-50/50 border-slate-200 text-slate-900'
+                        : 'bg-slate-950/60 hover:bg-cyan-950/30 border-white/10 text-white'
+                  }`}
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xl">{art.icon}</span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          isLight
+                            ? 'bg-cyan-100 text-cyan-800'
+                            : 'bg-cyan-500/20 text-cyan-300'
+                        }`}
+                      >
+                        {isAr ? `المقال التعريفي ${index + 1}` : `Introductory Article ${index + 1}`}
+                      </span>
+                    </div>
+                    <h3 className="text-sm sm:text-base font-black font-['Alexandria'] leading-snug">
+                      {isAr ? art.title : art.titleEn}
+                    </h3>
+                    <p
+                      className={`text-xs leading-relaxed ${
+                        isLight ? 'text-slate-600' : 'text-slate-300'
+                      }`}
+                    >
+                      {isAr ? art.summary : art.summaryEn}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-white/10 text-xs font-bold text-cyan-600 dark:text-cyan-300">
+                    <span>{isAr ? art.readTime : art.readTimeEn}</span>
+                    <span>
+                      {isSelected
+                        ? isAr
+                          ? 'إخفاء نص المقال ▲'
+                          : 'Hide Article Text ▲'
+                        : isAr
+                          ? 'قراءة المقال كاملاً ▼'
+                          : 'Read Full Article ▼'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {expandedIntroId && (
+            <div
+              className={`p-5 sm:p-7 rounded-2xl border space-y-4 ${
+                isLight
+                  ? 'bg-white border-cyan-200 text-slate-800 shadow-inner'
+                  : 'bg-slate-950/85 border-cyan-500/30 text-slate-200'
+              }`}
+            >
+              {(() => {
+                const activeArt = PLATFORM_INTRODUCTORY_ARTICLES.find(
+                  (a) => a.id === expandedIntroId
+                );
+                if (!activeArt) return null;
+                return (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-white/10">
+                      <h3
+                        className={`text-base sm:text-lg font-black font-['Alexandria'] ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {activeArt.icon} {isAr ? activeArt.title : activeArt.titleEn}
+                      </h3>
+                      <span
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${
+                          isLight
+                            ? 'bg-cyan-50 text-cyan-800 border border-cyan-200'
+                            : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                        }`}
+                      >
+                        {isAr ? activeArt.scientificFramework : activeArt.scientificFrameworkEn}
+                      </span>
+                    </div>
+                    <div className="whitespace-pre-line text-xs sm:text-sm leading-relaxed md:leading-loose font-medium">
+                      {isAr
+                        ? activeArt.fullContinuousTextAr
+                        : activeArt.contentParagraphs
+                            .map((p) => `${p.headingEn}\n\n${p.textEn}`)
+                            .join('\n\n────────────────────────\n\n')}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </section>
 
         {/* ========================================================

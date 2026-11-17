@@ -1,3 +1,9 @@
+import { PDF_FOUR_NARRATIVE_ARTICLES } from './pdfFourBigFiveArticles';
+import { RELATIONSHIP_FOUR_NARRATIVE_ARTICLES } from './relationshipFourArticles';
+import { EMOTIONAL_IQ_NARRATIVE_ARTICLES } from './emotionalIntelligenceSeriesArticles';
+import { PLATFORM_INTRODUCTORY_ARTICLES } from './platformIntroductoryArticles';
+import { CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES } from './clinicalChildhoodAnxietyOverthinkingArticle';
+
 export interface DiagnosticComparisonRow {
   criterionAr: string;
   criterionEn: string;
@@ -470,6 +476,12 @@ export const DIGITAL_COMPANION_ILLUSION_FULL_TEXT_AR = `# وهم الرفيق ا
 الإنسان يحتاج إلى إنسان آخر ليؤكد (Confirm) وجوده. الآلة يمكنها محاكاة الكلام، لكنها لا يمكنها محاكاة **الحضور**.`;
 
 export const ARTICLES_CATALOG: Article[] = [
+  ...CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES,
+  ...PLATFORM_INTRODUCTORY_ARTICLES,
+  ...EMOTIONAL_IQ_NARRATIVE_ARTICLES,
+  ...RELATIONSHIP_FOUR_NARRATIVE_ARTICLES,
+  ...PDF_FOUR_NARRATIVE_ARTICLES,
+
   // ============================================================================
   // المجموعة القصصية العيادية الثانية: وهم الرفيق الرقمي (سجلات سرية من عصر الذكاء الاصطناعي)
   // ============================================================================

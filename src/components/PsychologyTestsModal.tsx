@@ -48,6 +48,7 @@ import {
   PsychometricAcademicConclusion,
   ScientificClinicalDisclaimerBanner,
 } from './PsychometricAcademicFraming';
+import { TestScoringTrustBanner } from './TestScoringTrustBanner';
 
 const LazyTieredAssessmentModule = lazy(() =>
   import('./TieredAssessmentModule').then((m) => ({
@@ -727,6 +728,8 @@ export const PsychologyTestsModal: React.FC<Props> = ({
           >
             {/* Clinical & Scientific Exploratory Disclaimer Notice */}
             <ScientificClinicalDisclaimerBanner testType="personality" />
+
+            <TestScoringTrustBanner compact />
 
             {/* Permanent Top Academic Introduction (AR/EN + Dark/Light Mode) */}
             <PsychometricAcademicIntro variant="modal" focusScope="personality" />

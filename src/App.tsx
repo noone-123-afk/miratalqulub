@@ -78,6 +78,11 @@ const PersonalityTestsPage = lazy(() =>
 const ArticlesEncyclopediaPage = lazy(() =>
   import('./pages/ArticlesEncyclopediaPage').then((m) => ({ default: m.ArticlesEncyclopediaPage }))
 );
+const HowTestResultsCalculatedPage = lazy(() =>
+  import('./pages/HowTestResultsCalculatedPage').then((m) => ({
+    default: m.HowTestResultsCalculatedPage,
+  }))
+);
 
 // Code-Split Lazy Loaded Modals (Mounted only when opened)
 const LiveChatModal = lazy(() =>
@@ -157,7 +162,8 @@ export type SitePage =
   | 'admin-cms'
   | 'personality-tests'
   | 'articles'
-  | 'compatibility';
+  | 'compatibility'
+  | 'how-results-are-calculated';
 type AppStep = 'profile' | 'quiz' | 'analyzing' | 'result';
 
 function SectionLoadingFallback() {
@@ -242,6 +248,13 @@ function AppContent() {
         setIsBookClubOpen(true);
         setCurrentPage('home');
       } else if (
+        section === 'how-results-are-calculated' ||
+        section === 'scoring-guide' ||
+        section === 'how-tests-work' ||
+        section === 'scoring'
+      ) {
+        setCurrentPage('how-results-are-calculated');
+      } else if (
         section === 'personality-tests' ||
         section === 'personality' ||
         section === 'mbti' ||
@@ -306,6 +319,7 @@ function AppContent() {
       'personality-tests',
       'articles',
       'compatibility',
+      'how-results-are-calculated',
     ];
 
     if (page === 'community' || page === 'book-club' || page === 'salon') {
@@ -969,6 +983,18 @@ function AppContent() {
               <PersonalityTestsPage
                 onBackToHome={() => handleNavigatePage('home')}
                 onNavigatePage={handleNavigatePage}
+              />
+            )}
+
+            {currentPage === 'how-results-are-calculated' && (
+              <HowTestResultsCalculatedPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+                onStartPersonalityTests={() => handleNavigatePage('personality-tests')}
+                onStartCompatibilityTest={() => {
+                  handleReset();
+                  handleNavigatePage('compatibility');
+                }}
               />
             )}
 

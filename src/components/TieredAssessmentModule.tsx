@@ -70,6 +70,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
+import { TestScoringTrustBanner } from './TestScoringTrustBanner';
 
 const LazyScientificVisualDashboards = lazy(() =>
   import('./ScientificVisualDashboards').then((m) => ({
@@ -970,6 +971,8 @@ export const TieredAssessmentModule: React.FC<Props> = ({
           />
         </div>
 
+        <TestScoringTrustBanner compact />
+
         {runnerMode === 'batch10' ? (
           <div className="space-y-4">
             {batchSlice.map((qItem) => {
@@ -1186,6 +1189,8 @@ export const TieredAssessmentModule: React.FC<Props> = ({
           </p>
         </div>
       </div>
+
+      <TestScoringTrustBanner compact />
 
       {/* Navigation Switcher for Tasks 1, 2, 3, 4 */}
       <div className={`grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 rounded-2xl border ${

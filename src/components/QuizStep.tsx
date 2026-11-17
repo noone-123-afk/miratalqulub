@@ -5,6 +5,7 @@ import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { ScientificClinicalDisclaimerBanner } from './PsychometricAcademicFraming';
+import { TestScoringTrustBanner } from './TestScoringTrustBanner';
 import {
   detectUserLocationAndNationality,
   refineEthnicPromptWithQuizAnswers,
@@ -295,6 +296,10 @@ export const QuizStep: React.FC<Props> = ({
         testTitleEn="Partner Psychological & Values Compatibility Quiz"
         compact
       />
+
+      <div className="mb-4">
+        <TestScoringTrustBanner compact />
+      </div>
 
       {/* Automatic Location & Nationality Detector Banner for Realistic Ethnic Portrait Guidance */}
       <div
