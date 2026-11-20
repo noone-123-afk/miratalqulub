@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Sparkles,
   Compass,
   FileText,
@@ -19,6 +21,10 @@ import {
   Sun,
   Moon,
   Globe,
+  SlidersHorizontal,
+  RotateCcw,
+  Brain,
+  BookText,
 } from 'lucide-react';
 import { Novel, NovelGenre, NOVELS_CATALOG } from '../data/novelsData';
 import { getAllNovels } from '../services/novelsService';
@@ -27,6 +33,14 @@ import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  NovelLengthFilter,
+  NovelThemeFilter,
+  NovelSortOption,
+  NOVEL_LENGTH_OPTIONS,
+  NOVEL_THEME_OPTIONS,
+  filterAndSortNovels,
+} from '../utils/novelFilters';
 
 interface Props {
   onSelectNovel: (novelId: string) => void;
@@ -46,10 +60,37 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
   const [novels, setNovels] = useState<Novel[]>(NOVELS_CATALOG);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState<'all' | NovelGenre>('all');
-  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'words'>('popular');
+  const [selectedGenre, setSelectedGenre] = useState<'all' | NovelGenre>(() => {
+    try {
+      const saved = sessionStorage.getItem('mirat_open_novel_genre') as NovelGenre | null;
+      if (saved) {
+        sessionStorage.removeItem('mirat_open_novel_genre');
+        return saved;
+      }
+    } catch {
+      // ignore
+    }
+    return 'all';
+  });
+  const [sortBy, setSortBy] = useState<NovelSortOption>('popular');
+  const [selectedLength, setSelectedLength] = useState<NovelLengthFilter>('all');
+  const [selectedTheme, setSelectedTheme] = useState<NovelThemeFilter>('all');
+  const [mobileFiltersExpanded, setMobileFiltersExpanded] = useState(false);
 
   useEffect(() => {
+    const handleGenreEvent = (e: Event) => {
+      const custom = e as CustomEvent<NovelGenre>;
+      if (custom.detail) {
+        setSelectedGenre(custom.detail);
+        try {
+          sessionStorage.removeItem('mirat_open_novel_genre');
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('mirat:open-novel-genre', handleGenreEvent);
+
     let isMounted = true;
     getAllNovels().then((list) => {
       if (isMounted) {
@@ -61,6 +102,7 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
     });
     return () => {
       isMounted = false;
+      window.removeEventListener('mirat:open-novel-genre', handleGenreEvent);
     };
   }, []);
 
@@ -74,26 +116,70 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
     { id: 'sci_fantasy', labelAr: 'خيال علمي وفانتازيا فكرية', labelEn: 'Intellectual Sci-Fantasy' },
   ];
 
-  const filteredNovels = novels
-    .filter((novel) => {
-      if (selectedGenre !== 'all' && novel.genre !== selectedGenre) return false;
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        novel.titleAr.toLowerCase().includes(q) ||
-        (novel.titleEn && novel.titleEn.toLowerCase().includes(q)) ||
-        novel.subtitleAr.toLowerCase().includes(q) ||
-        novel.synopsisAr.toLowerCase().includes(q) ||
-        novel.authorPersonaAr.toLowerCase().includes(q) ||
-        (novel.placeSettingAr && novel.placeSettingAr.toLowerCase().includes(q)) ||
-        (novel.timeSettingAr && novel.timeSettingAr.toLowerCase().includes(q))
-      );
-    })
-    .sort((a, b) => {
-      if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'words') return b.totalWords - a.totalWords;
-      return b.readsCount - a.readsCount;
+  const filteredNovels = useMemo(
+    () =>
+      filterAndSortNovels(novels, {
+        searchQuery,
+        selectedGenre,
+        selectedLength,
+        selectedTheme,
+        sortBy,
+      }),
+    [novels, searchQuery, selectedGenre, selectedLength, selectedTheme, sortBy]
+  );
+
+  // Deterministic faceted counts per length option (respecting search, genre, and theme)
+  const lengthCounts = useMemo(() => {
+    const counts: Record<NovelLengthFilter, number> = { all: 0, short: 0, medium: 0, long: 0 };
+    NOVEL_LENGTH_OPTIONS.forEach((opt) => {
+      counts[opt.id] = filterAndSortNovels(novels, {
+        searchQuery,
+        selectedGenre,
+        selectedLength: opt.id,
+        selectedTheme,
+        sortBy,
+      }).length;
     });
+    return counts;
+  }, [novels, searchQuery, selectedGenre, selectedTheme, sortBy]);
+
+  // Deterministic faceted counts per theme option (respecting search, genre, and length)
+  const themeCounts = useMemo(() => {
+    const counts: Record<NovelThemeFilter, number> = {
+      all: 0,
+      attachment_identity: 0,
+      love_ethics: 0,
+      dark_psyche_investigation: 0,
+      resilience_teamwork: 0,
+    };
+    NOVEL_THEME_OPTIONS.forEach((opt) => {
+      counts[opt.id] = filterAndSortNovels(novels, {
+        searchQuery,
+        selectedGenre,
+        selectedLength,
+        selectedTheme: opt.id,
+        sortBy,
+      }).length;
+    });
+    return counts;
+  }, [novels, searchQuery, selectedGenre, selectedLength, sortBy]);
+
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    selectedGenre !== 'all' ||
+    selectedLength !== 'all' ||
+    selectedTheme !== 'all';
+
+  const activeAdvancedFiltersCount =
+    (selectedLength !== 'all' ? 1 : 0) + (selectedTheme !== 'all' ? 1 : 0);
+
+  const resetAllFilters = () => {
+    soundManager.playTap();
+    setSearchQuery('');
+    setSelectedGenre('all');
+    setSelectedLength('all');
+    setSelectedTheme('all');
+  };
 
   const totalWords = novels.reduce((acc, curr) => acc + curr.totalWords, 0);
   const totalChapters = novels.reduce((acc, curr) => acc + (curr.chapters?.length || 0), 0);
@@ -420,6 +506,181 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
               );
             })}
           </div>
+
+          {/* Mobile Collapsible Trigger for Length & Psychological Theme Filters */}
+          <div
+            className={`pt-3 border-t flex items-center justify-between gap-3 md:hidden ${
+              isLight ? 'border-slate-200' : 'border-slate-800/80'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playTap();
+                setMobileFiltersExpanded((prev) => !prev);
+              }}
+              aria-expanded={mobileFiltersExpanded}
+              className={`inline-flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl border transition-colors cursor-pointer ${
+                activeAdvancedFiltersCount > 0
+                  ? isLight
+                    ? 'bg-rose-50 border-rose-300 text-rose-700'
+                    : 'bg-rose-500/15 border-rose-500/40 text-rose-300'
+                  : isLight
+                  ? 'bg-slate-50 border-slate-200 text-slate-700'
+                  : 'bg-slate-950/80 border-slate-800 text-slate-300'
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-rose-500" />
+              <span>
+                {language === 'ar' ? 'تصفية حسب الطول والموضوع النفسي' : 'Length & Psychological Theme'}
+              </span>
+              {activeAdvancedFiltersCount > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-black">
+                  {activeAdvancedFiltersCount}
+                </span>
+              )}
+              {mobileFiltersExpanded ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
+            </button>
+
+            <span className={`text-xs font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              {language === 'ar' ? `${filteredNovels.length} نتيجة` : `${filteredNovels.length} results`}
+            </span>
+          </div>
+
+          {/* Length & Psychological Theme Filters (Always visible on Desktop, collapsible on Mobile) */}
+          <div
+            className={`${
+              mobileFiltersExpanded ? 'grid' : 'hidden md:grid'
+            } grid-cols-1 lg:grid-cols-2 gap-4 pt-3 border-t ${
+              isLight ? 'border-slate-200' : 'border-slate-800/80'
+            }`}
+          >
+            {/* 1. Novel Length Filter */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                <BookText className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span className={isLight ? 'text-slate-700' : 'text-slate-200'}>
+                  {language === 'ar' ? 'طول الرواية:' : 'Novel Length:'}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {NOVEL_LENGTH_OPTIONS.map((opt) => {
+                  const isSelected = selectedLength === opt.id;
+                  const count = lengthCounts[opt.id];
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        soundManager.playTap();
+                        setSelectedLength(opt.id);
+                      }}
+                      className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm font-bold'
+                          : isLight
+                          ? 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+                          : 'bg-slate-950/70 text-slate-300 hover:text-white hover:border-slate-700 border-slate-800/80'
+                      }`}
+                    >
+                      <span>{language === 'ar' ? opt.labelAr : opt.labelEn}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                          isSelected
+                            ? 'bg-slate-950/15 text-slate-950'
+                            : isLight
+                            ? 'bg-slate-200/80 text-slate-600'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Psychological or Emotional Theme Filter */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                <Brain className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                <span className={isLight ? 'text-slate-700' : 'text-slate-200'}>
+                  {language === 'ar' ? 'الموضوع النفسي أو العاطفي:' : 'Psychological / Emotional Theme:'}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {NOVEL_THEME_OPTIONS.map((opt) => {
+                  const isSelected = selectedTheme === opt.id;
+                  const count = themeCounts[opt.id];
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        soundManager.playTap();
+                        setSelectedTheme(opt.id);
+                      }}
+                      className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm font-bold'
+                          : isLight
+                          ? 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+                          : 'bg-slate-950/70 text-slate-300 hover:text-white hover:border-slate-700 border-slate-800/80'
+                      }`}
+                    >
+                      <span>{language === 'ar' ? opt.labelAr : opt.labelEn}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : isLight
+                            ? 'bg-slate-200/80 text-slate-600'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Results Count & Reset Filters Summary Bar */}
+          <div
+            className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
+              isLight ? 'border-slate-200 text-slate-600' : 'border-slate-800/80 text-slate-400'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">
+                {language === 'ar'
+                  ? `عرض ${filteredNovels.length} من أصل ${novels.length} أعمال أدبية ونفسية`
+                  : `Showing ${filteredNovels.length} of ${novels.length} literary works`}
+              </span>
+            </div>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold border transition-colors cursor-pointer ${
+                  isLight
+                    ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                    : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30'
+                }`}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Novels Grid */}
@@ -441,13 +702,11 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
               {language === 'ar' ? 'لم يتم العثور على روايات مطابقة' : 'No matching novels found'}
             </h3>
             <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedGenre('all');
-              }}
-              className="text-xs text-rose-500 font-bold hover:underline inline-block mt-2"
+              onClick={resetAllFilters}
+              className="text-xs text-rose-500 font-bold hover:underline inline-flex items-center gap-1.5 mt-2 cursor-pointer"
             >
-              {language === 'ar' ? 'إعادة ضبط عوامل التصفية' : 'Reset filters'}
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset filters'}</span>
             </button>
           </div>
         ) : (

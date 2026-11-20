@@ -39,6 +39,14 @@ import {
 import { PsychologyTestsModal } from '../components/PsychologyTestsModal';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
+import { NextStepRecommendations } from '../components/NextStepRecommendations';
+import {
+  getMBTIRecommendations,
+  getBigFiveRecommendations,
+  ResolvedTestCard,
+} from '../data/recommendationsMapping';
+import { AssessmentType } from '../data/psychologySuiteData';
+import { IntelligenceBatteryType } from '../data/intelligenceTestData';
 
 const LazyIntelligenceTestModal = lazy(() =>
   import('../components/IntelligenceTestModal').then((m) => ({
@@ -75,7 +83,60 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
 
   // Additional Modals for Intelligence & Advanced Psychometrics directly accessible from this page
   const [isIntelligenceModalOpen, setIsIntelligenceModalOpen] = useState(false);
+  const [initialIntelligenceBattery, setInitialIntelligenceBattery] =
+    useState<IntelligenceBatteryType | null>(null);
   const [isPsychModalOpen, setIsPsychModalOpen] = useState(false);
+  const [initialPsychTestId, setInitialPsychTestId] = useState<AssessmentType | null>(null);
+
+  const applyPendingTestLaunch = React.useCallback((testCard: ResolvedTestCard) => {
+    if (testCard.launchKind === 'personality_inline' && testCard.launchParam) {
+      const target = PERSONALITY_TESTS_CATALOG.find((t) => t.id === testCard.launchParam);
+      if (target) {
+        handleStartTest(target);
+        return true;
+      }
+    }
+    if (testCard.launchKind === 'psych_modal') {
+      setInitialPsychTestId((testCard.launchParam as AssessmentType) || null);
+      setIsPsychModalOpen(true);
+      return true;
+    }
+    if (testCard.launchKind === 'intelligence_modal') {
+      setInitialIntelligenceBattery((testCard.launchParam as IntelligenceBatteryType) || null);
+      setIsIntelligenceModalOpen(true);
+      return true;
+    }
+    if (testCard.launchKind === 'tiered') {
+      const tieredEl = document.getElementById('tiered-assessment-section');
+      if (tieredEl) {
+        tieredEl.scrollIntoView({ behavior: 'smooth' });
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('mirat_pending_test_launch');
+      if (raw) {
+        sessionStorage.removeItem('mirat_pending_test_launch');
+        const parsed = JSON.parse(raw) as ResolvedTestCard;
+        applyPendingTestLaunch(parsed);
+      }
+    } catch {
+      // ignore
+    }
+
+    const onLaunchEvent = (e: Event) => {
+      const custom = e as CustomEvent<ResolvedTestCard>;
+      if (custom.detail) {
+        applyPendingTestLaunch(custom.detail);
+      }
+    };
+    window.addEventListener('mirat:launch-test', onLaunchEvent);
+    return () => window.removeEventListener('mirat:launch-test', onLaunchEvent);
+  }, [applyPendingTestLaunch]);
 
   // Result state
   const [mbtiResult, setMbtiResult] = useState<{
@@ -609,15 +670,17 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
             <TestScoringTrustBanner onNavigatePage={onNavigatePage} />
 
             {/* Multi-Tier Psychometric Assessment System (Quick / Advanced / Professional) */}
-            <Suspense
-              fallback={
-                <div className="p-6 text-center text-xs font-bold opacity-75">
-                  جارٍ تجهيز مستويات التحليل السيكومتري المتعددة...
-                </div>
-              }
-            >
-              <LazyTieredAssessmentModule userName={user?.displayName || undefined} />
-            </Suspense>
+            <div id="tiered-assessment-section">
+              <Suspense
+                fallback={
+                  <div className="p-6 text-center text-xs font-bold opacity-75">
+                    جارٍ تجهيز مستويات التحليل السيكومتري المتعددة...
+                  </div>
+                }
+              >
+                <LazyTieredAssessmentModule userName={user?.displayName || undefined} />
+              </Suspense>
+            </div>
 
             {/* Primary Personality Assessment Cards Grid (MBTI & Big Five) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1459,6 +1522,21 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
                 </span>
               </button>
             </div>
+
+            {/* Deterministic Next-Step Recommendations (MBTI or Big Five) */}
+            {(mbtiResult || bigFiveResult) && (
+              <NextStepRecommendations
+                bundle={
+                  mbtiResult
+                    ? getMBTIRecommendations({
+                        typeCode: mbtiResult.typeCode,
+                        percentages: mbtiResult.percentages,
+                      })
+                    : getBigFiveRecommendations(bigFiveResult!.scores, 'big_five_ocean')
+                }
+                onLaunchTest={(testCard) => applyPendingTestLaunch(testCard)}
+              />
+            )}
           </div>
         )}
 
@@ -1470,14 +1548,22 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
         <Suspense fallback={null}>
           <LazyIntelligenceTestModal
             isOpen={isIntelligenceModalOpen}
-            onClose={() => setIsIntelligenceModalOpen(false)}
+            initialBattery={initialIntelligenceBattery}
+            onClose={() => {
+              setIsIntelligenceModalOpen(false);
+              setInitialIntelligenceBattery(null);
+            }}
           />
         </Suspense>
       )}
       {isPsychModalOpen && (
         <PsychologyTestsModal
           isOpen={isPsychModalOpen}
-          onClose={() => setIsPsychModalOpen(false)}
+          initialTestId={initialPsychTestId}
+          onClose={() => {
+            setIsPsychModalOpen(false);
+            setInitialPsychTestId(null);
+          }}
         />
       )}
     </div>

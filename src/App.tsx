@@ -6,6 +6,9 @@ import type { WebsiteTabKey } from './components/WebsiteSectionsModal';
 import type { DashboardTabKey } from './components/UserProfileDashboard';
 import type { OnboardingGoal } from './components/OnboardingWizardModal';
 import type { DetectedNationalityProfile } from './utils/locationNationalityDetector';
+import type { AssessmentType } from './data/psychologySuiteData';
+import type { IntelligenceBatteryType } from './data/intelligenceTestData';
+import type { ResolvedTestCard } from './data/recommendationsMapping';
 import { soundManager } from './utils/sound';
 import { isPinLockEnabled } from './utils/privacyLock';
 import { useAppTheme } from './utils/theme';
@@ -193,7 +196,10 @@ function AppContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isPsychologyTestsOpen, setIsPsychologyTestsOpen] = useState(false);
+  const [initialPsychTestId, setInitialPsychTestId] = useState<AssessmentType | null>(null);
   const [isIntelligenceModalOpen, setIsIntelligenceModalOpen] = useState(false);
+  const [initialIntelligenceBattery, setInitialIntelligenceBattery] =
+    useState<IntelligenceBatteryType | null>(null);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [userProfileDashboardTab, setUserProfileDashboardTab] = useState<DashboardTabKey>('overview');
   const [isCoupleInviteOpen, setIsCoupleInviteOpen] = useState(false);
@@ -291,9 +297,51 @@ function AppContent() {
     handleRouteChange();
     window.addEventListener('hashchange', handleRouteChange);
     window.addEventListener('popstate', handleRouteChange);
+
+    const handleLaunchRecommendedTest = (e: Event) => {
+      const custom = e as CustomEvent<ResolvedTestCard>;
+      const testCard = custom.detail;
+      if (!testCard) return;
+
+      if (testCard.launchKind === 'compatibility') {
+        setIsPsychologyTestsOpen(false);
+        setIsIntelligenceModalOpen(false);
+        window.location.hash = '#/compatibility';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      if (testCard.launchKind === 'psych_modal') {
+        setIsIntelligenceModalOpen(false);
+        setInitialPsychTestId((testCard.launchParam as AssessmentType) || null);
+        setIsPsychologyTestsOpen(true);
+        return;
+      }
+
+      if (testCard.launchKind === 'intelligence_modal') {
+        setIsPsychologyTestsOpen(false);
+        setInitialIntelligenceBattery((testCard.launchParam as IntelligenceBatteryType) || null);
+        setIsIntelligenceModalOpen(true);
+        return;
+      }
+
+      // personality_inline or tiered -> navigate to #/personality-tests where PersonalityTestsPage consumes mirat_pending_test_launch
+      setIsPsychologyTestsOpen(false);
+      setIsIntelligenceModalOpen(false);
+      try {
+        sessionStorage.setItem('mirat_pending_test_launch', JSON.stringify(testCard));
+      } catch {
+        // ignore
+      }
+      window.location.hash = '#/personality-tests';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('mirat:launch-test', handleLaunchRecommendedTest);
     return () => {
       window.removeEventListener('hashchange', handleRouteChange);
       window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('mirat:launch-test', handleLaunchRecommendedTest);
     };
   }, []);
 
@@ -1175,10 +1223,15 @@ function AppContent() {
         {isPsychologyTestsOpen && (
           <PsychologyTestsModal
             isOpen={isPsychologyTestsOpen}
-            onClose={() => setIsPsychologyTestsOpen(false)}
+            initialTestId={initialPsychTestId}
+            onClose={() => {
+              setIsPsychologyTestsOpen(false);
+              setInitialPsychTestId(null);
+            }}
             userName={profile?.userName}
             onOpenDashboard={(tab) => {
               setIsPsychologyTestsOpen(false);
+              setInitialPsychTestId(null);
               handleOpenUserDashboard(tab || 'overview');
             }}
           />
@@ -1223,7 +1276,11 @@ function AppContent() {
         {isIntelligenceModalOpen && (
           <IntelligenceTestModal
             isOpen={isIntelligenceModalOpen}
-            onClose={() => setIsIntelligenceModalOpen(false)}
+            initialBattery={initialIntelligenceBattery}
+            onClose={() => {
+              setIsIntelligenceModalOpen(false);
+              setInitialIntelligenceBattery(null);
+            }}
           />
         )}
 

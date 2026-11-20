@@ -49,6 +49,11 @@ import {
   ScientificClinicalDisclaimerBanner,
 } from './PsychometricAcademicFraming';
 import { TestScoringTrustBanner } from './TestScoringTrustBanner';
+import {
+  getPsychologySuiteRecommendations,
+  ResolvedTestCard,
+} from '../data/recommendationsMapping';
+import { NextStepRecommendations } from './NextStepRecommendations';
 
 const LazyTieredAssessmentModule = lazy(() =>
   import('./TieredAssessmentModule').then((m) => ({
@@ -1952,6 +1957,20 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                 </motion.button>
               )}
             </div>
+
+            {/* Deterministic Next-Step Recommendations */}
+            <NextStepRecommendations
+              bundle={getPsychologySuiteRecommendations(activeReport)}
+              forceDark
+              onBeforeNavigate={() => onClose()}
+              onLaunchTest={(testCard: ResolvedTestCard) => {
+                if (testCard.launchKind === 'psych_modal' && testCard.launchParam) {
+                  handleSelectTest(testCard.launchParam as AssessmentType);
+                  return true;
+                }
+                return false;
+              }}
+            />
 
             {/* Permanent Bottom Academic Conclusion & APA References */}
             <PsychometricAcademicConclusion variant="modal" />

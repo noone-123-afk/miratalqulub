@@ -7,10 +7,78 @@ export interface HomeArticleHighlight {
   summaryEn: string;
   readTime: string;
   readTimeEn: string;
+  publishDate?: string;
   icon: string;
   scientificFramework: string;
   scientificFrameworkEn: string;
 }
+
+export interface HomeNovelCategory {
+  genre: 'clinical_stories' | 'sci_fi_future' | 'tactical_action' | 'crime_mystery' | 'romance' | 'sci_fantasy';
+  titleAr: string;
+  titleEn: string;
+  descAr: string;
+  descEn: string;
+  icon: string;
+  accentColor: string;
+}
+
+export const HOME_NOVEL_CATEGORIES: HomeNovelCategory[] = [
+  {
+    genre: 'clinical_stories',
+    titleAr: 'روايات وقصص نفسية',
+    titleEn: 'Psychological Novels & Stories',
+    descAr: 'مجموعات قصصية عيادية وسيكولوجية تغوص في أعماق النفس البشرية والتعلق والصراعات الداخلية.',
+    descEn: 'Clinical and psychological story collections exploring human depth, attachment, and inner conflicts.',
+    icon: '🧠',
+    accentColor: '#ec4899',
+  },
+  {
+    genre: 'sci_fi_future',
+    titleAr: 'روايات وقصص خيال علمي',
+    titleEn: 'Sci-Fi & Technology Novels',
+    descAr: 'روايات خيال علمي وتكنولوجيا تستشرف المستقبل والذكاء الاصطناعي والمعالجات الكمومية.',
+    descEn: 'Science fiction and technology narratives exploring the future, AI, and quantum computing.',
+    icon: '🚀',
+    accentColor: '#06b6d4',
+  },
+  {
+    genre: 'tactical_action',
+    titleAr: 'روايات وقصص أكشن',
+    titleEn: 'Action & Tactical Thrillers',
+    descAr: 'روايات أكشن ومغامرات ومطاردات تكتيكية مشوقة ومليئة بالتحدي والإثارة.',
+    descEn: 'High-stakes tactical action, chases, and suspenseful adventure narratives.',
+    icon: '⚡',
+    accentColor: '#f97316',
+  },
+  {
+    genre: 'crime_mystery',
+    titleAr: 'روايات وقصص غموض وتحقيقات جنائية',
+    titleEn: 'Crime & Forensic Mystery Novels',
+    descAr: 'روايات الغموض والألغاز المغلقة والتحقيقات البوليسية الجنائية الدقيقة.',
+    descEn: 'Locked-room mysteries, forensic investigations, and gripping detective fiction.',
+    icon: '🕵️',
+    accentColor: '#ef4444',
+  },
+  {
+    genre: 'romance',
+    titleAr: 'روايات وقصص رومانسية واجتماعية',
+    titleEn: 'Romantic & Social Novels',
+    descAr: 'روايات وجدانية واجتماعية تعكس المروءة والحب العفيف والعلاقات الإنسانية الواقعية.',
+    descEn: 'Emotional and social fiction reflecting integrity, pure love, and authentic human bonds.',
+    icon: '🌸',
+    accentColor: '#10b981',
+  },
+  {
+    genre: 'sci_fantasy',
+    titleAr: 'روايات وقصص فانتازيا فكرية',
+    titleEn: 'Intellectual Sci-Fantasy Stories',
+    descAr: 'أعمال سردية تجمع بين الخيال الإبداعي والأكشن الفكري والرمزية الإنسانية العميقة.',
+    descEn: 'Creative works blending speculative imagination, intellectual action, and human symbolism.',
+    icon: '✨',
+    accentColor: '#8b5cf6',
+  },
+];
 
 export interface HomeNovelHighlight {
   id: string;
@@ -29,6 +97,240 @@ export interface HomeNovelHighlight {
 
 export const HOME_HIGHLIGHTED_ARTICLES: HomeArticleHighlight[] = [
   {
+    "id": "daily-habits-of-psychologically-successful-people",
+    "title": "العادات اليومية للأشخاص الناجحين نفسياً",
+    "titleEn": "Daily Habits of Psychologically Successful People: Harvard Grant Study, Habit Neurobiology, Wellbeing Pillars, and Daily Rhythm",
+    "summary": "مرجع علمي وتطبيقي في عادات الصحة النفسية والازدهار عبر 12 محوراً و20 مرجعاً: نتائج دراسة هارفارد (Grant Study)، أبعاد كارول ريف الستة، العقد القاعدية واللدونة، العادات الجسدية والعاطفية والمعرفية والاجتماعية والرقمية، هندسة العادات لـ Fogg وClear، وجدول اليوم المتكامل.",
+    "summaryEn": "Evidence-based guide to daily habits of thriving across 12 axes and 20 references: Harvard Grant Study, Ryff’s 6 Well-Being pillars, habit loops, somatic/emotional/cognitive/social/digital habits, Tiny Habits, and full daily schedule.",
+    "readTime": "20 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "20 min read",
+    "publishDate": "2026-11-20",
+    "icon": "☀️",
+    "scientificFramework": "دراسة هارفارد الطولية (Vaillant & Waldinger)، الرفاهية النفسية (Carol Ryff)، نظرية التوسع والبناء (Fredrickson)، وهندسة العادات (Fogg, Clear, Duhigg, Lally)",
+    "scientificFrameworkEn": "Harvard Grant Study (Vaillant & Waldinger), Psychological Well-Being (Ryff), Broaden-and-Build (Fredrickson), and Habit Science (Fogg, Clear, Lally)"
+  },
+  {
+    "id": "how-to-overcome-overthinking-cbt-act-behavioral-guide",
+    "title": "كيف تتخلص من التفكير الزائد؟",
+    "titleEn": "How to Overcome Overthinking? CBT, ACT Cognitive Defusion, DMN Neurobiology, and Practical Behavioral Interventions",
+    "summary": "دليل عملي وعلاجي متكامل للتحرر من التفكير الزائد عبر 10 محاور: الفرق بين الاجترار والقلق وحل المشكلات، شبكة DMN واللوزة الدماغية، وهم السيطرة، أدوات CBT («إذن ماذا؟» والتحول من لماذا إلى كيف)، فك الارتباط وتأريض 5-4-3-2-1 في ACT، وقت القلق، منعكس الغوص بالماء البارد، وخطة اليوم الكامل.",
+    "summaryEn": "Practical CBT + ACT + Behavioral guide to overcoming overthinking across 10 axes: Rumination vs. Worry vs. Problem-Solving, DMN neurobiology, CBT tools, ACT Cognitive Defusion & 5-4-3-2-1 grounding, Worry Time, cold-water dive reflex, and daily routines.",
+    "readTime": "16 دقيقة قراءة علمية",
+    "readTimeEn": "16 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🧠",
+    "scientificFramework": "العلاج المعرفي السلوكي (Aaron Beck CBT)، القبول والالتزام وفك الارتباط (Steven Hayes ACT)، الشبكة الافتراضية DMN (Raichle)، وبحوث الاجترار والقلق (Nolen-Hoeksema & Watkins)",
+    "scientificFrameworkEn": "Cognitive Behavioral Therapy (Beck), ACT Cognitive Defusion (Hayes), Default Mode Network (Raichle), and Rumination Research (Nolen-Hoeksema & Watkins)"
+  },
+  {
+    "id": "importance-of-self-awareness-in-personality-development",
+    "title": "أهمية الوعي الذاتي في تطوير الشخصية",
+    "titleEn": "The Importance of Self-Awareness in Personality Development: Neurobiology, Internal vs. External Insight, and Self-Differentiation",
+    "summary": "دراسة معمّقة لدور الوعي الذاتي في تشكيل الشخصية عبر 12 محوراً: البيولوجيا العصبية (mPFC وACC والجزيرة وDMN)، المرآة الداخلية لدوفال وويكلوند، اكتشاف تاشا يوريتش (الوعي الداخلي والخارجي)، التمايز الذاتي لبوين، مدارس العلاج النفسي، مفارقة الوعي المفرط والاجترار، و7 خطوات عملية.",
+    "summaryEn": "Deep dive into Self-Awareness across 12 axes: neural circuits (mPFC, ACC, Insula, DMN), Duval & Wicklund’s Mirror Theory, Eurich’s Internal vs. External Insight, Bowen’s Differentiation, therapy lenses, rumination vs. insight table, and 7 daily steps.",
+    "readTime": "18 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "18 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🪞",
+    "scientificFramework": "الوعي الداخلي والخارجي (Tasha Eurich)، نظرية الوعي الذاتي (Duval & Wicklund)، التمايز الذاتي (Murray Bowen)، والشبكات العصبية للذات (mPFC, ACC, DMN)",
+    "scientificFrameworkEn": "Internal & External Self-Awareness (Eurich), Objective Self-Awareness (Duval & Wicklund), Differentiation of Self (Bowen), and Neural Self-Networks"
+  },
+  {
+    "id": "how-to-develop-emotional-intelligence-scientific-guide",
+    "title": "كيف تطور ذكاءك العاطفي؟",
+    "titleEn": "How to Develop Your Emotional Intelligence? Scientific Foundations, Emotional Granularity, Interoception, and a 12-Week Training Program",
+    "summary": "دراسة مرجعية نقدية وتطبيقية من 15 محوراً و32 مرجعاً علمياً: تفكيك أسطورة «80% من النجاح»، نموذج الفروع الأربعة لماير وسالوفي، القدرة (MSCEIT) مقابل السمة، الحبيبات العاطفية لباريت، الاستقبال الداخلي والأليكسيثيميا، الضيق التعاطفي مقابل الرحمة، الجانب المظلم، العمل الانفعالي، قواعد العرض الثقافية، وبرنامج 12 أسبوعاً.",
+    "summaryEn": "Critical 15-axis, 32-reference scientific guide to Emotional Intelligence: Mayer & Salovey’s 4 branches, debunking the 80% slogan, MSCEIT vs. Trait EI, Emotional Granularity, Interoception & Alexithymia, Compassion vs. Distress, Emotional Labor, and a 12-week practice curriculum.",
+    "readTime": "22 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "22 min read",
+    "publishDate": "2026-11-20",
+    "icon": "💎",
+    "scientificFramework": "نموذج الفروع الأربعة (Mayer & Salovey / MSCEIT)، الحبيبات العاطفية (Barrett)، الاستقبال الداخلي (Craig)، الرحمة (Tania Singer)، الدقة التعاطفية (Ickes)، واللدونة الانفعالية (Nelis & Kotsou)",
+    "scientificFrameworkEn": "4-Branch Ability EI (Mayer & Salovey), Emotional Granularity (Barrett), Interoception (Craig), Compassion (Singer), Empathic Accuracy (Ickes), and Emotional Plasticity"
+  },
+  {
+    "id": "intelligent-negative-emotion-regulation-goleman-act",
+    "title": "إدارة المشاعر السلبية بذكاء",
+    "titleEn": "Managing Negative Emotions Intelligently: Evolutionary Functions, Amygdala Hijack, ACT, and Emotional Resilience",
+    "summary": "مرجع سريري وعصبي لإدارة المشاعر غير المريحة بذكاء عبر أحد عشر محوراً: الوظائف التطورية للغضب والحزن والقلق والخجل، بيولوجيا اختطاف اللوزة الدماغية، أخطاء الكبت والاجترار، مهارات الذكاء العاطفي لغولمان، العلاج بالقبول والالتزام (ACT)، 10 استراتيجيات عملية، وخطة المرونة العاطفية.",
+    "summaryEn": "Clinical and neurobiological guide across 11 axes: evolutionary duties of anger/sadness/anxiety, Amygdala Hijack, suppression vs. reappraisal, Goleman’s 4 EI skills, ACT flexibility, 10 daily practices, and emotional resilience.",
+    "readTime": "18 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "18 min read",
+    "publishDate": "2026-11-20",
+    "icon": "⚖️",
+    "scientificFramework": "الذكاء العاطفي (Daniel Goleman)، تنظيم الانفعالات (James Gross)، العلاج بالقبول والالتزام (Steven Hayes ACT)، التسمية العاطفية (Lieberman)، وDBT (Linehan)",
+    "scientificFrameworkEn": "Emotional Intelligence (Goleman), Emotion Regulation (Gross), ACT (Hayes), Affect Labeling (Lieberman), and DBT (Linehan)"
+  },
+  {
+    "id": "how-to-manage-stress-and-psychological-pressure",
+    "title": "كيف تتعامل مع التوتر والضغط النفسي؟",
+    "titleEn": "How to Manage Stress and Psychological Pressure? HPA Axis Neurobiology, Cognitive Appraisal, Coping, and Resilience",
+    "summary": "دليل علمي وتطبيقي لفهم التوتر وإدارته عبر اثني عشر محوراً: محور HPA والكورتيزول، آثار التوتر المزمن على القلب والحُصين، مصادر التوتر الخمسة، نموذج التقييم المعرفي للازاروس وفولكمان، 10 استراتيجيات مواجهة صحية، بناء المرونة النفسية، جدول تشخيصي من 7 معايير، وخطة تمارين يومية.",
+    "summaryEn": "Clinical and neurobiological stress guide across 12 axes: HPA axis neurochemistry, chronic effects, 5 stressor categories, Lazarus & Folkman Cognitive Appraisal, 10 evidence-based coping tools, resilience, 7-row diagnostic matching table, and daily routines.",
+    "readTime": "18 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "18 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🌿",
+    "scientificFramework": "نظرية التوتر (Hans Selye)، التقييم المعرفي والمواجهة (Lazarus & Folkman)، البيولوجيا العصبية والحمل الألوستاتي (Sapolsky & McEwen)، وتقليل التوتر باليقظة (Kabat-Zinn)",
+    "scientificFrameworkEn": "Stress Science (Selye), Cognitive Appraisal & Coping (Lazarus & Folkman), Allostatic Load (Sapolsky & McEwen), and MBSR (Kabat-Zinn)"
+  },
+  {
+    "id": "how-to-build-practical-self-confidence-bandura-dweck",
+    "title": "كيف تزيد ثقتك بنفسك بطريقة عملية؟",
+    "titleEn": "How to Build Self-Confidence Practically? Self-Efficacy, Growth Mindset, Neuroplasticity, and Daily Exercises",
+    "summary": "دليل علمي وتطبيقي لبناء الثقة بالنفس الحقيقية عبر أحد عشر محوراً: التفريق بين تقدير الذات والفعالية الذاتية، الدوبامين والمرونة العصبية، الجذور الطفولية، مصادر باندورا الأربعة، عقلية النمو لكارول دويك، 8 خطوات يومية عملية، الأخطاء الشائعة، تحديات السوشل ميديا، وخمسة تمارين يومية.",
+    "summaryEn": "Evidence-based guide to real self-confidence across 11 axes: Self-Esteem vs. Self-Efficacy, dopamine neuroplasticity, attachment roots, Bandura’s 4 sources, Dweck’s Growth Mindset, 8 daily steps, common pitfalls, digital comparison traps, and 5 daily exercises.",
+    "readTime": "17 دقيقة قراءة علمية",
+    "readTimeEn": "17 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🌟",
+    "scientificFramework": "نظرية الفعالية الذاتية (Bandura)، عقلية النمو (Dweck)، التعاطف الذاتي (Neff)، العلاج المعرفي والتفاؤل المكتسب (Beck & Seligman)، ونظرية التقرير الذاتي (Deci & Ryan)",
+    "scientificFrameworkEn": "Self-Efficacy Theory (Bandura), Growth Mindset (Dweck), Self-Compassion (Neff), Cognitive Therapy & Learned Optimism, and Self-Determination Theory"
+  },
+  {
+    "id": "rebuilding-trust-after-infidelity-betrayal-trauma",
+    "title": "كيف تستعيد الثقة بعد الخيانة أو الكذب؟",
+    "titleEn": "How to Rebuild Trust After Infidelity or Lying? Trauma Neurobiology, Healing Phases, Forgiveness, and Diagnostic Criteria",
+    "summary": "تحليل سريري وعصبي معمق لصدمة الخيانة والكذب عبر اثني عشر محوراً: أنواع الخيانة الستة، بيولوجيا متلازمة ما بعد الخيانة، مراحل الشفاء الثلاث، مسؤوليات الخائن وإرشادات المخادَع، خطوات بناء الثقة، حقيقة التسامح، معايير الرحيل بكرامة، وجدول تشخيصي من 10 معايير.",
+    "summaryEn": "Clinical and neurobiological guide to infidelity trauma recovery across 12 axes: six forms of betrayal, PISD brain response, Crisis/Meaning/Vision stages, accountability, forgiveness, dignified departure, and a 10-point diagnostic table.",
+    "readTime": "18 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "18 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🩹",
+    "scientificFramework": "بيولوجيا صدمة الخيانة (van der Kolk, Coan)، مراحل التعافي الثلاث (Spring & Gottman)، العلاج المتمركز حول العواطف (Sue Johnson)، وعلم التسامح السريري (Worthington)",
+    "scientificFrameworkEn": "Betrayal Trauma Neurobiology (van der Kolk, Coan), 3-Stage Recovery (Spring & Gottman), EFT (Johnson), and Forgiveness Science (Worthington)"
+  },
+  {
+    "id": "effective-communication-skills-between-partners",
+    "title": "مهارات التواصل الفعّال بين الشريكين",
+    "titleEn": "Effective Communication Skills Between Partners: Polyvagal Safety, Active Listening, Repair, and Digital Boundaries",
+    "summary": "مرجع سريري وتطبيقي متكامل في سيكولوجيا وبيولوجيا التواصل الزوجي عبر أحد عشر محوراً: نظرية العصب المبهم لبورغيس، تفكيك وهم الشفافية، الاستماع التعاطفي، رسائل «أنا» والبداية اللطيفة، لغة الجسد، الأحلام الكامنة، قواعد التواصل الرقمي، محاولات الإصلاح، الحميمية، وثقافة التقدير 20:1.",
+    "summaryEn": "A clinical and neurobiological guide to couple communication spanning 11 axes: Polyvagal safety, Illusion of Transparency, empathic listening, I-Statements & Soft Start-up, non-verbal cues, Hidden Dreams, digital boundaries, repair attempts, intimacy dialogue, and 20:1 appreciation.",
+    "readTime": "17 دقيقة قراءة علمية",
+    "readTimeEn": "17 min read",
+    "publishDate": "2026-11-20",
+    "icon": "💬",
+    "scientificFramework": "نظرية العصب المبهم المتعدد (Porges)، الاستماع التعاطفي (Rogers)، رسائل أنا (Gordon)، مختبر غوتمان (Gottman)، التواصل غير اللفظي (Mehrabian)، والتأقلم الثنائي (Randall & Bodenmann)",
+    "scientificFrameworkEn": "Polyvagal Theory (Porges), Empathic Listening (Rogers), I-Statements (Gordon), Gottman Lab, Nonverbal Communication (Mehrabian), and Dyadic Coping"
+  },
+  {
+    "id": "jealousy-in-relationships-normal-vs-pathological-neurobiology",
+    "title": "الغيرة في العلاقات: متى تكون طبيعية ومتى تصبح مشكلة؟",
+    "titleEn": "Jealousy in Relationships: Normal vs. Pathological, Neurobiology, Digital Challenges, and Clinical Recovery",
+    "summary": "تحليل سريري وعصبي وتطوري للغيرة يفكك أسطورة «الغيرة برهان الحب»، مبيّناً خرائط الدماغ بالرنين الوظيفي، وعلامات الغيرة الطبيعية الست مقابل الغيرة المرضية والوسواسية والرقمية، مع جدول تشخيصي من 10 معايير وخطة تعافٍ شاملة.",
+    "summaryEn": "Clinical, evolutionary, and fMRI breakdown distinguishing healthy jealousy from pathological, obsessive, and social-media jealousy with a 10-point diagnostic table and recovery plan.",
+    "readTime": "19 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "19 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🧿",
+    "scientificFramework": "علم النفس التطوري (Buss)، البيولوجيا العصبية للغيرة والألم الاجتماعي (Takahashi & Zayas fMRI)، نظرية التعلق (Bowlby)، والغيرة الرقمية (Muise et al.)",
+    "scientificFrameworkEn": "Evolutionary Psychology (Buss), fMRI Social Pain Neurobiology (Takahashi & Zayas), Attachment Theory, and Digital Jealousy (Muise et al.)"
+  },
+  {
+    "id": "how-attachment-style-shapes-partner-selection",
+    "title": "كيف يؤثر نمط التعلق على اختيار الشريك؟",
+    "titleEn": "How Does Your Attachment Style Shape Partner Selection? Imago, Neurobiology, and Earned Security",
+    "summary": "تشريح علمي للخريطة اللاشعورية التي توجه الانجذاب العاطفي عبر نظرية التعلق (بولبي وأينسورث وهازان وشيفر)، ونظرية «الإيماجو» لهارفيل هندريكس، وديناميكيات اختيار الأنماط الأربعة، وفخ الكيمياء الدوبامينية، وصولاً إلى بناء «الأمان المكتسب» والاختيار الواعي.",
+    "summaryEn": "Explores the unconscious attachment map shaping partner attraction via Attachment Theory, Hendrix’s Imago Theory, dopamine chemistry traps, and pathways to Earned Security.",
+    "readTime": "19 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "19 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🧭",
+    "scientificFramework": "نظرية التعلق للبالغين (Bowlby, Ainsworth, Hazan & Shaver)، نظرية الإيماجو (Hendrix)، العلاج المتمركز حول العواطف (EFT)، ومفهوم الأمان المكتسب",
+    "scientificFrameworkEn": "Adult Attachment Theory (Bowlby, Ainsworth, Hazan & Shaver), Imago Theory (Hendrix), EFT (Sue Johnson), and Earned Security"
+  },
+  {
+    "id": "true-love-vs-emotional-attachment-neurobiology",
+    "title": "الفرق بين الحب الحقيقي والتعلق العاطفي",
+    "titleEn": "True Love vs. Emotional Attachment: Clinical Criteria, Neurobiology, and Differentiation",
+    "summary": "تمييز سريري وعصبي دقيق بين الحب الناضج والتعلق العاطفي أو «الهيام» عبر 12 محوراً وجدول تشخيصي من 10 معايير: كيمياء الدوبامين مقابل الأوكسيتوسين، التمايز الذاتي مقابل الانصهار، ونظام الرعاية مقابل التهديد.",
+    "summaryEn": "Clinically distinguishes mature love from codependent attachment and limerence across 12 pillars, brain chemistry, Bowenian differentiation, and a 10-point diagnostic table.",
+    "readTime": "18 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "18 min read",
+    "publishDate": "2026-11-20",
+    "icon": "💎",
+    "scientificFramework": "النظرية المثلثية للحب (Sternberg)، الهيام (Tennov)، التمايز الذاتي (Bowen)، ظاهرة مايكل أنجلو (Drigotas)، والبيولوجيا العصبية للحب (Fisher)",
+    "scientificFrameworkEn": "Triangular Theory of Love (Sternberg), Limerence (Tennov), Self-Differentiation (Bowen), and Neurobiology of Love (Fisher)"
+  },
+  {
+    "id": "healthy-marital-conflict-management-gottman-biology",
+    "title": "كيف تتعامل مع الخلافات الزوجية بطريقة صحية؟",
+    "titleEn": "How to Handle Marital Conflicts Healthily? Neurobiology, Antidotes, and Post-Conflict Repair",
+    "summary": "دليل علمي لإدارة الخلافات الزوجية عبر قاعدة الـ 20 دقيقة لتهدئة اختطاف اللوزة الدماغية، وترياقات فرسان نهاية العالم الأربعة، وفن البداية اللطيفة، ومحاولات الإصلاح، والتحقق العاطفي، ومحادثة ما بعد العاصفة.",
+    "summaryEn": "Evidence-based guide to conflict regulation: 20-minute amygdala cool-downs, Four Horsemen antidotes, Soft Start-ups, Repair Attempts, Validation, and Aftermath debriefs.",
+    "readTime": "14 دقيقة قراءة علمية",
+    "readTimeEn": "14 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🕊️",
+    "scientificFramework": "بيولوجيا الشجار (Goleman)، فرسان نهاية العالم الأربعة وترياقاتهم وقاعدة الـ 20 دقيقة (Gottman & Levenson)، والتحقق العاطفي (EFT)",
+    "scientificFrameworkEn": "Amygdala Hijack (Goleman), Four Horsemen & 20-Min Rule (Gottman & Levenson), and EFT Validation"
+  },
+  {
+    "id": "marital-compatibility-key-influencing-factors",
+    "title": "التوافق بين الزوجين: أهم العوامل المؤثرة",
+    "titleEn": "Marital Compatibility: The Key Psychological, Attachment, and Behavioral Factors",
+    "summary": "تفكيك أسطورة التطابق المثالي لصالح التكامل الوظيفي، عبر تحليل السمات الخمس الكبرى (Big Five)، وفخ القلق-التجنب، والتوافق القيمي، وإدارة الصراع، وعقلية النمو الجنسي، وتأثير الأوهام الإيجابية.",
+    "summaryEn": "Debunks the sameness myth in favor of functional complementarity across the Big Five, attachment cycles, shared values, conflict protocols, and positive illusions.",
+    "readTime": "12 دقيقة قراءة علمية",
+    "readTimeEn": "12 min read",
+    "publishDate": "2026-11-20",
+    "icon": "⚖️",
+    "scientificFramework": "نموذج السمات الخمس الكبرى (Big Five)، نظرية التعلق (Hazan & Shaver)، العلاج المتمركز حول العواطف (EFT)، وعقلية النمو الجنسي",
+    "scientificFrameworkEn": "Big Five Model, Adult Attachment Theory, EFT, Sexual Growth Mindset, and Positive Illusions"
+  },
+  {
+    "id": "important-questions-to-ask-before-marriage",
+    "title": "أسئلة مهمة يجب طرحها قبل الزواج",
+    "titleEn": "Essential Premarital Questions: A Research-Backed Dialogue Map Before Marriage",
+    "summary": "خريطة حوارية من 16 محوراً لما قبل الزواج مستندة إلى نموذج «الهشاشة–الضغط–التكيف»، تغطي الدافع والالتزام، القيم، الأسرة الأصلية، الصحة النفسية، المال والعقود الضمنية، الحمل الذهني، الحميمية، والعالم الرقمي.",
+    "summaryEn": "A 16-domain premarital dialogue map grounded in the Vulnerability–Stress–Adaptation model covering values, finances, mental load, digital boundaries, and dyadic coping.",
+    "readTime": "18 دقيقة قراءة علمية وموسعة",
+    "readTimeEn": "18 min read",
+    "publishDate": "2026-11-20",
+    "icon": "💍",
+    "scientificFramework": "نموذج الهشاشة–الضغط–التكيف (Karney & Bradbury)، الانزلاق مقابل القرار (Stanley & Markman)، ودراسة 43 بحثاً طولياً (Joel et al., 2020)",
+    "scientificFrameworkEn": "Vulnerability–Stress–Adaptation Model (Karney & Bradbury), Sliding vs. Deciding, and Joel et al. (2020)"
+  },
+  {
+    "id": "building-successful-long-term-romantic-relationship",
+    "title": "كيف تبني علاقة عاطفية ناجحة طويلة الأمد؟",
+    "titleEn": "How to Build a Successful Long-Term Romantic Relationship? Neurobiology, Trust Engineering, and Shared Meaning",
+    "summary": "دليل تطبيقي من 8 محاور لبناء علاقة تصمد عبر العقود: الانتقال من الهيام إلى التعلق بالأوكسيتوسين، البنك العاطفي ونسبة 5:1، التمايز الذاتي، الحوار حول المشاكل الأبدية، طقوس الاتصال، التوسع الذاتي، والمرونة في الأزمات.",
+    "summaryEn": "Eight-pillar guide to enduring relationships: limerence-to-attachment shift, 5:1 Emotional Bank Account, differentiation, shared rituals, and self-expansion novelty.",
+    "readTime": "12 دقيقة قراءة علمية",
+    "readTimeEn": "12 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🏛️",
+    "scientificFramework": "البيولوجيا العصبية للحب (Helen Fisher)، بيت العلاقة الصوتي ونسبة 5:1 (Gottman)، التمايز الذاتي (Bowen & Perel)، والتوسع الذاتي (Aron)",
+    "scientificFrameworkEn": "Fisher Neurobiology, Gottman 5:1 Sound Relationship House, Bowen & Perel Differentiation, and Aron Self-Expansion"
+  },
+  {
+    "id": "healthy-love-signs-neuroception-attachment-gottman",
+    "title": "علامات الحب الصحي في العلاقات",
+    "titleEn": "Signs of Healthy Love in Relationships: Neuroception, Attachment Security, and Clinical Pillars",
+    "summary": "تفكيك سريري وعصبي لأركان الحب الصحي بوصفه مرسىً آمناً لا عاصفة استنزاف: الأمان العصبي والإدراك العصبي عند بورجيس، التمايز الذاتي والتعلق الآمن، مناشدات الاتصال عند غوتمان، ظاهرة مايكل أنجلو، والمساءلة الصادقة.",
+    "summaryEn": "Clinical and neurobiological pillars of healthy love: Porges Neuroception, Bowen/Bowlby secure differentiation, Gottman bids, Michelangelo phenomenon, and transparent accountability.",
+    "readTime": "10 دقائق قراءة علمية",
+    "readTimeEn": "10 min read",
+    "publishDate": "2026-11-20",
+    "icon": "⚓",
+    "scientificFramework": "نظرية الأعصاب المتعددة والإدراك العصبي (Porges)، التمايز الذاتي (Bowen & Perel)، التعلق الآمن (Bowlby)، وظاهرة مايكل أنجلو",
+    "scientificFrameworkEn": "Polyvagal Neuroception (Porges), Self-Differentiation, Secure Attachment (Bowlby), and Michelangelo Phenomenon"
+  },
+  {
+    "id": "analytical-personality-how-they-think-neuro-family-dynamics",
+    "title": "كيف يفكر أصحاب الشخصية التحليلية؟ تشريح العقل المنطقي، الديناميكيات العصبية، والتأثير على النظم الأسرية",
+    "titleEn": "How Do Analytical Personalities Think? Dissecting the Logical Mind, Neurobiology, and Impact on Family Systems",
+    "summary": "تشريح علمي وسريري لبنية العقل التحليلي وفق نظرية العمليات المزدوجة (دانيال كانيمان)، والاستقلال عن المجال (ويتكين)، والوظائف المعرفية عند كارل يونغ (Te/Ti)، مع تحليل الأسس العصبية (DLPFC والشبكة التنفيذية والدوبامين)، وأدوات القياس المقننة (Watson-Glaser, NEO-PI-R, CRT, MBTI)، ودراسة حالة زوجية موسعة من 12 جلسة («طارق» و«نور»).",
+    "summaryEn": "A clinical and neurocognitive dissection of the Analytical Personality through Kahneman’s Dual-Process Theory, Witkin’s Field Independence, Jungian cognitive functions (Te/Ti), fMRI findings (DLPFC, Central Executive Network, Dopamine), validated scales (Watson-Glaser, NEO-PI-R, CRT, MBTI), and a 12-session couple therapy case study (\"Tariq\" and \"Noor\").",
+    "readTime": "12 دقيقة قراءة علمية",
+    "readTimeEn": "12 min read",
+    "publishDate": "2026-11-20",
+    "icon": "🧩",
+    "scientificFramework": "نظرية العمليات المزدوجة (Kahneman System 1/2)، الاستقلال عن المجال (Witkin)، وظائف يونغ (Te/Ti)، مقاييس (Watson-Glaser, NEO-PI-R, CRT)، ونظرية النظم الأسرية",
+    "scientificFrameworkEn": "Dual-Process Theory (Kahneman), Field Independence (Witkin), Jungian Functions (Te/Ti), Watson-Glaser / NEO-PI-R / CRT, and Family Systems Theory"
+  },
+  {
     "id": "childhood-deep-impact-adult-personality-integrative-arab-western-study",
     "title": "التأثير العميق للطفولة على تشكيل الشخصية في مرحلة البلوغ: مقاربة علمية متكاملة بين النظريات النفسية، الأسس العصبية، والخصوصية الثقافية العربية",
     "titleEn": "The Profound Impact of Childhood on Adult Personality Formation: An Integrative Scientific Approach Across Psychological Theories, Neurobiology, and Arab Cultural Specificity",
@@ -36,6 +338,7 @@ export const HOME_HIGHLIGHTED_ARTICLES: HomeArticleHighlight[] = [
     "summaryEn": "An integrative scientific and clinical study examining how childhood serves as the architectural foundation of adult personality through Gene-Environment Interaction and Epigenetics, Erikson’s psychosocial stages, Bowlby & Ainsworth’s Attachment Theory, Jeffrey Young’s 18 Early Maladaptive Schemas, toxic stress neurobiology (HPA axis, Amygdala hypertrophy, Hippocampal atrophy, Prefrontal Cortex), psychometric tools (ACEs, YSQ, AAI, Big Five NEO-PI-R), Arab vs. Western cultural dynamics, and a 20-session clinical case study (\"Tariq\", 34).",
     "readTime": "24 دقيقة قراءة علمية وسريرية",
     "readTimeEn": "24 min read",
+    "publishDate": "2026-11-17",
     "icon": "🌳",
     "scientificFramework": "التفاعل الجيني-البيئي والوراثة اللاجينية (Epigenetics)، مراحل إريكسون، نظرية التعلق (Bowlby, Ainsworth, Hazan & Shaver)، العلاج بالمخططات (Jeffrey Young YSQ)، واستبيان صدمات الطفولة (ACEs) ومقابلة التعلق للبالغين (AAI)",
     "scientificFrameworkEn": "Gene-Environment Interaction & Epigenetics, Erikson Psychosocial Stages, Attachment Theory (Bowlby, Ainsworth, AAI), Schema Therapy (Young YSQ), and ACEs Study"

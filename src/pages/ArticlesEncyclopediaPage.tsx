@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
@@ -11,6 +11,8 @@ import {
   Check,
   Award,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   GraduationCap,
   Stethoscope,
   FileText,
@@ -21,6 +23,10 @@ import {
   Sun,
   Moon,
   Maximize2,
+  SlidersHorizontal,
+  RotateCcw,
+  Hash,
+  ArrowUpDown,
 } from 'lucide-react';
 import {
   Article,
@@ -54,6 +60,16 @@ import {
   ResearchArticleModalProps,
 } from '../components/ResearchArticleModal';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  ArticleCategoryFilter,
+  ArticleReadTimeFilter,
+  ArticleKeywordFilter,
+  ArticleSortOption,
+  READ_TIME_FILTER_OPTIONS,
+  ARTICLE_KEYWORD_OPTIONS,
+  filterAndSortNarrativeArticles,
+  filterAndSortAcademicPapers,
+} from '../utils/articleFilters';
 
 export { ResearchArticleModal };
 export type { ResearchArticleModalProps };
@@ -64,7 +80,7 @@ interface Props {
 }
 
 type ContentTrack = 'narrative' | 'academic';
-type FilterCategory = 'all' | 'relationships' | 'self_growth' | 'applied_psychology' | 'emotional_iq';
+type FilterCategory = ArticleCategoryFilter;
 
 export const ArticlesEncyclopediaPage: React.FC<Props> = ({
   onBackToHome,
@@ -76,6 +92,10 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
 
   const [activeTrack, setActiveTrack] = useState<ContentTrack>('narrative');
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
+  const [selectedReadTime, setSelectedReadTime] = useState<ArticleReadTimeFilter>('all');
+  const [selectedKeyword, setSelectedKeyword] = useState<ArticleKeywordFilter>('all');
+  const [sortBy, setSortBy] = useState<ArticleSortOption>('newest');
+  const [mobileFiltersExpanded, setMobileFiltersExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeNarrative, setActiveNarrative] = useState<Article | null>(null);
   const [activeAcademic, setActiveAcademic] = useState<AcademicPaper | null>(null);
@@ -89,9 +109,29 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
   const [readerViewMode, setReaderViewMode] = useState<ContinuousViewMode>('segmented_and_continuous');
 
   useEffect(() => {
+    const validCategories: FilterCategory[] = [
+      'all',
+      'relationships',
+      'self_growth',
+      'applied_psychology',
+      'emotional_iq',
+    ];
+
     const checkDeepLinkedArticle = () => {
       try {
-        const hashParts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+        const rawHash = window.location.hash.replace(/^#\/?/, '');
+        const [hashPath, queryStr] = rawHash.split('?');
+        const hashParts = hashPath.split('/').filter(Boolean);
+        const searchParams = new URLSearchParams(queryStr || '');
+        const queryCat = searchParams.get('category') as FilterCategory | null;
+        const storedCat = sessionStorage.getItem('mirat_open_article_category') as FilterCategory | null;
+        const targetCategory = queryCat || storedCat;
+
+        if (targetCategory && validCategories.includes(targetCategory)) {
+          sessionStorage.removeItem('mirat_open_article_category');
+          setSelectedCategory(targetCategory);
+        }
+
         const hashArticleId =
           (hashParts[0] === 'articles' || hashParts[0] === 'research') && hashParts[1]
             ? decodeURIComponent(hashParts[1])
@@ -99,6 +139,10 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
         const targetId = hashArticleId || sessionStorage.getItem('mirat_open_article_id');
         if (targetId) {
           sessionStorage.removeItem('mirat_open_article_id');
+          if (validCategories.includes(targetId as FilterCategory)) {
+            setSelectedCategory(targetId as FilterCategory);
+            return;
+          }
           const foundNarrative = ARTICLES_CATALOG.find((a) => a.id === targetId);
           if (foundNarrative) {
             setActiveTrack('narrative');
@@ -173,33 +217,141 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
     { key: 'emotional_iq', labelAr: 'الذكاء العاطفي والتواصل', labelEn: 'Emotional Intelligence (EQ)', icon: '🎯' },
   ];
 
-  const q = searchQuery.trim().toLowerCase();
+  const filteredNarrativeArticles = useMemo(
+    () =>
+      filterAndSortNarrativeArticles(ARTICLES_CATALOG, {
+        searchQuery,
+        selectedCategory,
+        selectedReadTime,
+        selectedKeyword,
+        sortBy,
+      }),
+    [searchQuery, selectedCategory, selectedReadTime, selectedKeyword, sortBy]
+  );
 
-  const filteredNarrativeArticles = ARTICLES_CATALOG.filter((art) => {
-    const matchesCategory = selectedCategory === 'all' || art.category === selectedCategory;
-    const matchesQuery =
-      !q ||
-      art.title.toLowerCase().includes(q) ||
-      art.titleEn.toLowerCase().includes(q) ||
-      art.summary.toLowerCase().includes(q) ||
-      art.summaryEn.toLowerCase().includes(q) ||
-      art.scientificFramework.toLowerCase().includes(q) ||
-      art.scientificFrameworkEn.toLowerCase().includes(q);
-    return matchesCategory && matchesQuery;
-  });
+  const filteredAcademicPapers = useMemo(
+    () =>
+      filterAndSortAcademicPapers(ACADEMIC_PAPERS_CATALOG, {
+        searchQuery,
+        selectedCategory,
+        selectedReadTime,
+        selectedKeyword,
+        sortBy,
+      }),
+    [searchQuery, selectedCategory, selectedReadTime, selectedKeyword, sortBy]
+  );
 
-  const filteredAcademicPapers = ACADEMIC_PAPERS_CATALOG.filter((paper) => {
-    const matchesCategory = selectedCategory === 'all' || paper.category === selectedCategory;
-    const matchesQuery =
-      !q ||
-      paper.titleAr.toLowerCase().includes(q) ||
-      paper.titleEn.toLowerCase().includes(q) ||
-      paper.abstractAr.toLowerCase().includes(q) ||
-      paper.abstractEn.toLowerCase().includes(q) ||
-      paper.keywordsAr.some((k) => k.toLowerCase().includes(q)) ||
-      paper.keywordsEn.some((k) => k.toLowerCase().includes(q));
-    return matchesCategory && matchesQuery;
-  });
+  // Deterministic faceted counts reflecting the active track
+  const categoryCounts = useMemo(() => {
+    const counts: Record<FilterCategory, number> = {
+      all: 0,
+      relationships: 0,
+      applied_psychology: 0,
+      self_growth: 0,
+      emotional_iq: 0,
+    };
+    const keys: FilterCategory[] = [
+      'all',
+      'relationships',
+      'applied_psychology',
+      'self_growth',
+      'emotional_iq',
+    ];
+    keys.forEach((cat) => {
+      counts[cat] =
+        activeTrack === 'narrative'
+          ? filterAndSortNarrativeArticles(ARTICLES_CATALOG, {
+              searchQuery,
+              selectedCategory: cat,
+              selectedReadTime,
+              selectedKeyword,
+              sortBy,
+            }).length
+          : filterAndSortAcademicPapers(ACADEMIC_PAPERS_CATALOG, {
+              searchQuery,
+              selectedCategory: cat,
+              selectedReadTime,
+              selectedKeyword,
+              sortBy,
+            }).length;
+    });
+    return counts;
+  }, [activeTrack, searchQuery, selectedReadTime, selectedKeyword, sortBy]);
+
+  const readTimeCounts = useMemo(() => {
+    const counts: Record<ArticleReadTimeFilter, number> = {
+      all: 0,
+      quick: 0,
+      medium: 0,
+      deep: 0,
+    };
+    READ_TIME_FILTER_OPTIONS.forEach((opt) => {
+      counts[opt.id] =
+        activeTrack === 'narrative'
+          ? filterAndSortNarrativeArticles(ARTICLES_CATALOG, {
+              searchQuery,
+              selectedCategory,
+              selectedReadTime: opt.id,
+              selectedKeyword,
+              sortBy,
+            }).length
+          : filterAndSortAcademicPapers(ACADEMIC_PAPERS_CATALOG, {
+              searchQuery,
+              selectedCategory,
+              selectedReadTime: opt.id,
+              selectedKeyword,
+              sortBy,
+            }).length;
+    });
+    return counts;
+  }, [activeTrack, searchQuery, selectedCategory, selectedKeyword, sortBy]);
+
+  const keywordCounts = useMemo(() => {
+    const counts = {} as Record<ArticleKeywordFilter, number>;
+    ARTICLE_KEYWORD_OPTIONS.forEach((opt) => {
+      counts[opt.id] =
+        activeTrack === 'narrative'
+          ? filterAndSortNarrativeArticles(ARTICLES_CATALOG, {
+              searchQuery,
+              selectedCategory,
+              selectedReadTime,
+              selectedKeyword: opt.id,
+              sortBy,
+            }).length
+          : filterAndSortAcademicPapers(ACADEMIC_PAPERS_CATALOG, {
+              searchQuery,
+              selectedCategory,
+              selectedReadTime,
+              selectedKeyword: opt.id,
+              sortBy,
+            }).length;
+    });
+    return counts;
+  }, [activeTrack, searchQuery, selectedCategory, selectedReadTime, sortBy]);
+
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    selectedCategory !== 'all' ||
+    selectedReadTime !== 'all' ||
+    selectedKeyword !== 'all';
+
+  const activeSecondaryFiltersCount =
+    (selectedReadTime !== 'all' ? 1 : 0) + (selectedKeyword !== 'all' ? 1 : 0);
+
+  const activeTrackTotal =
+    activeTrack === 'narrative' ? ARTICLES_CATALOG.length : ACADEMIC_PAPERS_CATALOG.length;
+  const activeTrackFilteredCount =
+    activeTrack === 'narrative'
+      ? filteredNarrativeArticles.length
+      : filteredAcademicPapers.length;
+
+  const resetAllFilters = () => {
+    soundManager.playTap();
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedReadTime('all');
+    setSelectedKeyword('all');
+  };
 
   const handleBackToList = () => {
     soundManager.playTap();
@@ -1008,36 +1160,94 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
             exit={{ opacity: 0 }}
             className="space-y-6"
           >
-            {/* Search & Category Bar */}
-            <div className="space-y-3">
-              <div className="relative">
-                <Search
-                  className={`w-4 h-4 text-gray-400 absolute top-3.5 ${
-                    isRTL ? 'right-4' : 'left-4'
-                  }`}
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    language === 'ar'
-                      ? 'ابحث في المقالات والأبحاث (غوتمان، التوافق، الانهيار النرجسي، الذكاء الاصطناعي، الاحتراق، تيك توك)...'
-                      : 'Search articles & research papers (Gottman, compatibility, narcissistic collapse, AI dependency, burnout)...'
-                  }
-                  className={`w-full ${
-                    isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'
-                  } py-3.5 rounded-2xl border text-sm focus:outline-none transition ${
-                    isLight
-                      ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
-                      : 'bg-white/5 border-white/15 text-white placeholder-gray-400 focus:border-purple-400'
-                  }`}
-                />
+            {/* Structured Filter & Sort Bar */}
+            <div
+              className={`p-4 sm:p-5 rounded-3xl border space-y-3.5 shadow-sm ${
+                isLight
+                  ? 'bg-white border-slate-200'
+                  : 'bg-slate-900/50 border-white/10'
+              }`}
+            >
+              {/* Search & Sort Row */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search
+                    className={`w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
+                      isRTL ? 'right-4' : 'left-4'
+                    }`}
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={
+                      language === 'ar'
+                        ? 'ابحث في المقالات والأبحاث (غوتمان، التوافق، الانهيار النرجسي، الذكاء الاصطناعي، الاحتراق، تيك توك)...'
+                        : 'Search articles & research papers (Gottman, compatibility, narcissistic collapse, AI dependency, burnout)...'
+                    }
+                    className={`w-full ${
+                      isRTL ? 'pr-11 pl-9' : 'pl-11 pr-9'
+                    } py-3 rounded-2xl border text-sm focus:outline-none transition ${
+                      isLight
+                        ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-600'
+                        : 'bg-white/5 border-white/15 text-white placeholder-gray-400 focus:border-purple-400'
+                    }`}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label={language === 'ar' ? 'مسح البحث' : 'Clear search'}
+                      className={`absolute top-1/2 -translate-y-1/2 ${
+                        isRTL ? 'left-3' : 'right-3'
+                      } text-xs text-slate-400 hover:text-slate-200 cursor-pointer`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Deterministic Sort Selector */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className={`inline-flex items-center gap-1 text-xs font-bold ${
+                      isLight ? 'text-slate-600' : 'text-gray-300'
+                    }`}
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-indigo-500" />
+                    <span className="hidden sm:inline">
+                      {language === 'ar' ? 'الترتيب:' : 'Sort:'}
+                    </span>
+                  </span>
+                  <select
+                    aria-label={language === 'ar' ? 'ترتيب المقالات والأبحاث' : 'Sort articles and papers'}
+                    title={language === 'ar' ? 'ترتيب المقالات والأبحاث' : 'Sort articles and papers'}
+                    value={sortBy}
+                    onChange={(e) => {
+                      soundManager.playTap();
+                      setSortBy(e.target.value as ArticleSortOption);
+                    }}
+                    className={`px-3.5 py-3 rounded-2xl border text-xs font-bold focus:outline-none cursor-pointer ${
+                      isLight
+                        ? 'bg-slate-50 border-slate-300 text-slate-800 focus:border-indigo-600'
+                        : 'bg-slate-950/90 border-white/15 text-white focus:border-purple-400'
+                    }`}
+                  >
+                    <option value="newest">
+                      {language === 'ar' ? 'الأحدث نشراً' : 'Newest First'}
+                    </option>
+                    <option value="most_read">
+                      {language === 'ar' ? 'الأكثر قراءة وتميزاً' : 'Most Read & Featured'}
+                    </option>
+                  </select>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {categories.map((cat) => {
                   const isSelected = selectedCategory === cat.key;
+                  const count = categoryCounts[cat.key];
                   return (
                     <button
                       key={cat.key}
@@ -1046,20 +1256,211 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                         soundManager.playTap();
                         setSelectedCategory(cat.key);
                       }}
-                      className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                      className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
                         isSelected
                           ? 'bg-gradient-to-r from-purple-600 to-rose-600 text-white shadow-md'
                           : isLight
-                          ? 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                          ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                           : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10'
                       }`}
                     >
                       <span>{cat.icon}</span>
                       <span>{language === 'ar' ? cat.labelAr : cat.labelEn}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : isLight
+                            ? 'bg-slate-200/80 text-slate-600'
+                            : 'bg-white/10 text-gray-300'
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
               </div>
+
+              {/* Mobile Collapsible Trigger for Reading Time & Keywords */}
+              <div
+                className={`pt-3 border-t flex items-center justify-between gap-2 md:hidden ${
+                  isLight ? 'border-slate-200' : 'border-white/10'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundManager.playTap();
+                    setMobileFiltersExpanded((prev) => !prev);
+                  }}
+                  aria-expanded={mobileFiltersExpanded}
+                  className={`inline-flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl border transition cursor-pointer ${
+                    activeSecondaryFiltersCount > 0
+                      ? isLight
+                        ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                        : 'bg-indigo-500/20 border-indigo-400/40 text-cyan-200'
+                      : isLight
+                      ? 'bg-slate-50 border-slate-200 text-slate-700'
+                      : 'bg-white/5 border-white/10 text-gray-200'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>
+                    {language === 'ar' ? 'تصفية حسب مدة القراءة والوسوم' : 'Reading Time & Keywords'}
+                  </span>
+                  {activeSecondaryFiltersCount > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-black">
+                      {activeSecondaryFiltersCount}
+                    </span>
+                  )}
+                  {mobileFiltersExpanded ? (
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
+                </button>
+
+                <span className={`text-xs font-bold ${isLight ? 'text-slate-600' : 'text-gray-300'}`}>
+                  {language === 'ar'
+                    ? `${activeTrackFilteredCount} نتيجة`
+                    : `${activeTrackFilteredCount} results`}
+                </span>
+              </div>
+
+              {/* Secondary Filters: Reading Time & Keywords (Always visible on Desktop, collapsible on Mobile) */}
+              <div
+                className={`${
+                  mobileFiltersExpanded ? 'grid' : 'hidden md:grid'
+                } grid-cols-1 lg:grid-cols-12 gap-4 pt-3 border-t ${
+                  isLight ? 'border-slate-200' : 'border-white/10'
+                }`}
+              >
+                {/* Reading Time Filter */}
+                <div className="lg:col-span-5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold">
+                    <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span className={isLight ? 'text-slate-700' : 'text-gray-200'}>
+                      {language === 'ar' ? 'مدة القراءة:' : 'Reading Time:'}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {READ_TIME_FILTER_OPTIONS.map((opt) => {
+                      const isSelected = selectedReadTime === opt.id;
+                      const count = readTimeCounts[opt.id];
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            soundManager.playTap();
+                            setSelectedReadTime(opt.id);
+                          }}
+                          className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold border transition cursor-pointer whitespace-nowrap ${
+                            isSelected
+                              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm font-bold'
+                              : isLight
+                              ? 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+                              : 'bg-white/5 text-gray-300 hover:text-white hover:border-white/25 border-white/10'
+                          }`}
+                        >
+                          <span>{language === 'ar' ? opt.labelAr : opt.labelEn}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                              isSelected
+                                ? 'bg-slate-950/15 text-slate-950'
+                                : isLight
+                                ? 'bg-slate-200/80 text-slate-600'
+                                : 'bg-white/10 text-gray-300'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Keywords / Tags Filter */}
+                <div className="lg:col-span-7 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold">
+                    <Hash className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                    <span className={isLight ? 'text-slate-700' : 'text-gray-200'}>
+                      {language === 'ar' ? 'الكلمات المفتاحية والوسوم:' : 'Keywords & Tags:'}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {ARTICLE_KEYWORD_OPTIONS.map((opt) => {
+                      const isSelected = selectedKeyword === opt.id;
+                      const count = keywordCounts[opt.id];
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            soundManager.playTap();
+                            setSelectedKeyword(opt.id);
+                          }}
+                          className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold border transition cursor-pointer whitespace-nowrap ${
+                            isSelected
+                              ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm font-bold'
+                              : isLight
+                              ? 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+                              : 'bg-white/5 text-gray-300 hover:text-white hover:border-white/25 border-white/10'
+                          }`}
+                        >
+                          <span>{language === 'ar' ? opt.labelAr : opt.labelEn}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                              isSelected
+                                ? 'bg-white/20 text-white'
+                                : isLight
+                                ? 'bg-slate-200/80 text-slate-600'
+                                : 'bg-white/10 text-gray-300'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Results Count & Reset Filters Summary Bar */}
+              <div
+                className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
+                  isLight ? 'border-slate-200 text-slate-600' : 'border-white/10 text-gray-300'
+                }`}
+              >
+                <span className="font-semibold">
+                  {activeTrack === 'academic'
+                    ? language === 'ar'
+                      ? `عرض ${activeTrackFilteredCount} من أصل ${activeTrackTotal} بحثاً علمياً محكّماً`
+                      : `Showing ${activeTrackFilteredCount} of ${activeTrackTotal} peer-reviewed papers`
+                    : language === 'ar'
+                    ? `عرض ${activeTrackFilteredCount} من أصل ${activeTrackTotal} مقالاً قصصياً وعلمياً`
+                    : `Showing ${activeTrackFilteredCount} of ${activeTrackTotal} clinical narrative articles`}
+                </span>
+
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold border transition cursor-pointer ${
+                      isLight
+                        ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                        : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border-rose-500/30'
+                    }`}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
 
               {/* Integrated Encyclopedia Reader Control Bar (Always Visible on Index & Reader) */}
               <div className="pt-1 space-y-2">
@@ -1169,104 +1570,128 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Track 1: Clinical Narrative Articles */}
             {activeTrack === 'narrative' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {filteredNarrativeArticles.map((art) => (
-                  <motion.article
-                    key={art.id}
-                    whileHover={{ scale: 1.01, y: -3 }}
-                    onClick={() => {
-                      soundManager.playTap();
-                      setActiveNarrative(art);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className={`p-6 rounded-3xl border transition cursor-pointer flex flex-col justify-between space-y-4 group shadow-md ${
-                      isLight
-                        ? 'bg-white hover:bg-rose-50/40 border-slate-200 hover:border-rose-400'
-                        : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-rose-500/40'
-                    }`}
+              filteredNarrativeArticles.length === 0 ? (
+                <div
+                  className={`py-16 px-6 text-center space-y-4 rounded-3xl border ${
+                    isLight ? 'bg-white border-slate-200' : 'bg-white/[0.03] border-white/10'
+                  }`}
+                >
+                  <BookOpen className="w-11 h-11 text-rose-500/80 mx-auto" />
+                  <h3 className="text-base sm:text-lg font-black font-['Alexandria']">
+                    {language === 'ar'
+                      ? 'لم يتم العثور على مقالات مطابقة للفلاتر المحددة'
+                      : 'No matching articles found for the selected filters'}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition cursor-pointer"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="px-3 py-1 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-300 text-xs font-bold border border-rose-500/30 flex items-center gap-1.5">
-                          <span>{art.icon}</span>
-                          <span>{language === 'ar' ? art.categoryLabelAr : art.categoryLabelEn}</span>
-                        </span>
-                        <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? art.readTime : art.readTimeEn}</span>
-                        </span>
-                      </div>
-
-                      <h3
-                        className={`text-base sm:text-lg font-black leading-snug font-['Alexandria'] ${
-                          isLight
-                            ? 'text-slate-900 group-hover:text-rose-600'
-                            : 'text-white group-hover:text-rose-300'
-                        }`}
-                      >
-                        {language === 'ar' ? art.title : art.titleEn}
-                      </h3>
-
-                      <p
-                        className={`text-xs sm:text-sm line-clamp-3 leading-relaxed ${
-                          isLight ? 'text-slate-600' : 'text-gray-300'
-                        }`}
-                      >
-                        {language === 'ar' ? art.summary : art.summaryEn}
-                      </p>
-                    </div>
-
-                    <div
-                      className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
-                        isLight ? 'border-slate-200' : 'border-white/10'
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {filteredNarrativeArticles.map((art) => (
+                    <motion.article
+                      key={art.id}
+                      whileHover={{ scale: 1.01, y: -3 }}
+                      onClick={() => {
+                        soundManager.playTap();
+                        setActiveNarrative(art);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`p-6 rounded-3xl border transition cursor-pointer flex flex-col justify-between space-y-4 group shadow-md ${
+                        isLight
+                          ? 'bg-white hover:bg-rose-50/40 border-slate-200 hover:border-rose-400'
+                          : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-rose-500/40'
                       }`}
                     >
-                      <span className="text-[11px] text-purple-600 dark:text-purple-300 font-semibold truncate max-w-[55%]">
-                        🔬 {language === 'ar' ? art.scientificFramework : art.scientificFrameworkEn}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            soundManager.playTap();
-                            setFullScreenArticle(art);
-                          }}
-                          className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white text-[11px] font-extrabold flex items-center gap-1 shadow-sm transition cursor-pointer"
-                        >
-                          <Maximize2 className="w-3 h-3" />
-                          <span>{language === 'ar' ? 'ملء الشاشة' : 'Full Screen'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            soundManager.playTap();
-                            setReaderViewMode('continuous_only');
-                            setActiveNarrative(art);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer ${
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="px-3 py-1 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-300 text-xs font-bold border border-rose-500/30 flex items-center gap-1.5 whitespace-nowrap">
+                            <span>{art.icon}</span>
+                            <span>{language === 'ar' ? art.categoryLabelAr : art.categoryLabelEn}</span>
+                          </span>
+                          <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
+                            <span>{language === 'ar' ? art.readTime : art.readTimeEn}</span>
+                          </span>
+                        </div>
+
+                        <h3
+                          className={`text-base sm:text-lg font-black leading-snug font-['Alexandria'] ${
                             isLight
-                              ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
-                              : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border-rose-400/30'
+                              ? 'text-slate-900 group-hover:text-rose-600'
+                              : 'text-white group-hover:text-rose-300'
                           }`}
                         >
-                          📜 {language === 'ar' ? 'قراءة كاملة دون تجزئة' : 'Full Unsegmented'}
-                        </button>
-                        <span className="text-rose-600 dark:text-rose-400 font-extrabold flex items-center gap-1">
-                          <span>{language === 'ar' ? 'قراءة المقال' : 'Read'}</span>
-                          <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
-                        </span>
+                          {language === 'ar' ? art.title : art.titleEn}
+                        </h3>
+
+                        <p
+                          className={`text-xs sm:text-sm line-clamp-3 leading-relaxed ${
+                            isLight ? 'text-slate-600' : 'text-gray-300'
+                          }`}
+                        >
+                          {language === 'ar' ? art.summary : art.summaryEn}
+                        </p>
                       </div>
-                    </div>
-                  </motion.article>
-                ))}
-              </div>
+
+                      <div
+                        className={`pt-3 border-t space-y-2.5 text-xs ${
+                          isLight ? 'border-slate-200' : 'border-white/10'
+                        }`}
+                      >
+                        <div className="text-[11px] text-purple-600 dark:text-purple-300 font-semibold truncate">
+                          🔬 {language === 'ar' ? art.scientificFramework : art.scientificFrameworkEn}
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                soundManager.playTap();
+                                setFullScreenArticle(art);
+                              }}
+                              className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white text-[11px] font-extrabold inline-flex items-center gap-1 shadow-sm transition cursor-pointer whitespace-nowrap"
+                            >
+                              <Maximize2 className="w-3 h-3 shrink-0" />
+                              <span>{language === 'ar' ? 'ملء الشاشة' : 'Full Screen'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                soundManager.playTap();
+                                setReaderViewMode('continuous_only');
+                                setActiveNarrative(art);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer whitespace-nowrap ${
+                                isLight
+                                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                                  : 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border-rose-400/30'
+                              }`}
+                            >
+                              📜 {language === 'ar' ? 'قراءة كاملة دون تجزئة' : 'Full Unsegmented'}
+                            </button>
+                          </div>
+                          <span className="text-rose-600 dark:text-rose-400 font-extrabold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                            <span>{language === 'ar' ? 'قراءة المقال' : 'Read'}</span>
+                            <ChevronRight className={`w-4 h-4 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+                          </span>
+                        </div>
+                      </div>
+                    </motion.article>
+                  ))}
+                </div>
+              )
             )}
 
             {/* Track 1: Full Academic Research Papers (أولاً: الأبحاث العلمية الكاملة) */}
@@ -1407,6 +1832,28 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                 )}
 
                 {/* Academic Papers Grid */}
+                {filteredAcademicPapers.length === 0 ? (
+                  <div
+                    className={`py-16 px-6 text-center space-y-4 rounded-3xl border ${
+                      isLight ? 'bg-white border-slate-200' : 'bg-white/[0.03] border-white/10'
+                    }`}
+                  >
+                    <GraduationCap className="w-11 h-11 text-cyan-500/80 mx-auto" />
+                    <h3 className="text-base sm:text-lg font-black font-['Alexandria']">
+                      {language === 'ar'
+                        ? 'لم يتم العثور على أبحاث محكّمة مطابقة للفلاتر المحددة'
+                        : 'No matching peer-reviewed papers found for the selected filters'}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={resetAllFilters}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold transition cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters'}</span>
+                    </button>
+                  </div>
+                ) : (
                 <div className="grid grid-cols-1 gap-5">
                   {filteredAcademicPapers.map((paper, pIdx) => (
                     <motion.article
@@ -1426,10 +1873,10 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs font-black border border-amber-500/30">
+                            <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs font-black border border-amber-500/30 whitespace-nowrap">
                               {language === 'ar' ? `الدراسة البحثية #${pIdx + 1}` : `Research Study #${pIdx + 1}`}
                             </span>
-                            <span className="px-3 py-1 rounded-xl bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 text-xs font-extrabold border border-cyan-500/30 flex items-center gap-1.5">
+                            <span className="px-3 py-1 rounded-xl bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 text-xs font-extrabold border border-cyan-500/30 flex items-center gap-1.5 whitespace-nowrap">
                               <span>{paper.icon}</span>
                               <span>
                                 {language === 'ar' ? paper.categoryLabelAr : paper.categoryLabelEn}
@@ -1439,13 +1886,13 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                               {language === 'ar' ? paper.methodologyBadgeAr : paper.methodologyBadgeEn}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-xs">
-                            <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-3 text-xs shrink-0">
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold inline-flex items-center gap-1 whitespace-nowrap">
+                              <Clock className="w-3.5 h-3.5 shrink-0" />
                               <span>{language === 'ar' ? paper.readTimeAr : paper.readTimeEn}</span>
                             </span>
-                            <span className="text-slate-500 dark:text-gray-400 font-medium flex items-center gap-1">
-                              <Calendar className="w-3.5 h-3.5" />
+                            <span className="text-slate-500 dark:text-gray-400 font-medium inline-flex items-center gap-1 whitespace-nowrap">
+                              <Calendar className="w-3.5 h-3.5 shrink-0" />
                               <span>{paper.publishDate}</span>
                             </span>
                           </div>
@@ -1565,19 +2012,20 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                           >
                             📜 {language === 'ar' ? 'قراءة كاملة دون تجزئة' : 'Full Continuous'}
                           </button>
-                          <span className="text-indigo-600 dark:text-cyan-400 font-extrabold flex items-center gap-1">
+                          <span className="text-indigo-600 dark:text-cyan-400 font-extrabold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                             <span>
                               {language === 'ar'
                                 ? 'قراءة البحث العلمي الكامل'
                                 : 'Read Full Research Paper'}
                             </span>
-                            <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                            <ChevronRight className={`w-4 h-4 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
                           </span>
                         </div>
                       </div>
                     </motion.article>
                   ))}
                 </div>
+                )}
               </div>
             )}
           </motion.div>

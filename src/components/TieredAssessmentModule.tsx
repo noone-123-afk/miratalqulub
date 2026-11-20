@@ -62,6 +62,8 @@ import {
   buildTemporalEvolutionSummary,
   UnifiedTestRecord,
 } from '../services/userHistoryService';
+import { getTieredAssessmentRecommendations } from '../data/recommendationsMapping';
+import { NextStepRecommendations } from './NextStepRecommendations';
 import {
   COMMUNITY_PROFILES,
   loadUserPersonalQuestionnaire,
@@ -882,6 +884,10 @@ export const TieredAssessmentModule: React.FC<Props> = ({
         >
           <LazyScientificVisualDashboards charts={report.visualCharts} userName={report.userName} />
         </Suspense>
+
+        <NextStepRecommendations
+          bundle={getTieredAssessmentRecommendations(report)}
+        />
       </div>
     );
   }

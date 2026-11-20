@@ -3,6 +3,18 @@ import { RELATIONSHIP_FOUR_NARRATIVE_ARTICLES } from './relationshipFourArticles
 import { EMOTIONAL_IQ_NARRATIVE_ARTICLES } from './emotionalIntelligenceSeriesArticles';
 import { PLATFORM_INTRODUCTORY_ARTICLES } from './platformIntroductoryArticles';
 import { CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES } from './clinicalChildhoodAnxietyOverthinkingArticle';
+import { CLINICAL_BATCH_ONE_ARTICLES } from './clinicalPersonalitySensitivityAnxietyArticles';
+import { CLINICAL_RELATIONSHIP_BATCH_ARTICLES } from './clinicalRelationshipLoveMarriageArticles';
+import { CLINICAL_ATTACHMENT_CONFLICT_BATCH_ARTICLES } from './clinicalConflictAttachmentSelectionArticles';
+import { CLINICAL_COMMUNICATION_BATCH_ARTICLES } from './clinicalCommunicationSkillsArticle';
+import { CLINICAL_BETRAYAL_RECOVERY_ARTICLES } from './clinicalBetrayalTrustRecoveryArticle';
+import { CLINICAL_SELF_CONFIDENCE_ARTICLES } from './clinicalSelfConfidenceGrowthArticle';
+import { CLINICAL_STRESS_MANAGEMENT_ARTICLES } from './clinicalStressManagementArticle';
+import { CLINICAL_EMOTIONAL_REGULATION_ARTICLES } from './clinicalEmotionalRegulationArticle';
+import { CLINICAL_DEVELOPING_EI_GUIDE_ARTICLES } from './clinicalDevelopingEIGuideArticle';
+import { CLINICAL_SELF_AWARENESS_ARTICLES } from './clinicalSelfAwarenessPersonalityArticle';
+import { CLINICAL_OVERCOMING_OVERTHINKING_ARTICLES } from './clinicalOvercomingOverthinkingArticle';
+import { CLINICAL_DAILY_HABITS_ARTICLES } from './clinicalDailyHabitsWellbeingArticle';
 
 export interface DiagnosticComparisonRow {
   criterionAr: string;
@@ -476,6 +488,18 @@ export const DIGITAL_COMPANION_ILLUSION_FULL_TEXT_AR = `# وهم الرفيق ا
 الإنسان يحتاج إلى إنسان آخر ليؤكد (Confirm) وجوده. الآلة يمكنها محاكاة الكلام، لكنها لا يمكنها محاكاة **الحضور**.`;
 
 export const ARTICLES_CATALOG: Article[] = [
+  ...CLINICAL_DAILY_HABITS_ARTICLES,
+  ...CLINICAL_OVERCOMING_OVERTHINKING_ARTICLES,
+  ...CLINICAL_SELF_AWARENESS_ARTICLES,
+  ...CLINICAL_DEVELOPING_EI_GUIDE_ARTICLES,
+  ...CLINICAL_EMOTIONAL_REGULATION_ARTICLES,
+  ...CLINICAL_STRESS_MANAGEMENT_ARTICLES,
+  ...CLINICAL_SELF_CONFIDENCE_ARTICLES,
+  ...CLINICAL_BETRAYAL_RECOVERY_ARTICLES,
+  ...CLINICAL_COMMUNICATION_BATCH_ARTICLES,
+  ...CLINICAL_ATTACHMENT_CONFLICT_BATCH_ARTICLES,
+  ...CLINICAL_RELATIONSHIP_BATCH_ARTICLES,
+  ...CLINICAL_BATCH_ONE_ARTICLES,
   ...CLINICAL_CHILDHOOD_ANXIETY_NARRATIVE_ARTICLES,
   ...PLATFORM_INTRODUCTORY_ARTICLES,
   ...EMOTIONAL_IQ_NARRATIVE_ARTICLES,

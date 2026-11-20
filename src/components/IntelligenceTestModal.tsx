@@ -49,10 +49,17 @@ import {
   PsychometricAcademicConclusion,
   ScientificClinicalDisclaimerBanner,
 } from './PsychometricAcademicFraming';
+import {
+  getMultipleIntelligencesRecommendations,
+  getObjectiveBatteryRecommendations,
+  ResolvedTestCard,
+} from '../data/recommendationsMapping';
+import { NextStepRecommendations } from './NextStepRecommendations';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  initialBattery?: IntelligenceBatteryType | null;
   onSaveResultToProfile?: (result: IntelligenceTestResult) => void;
 }
 
@@ -75,6 +82,7 @@ const STORAGE_OBJ_RESULT_KEY = 'mirat_intelligence_obj_result_';
 export const IntelligenceTestModal: React.FC<Props> = ({
   isOpen,
   onClose,
+  initialBattery = null,
   onSaveResultToProfile,
 }) => {
   const { user } = useAuth();
@@ -130,6 +138,14 @@ export const IntelligenceTestModal: React.FC<Props> = ({
       // Ignore
     }
   }, []);
+
+  useEffect(() => {
+    if (isOpen && initialBattery) {
+      setActiveBattery(initialBattery);
+      setStep('instructions');
+      setUnansweredWarning(false);
+    }
+  }, [isOpen, initialBattery]);
 
   // Load objective battery saved progress when switching battery
   useEffect(() => {
@@ -1947,6 +1963,22 @@ export const IntelligenceTestModal: React.FC<Props> = ({
                 </div>
               </div>
             )}
+
+            {/* Deterministic Next-Step Recommendations (Multiple Intelligences) */}
+            <NextStepRecommendations
+              bundle={getMultipleIntelligencesRecommendations(testResult)}
+              forceDark
+              onBeforeNavigate={() => onClose()}
+              onLaunchTest={(testCard: ResolvedTestCard) => {
+                if (testCard.launchKind === 'intelligence_modal' && testCard.launchParam) {
+                  setActiveBattery(testCard.launchParam as IntelligenceBatteryType);
+                  setStep('instructions');
+                  setUnansweredWarning(false);
+                  return true;
+                }
+                return false;
+              }}
+            />
           </div>
         )}
 
@@ -2240,6 +2272,22 @@ export const IntelligenceTestModal: React.FC<Props> = ({
                 )}
               </div>
             )}
+
+            {/* Deterministic Next-Step Recommendations (Objective Batteries) */}
+            <NextStepRecommendations
+              bundle={getObjectiveBatteryRecommendations(objResult)}
+              forceDark
+              onBeforeNavigate={() => onClose()}
+              onLaunchTest={(testCard: ResolvedTestCard) => {
+                if (testCard.launchKind === 'intelligence_modal' && testCard.launchParam) {
+                  setActiveBattery(testCard.launchParam as IntelligenceBatteryType);
+                  setStep('instructions');
+                  setUnansweredWarning(false);
+                  return true;
+                }
+                return false;
+              }}
+            />
 
             {/* Permanent Bottom Academic Conclusion & APA References */}
             <PsychometricAcademicConclusion variant="modal" />

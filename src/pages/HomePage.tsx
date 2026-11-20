@@ -27,7 +27,7 @@ import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset'
 import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
 import {
   HOME_HIGHLIGHTED_ARTICLES,
-  HOME_HIGHLIGHTED_NOVELS,
+  HOME_NOVEL_CATEGORIES,
 } from '../data/homeHighlightsData';
 
 export interface HomePageProps {
@@ -102,11 +102,78 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
     }
   };
 
-  // المقالات المعروضة داخل قسم "المقالات المعرفية" الحالي (6 مقالات علمية وإكلينيكية متنوعة)
-  const highlightedArticles = HOME_HIGHLIGHTED_ARTICLES.filter(Boolean);
+  // عرض أحدث مقال واحد فقط داخل قسم "المقالات المعرفية" في الصفحة الرئيسية
+  const latestArticle = [...HOME_HIGHLIGHTED_ARTICLES.filter(Boolean)].sort((a, b) =>
+    (b.publishDate || '').localeCompare(a.publishDate || '')
+  )[0] || null;
 
-  // الروايات المعروضة داخل قسم "الروايات والقصص" الحالي (6 روايات أصلية)
-  const highlightedNovels = HOME_HIGHLIGHTED_NOVELS.filter(Boolean);
+  // أصناف الروايات والقصص المتوفرة في القسم
+  const novelCategories = HOME_NOVEL_CATEGORIES;
+
+  // عناصر قسم "من أين أبدأ؟" في أعلى الصفحة الرئيسية
+  const whereToStartItems = [
+    {
+      id: 'start_personality',
+      intentAr: 'أريد فهم نفسي',
+      intentEn: 'I want to understand myself',
+      ctaAr: 'ابدأ باختبار الشخصية الشامل',
+      ctaEn: 'Start the Comprehensive Personality Test',
+      icon: Brain,
+      accent: 'from-purple-500 to-indigo-600',
+      action: () => {
+        soundManager.playTap();
+        if (props.onNavigatePage) {
+          props.onNavigatePage('personality-tests');
+        } else if (props.onOpenPsychologyTests) {
+          props.onOpenPsychologyTests();
+        }
+      },
+    },
+    {
+      id: 'start_compatibility',
+      intentAr: 'أريد معرفة توافق شريك الحياة',
+      intentEn: 'I want to know partner compatibility',
+      ctaAr: 'ابدأ باختبار التوافق العاطفي',
+      ctaEn: 'Start the Emotional Compatibility Test',
+      icon: Heart,
+      accent: 'from-rose-500 to-pink-600',
+      action: openCompatibilitySection,
+    },
+    {
+      id: 'start_articles',
+      intentAr: 'أريد تطوير ذاتي',
+      intentEn: 'I want to develop myself',
+      ctaAr: 'تصفح المقالات النفسية',
+      ctaEn: 'Browse Psychological Articles',
+      icon: BookOpen,
+      accent: 'from-emerald-500 to-teal-600',
+      action: () => {
+        soundManager.playTap();
+        if (props.onNavigatePage) {
+          props.onNavigatePage('articles');
+        } else if (props.onOpenArticles) {
+          props.onOpenArticles();
+        }
+      },
+    },
+    {
+      id: 'start_novels',
+      intentAr: 'أريد تجربة أدبية وتأملية',
+      intentEn: 'I want a literary & reflective experience',
+      ctaAr: 'اقرأ الروايات والقصص',
+      ctaEn: 'Read Novels & Stories',
+      icon: BookMarked,
+      accent: 'from-cyan-500 to-blue-600',
+      action: () => {
+        soundManager.playTap();
+        if (props.onNavigatePage) {
+          props.onNavigatePage('novels');
+        } else if (props.onOpenNovels) {
+          props.onOpenNovels();
+        }
+      },
+    },
+  ];
 
   // بطاقات الاختبارات والأدوات الـ 4 ضمن أقسام الموقع
   const interactiveToolCards = [
@@ -259,12 +326,14 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               isLight ? 'text-slate-900' : 'text-white'
             }`}
           >
-            {isAr ? 'مرآة القلوب' : 'Mirror of Hearts'}
+            {isAr ? 'مِـرآة القـلوب' : 'Mirror of Hearts'}
           </h1>
 
           {/* Hero Subtitle */}
           <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold font-['Alexandria'] text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 dark:from-purple-400 dark:via-pink-300 dark:to-indigo-300 mb-6">
-            {isAr ? 'افهم ذاتك... وابنِ علاقات أكثر وعياً' : 'Understand Yourself... Build More Mindful Relationships'}
+            {isAr
+              ? 'اكتشف ذاتك... وافهم الآخرين... وابنِ علاقات أكثر وعياً'
+              : 'Discover Yourself... Understand Others... Build More Mindful Relationships'}
           </h2>
 
           {/* Hero Description */}
@@ -275,17 +344,8 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               }`}
             >
               {isAr
-                ? 'منصة عربية متخصصة في تحليل الشخصية والتوافق النفسي والعاطفي والتطوير الذاتي، تجمع بين الاختبارات التفاعلية والمحتوى المعرفي والأدوات الذكية لمساعدتك على فهم نفسك والآخرين بصورة أعمق وأكثر وضوحاً.'
-                : 'An Arab platform dedicated to personality analysis, psychological and emotional compatibility, and self-development, combining interactive tests, knowledge content, and smart tools to help you understand yourself and others with deeper clarity.'}
-            </p>
-            <p
-              className={`text-sm sm:text-base font-semibold ${
-                isLight ? 'text-indigo-600' : 'text-indigo-300'
-              }`}
-            >
-              {isAr
-                ? 'وايضا تتوفر الابحاث العلمية والمقالات والروايات'
-                : 'Scientific research, clinical articles, and literary novels are also readily accessible'}
+                ? 'مرآة القلوب منصة عربية متخصصة في اكتشاف الذات وفهم العلاقات الإنسانية، تجمع بين التحليل الشخصي والتوافق النفسي والمحتوى العلمي والقصص الإنسانية الهادفة.'
+                : 'Mirror of Hearts is an Arab platform dedicated to self-discovery and understanding human relationships, combining personality analysis, psychological compatibility, scientific content, and purposeful human stories.'}
             </p>
             <p
               className={`text-sm sm:text-base leading-relaxed ${
@@ -293,8 +353,17 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               }`}
             >
               {isAr
-                ? 'ابدأ رحلتك نحو معرفة أعمق لشخصيتك وعلاقاتك من خلال أدوات مصممة بلغتك بسهولة وتجربة استخدام متطورة.'
-                : 'Embark on your journey toward deeper self-awareness and enriching relationships with cutting-edge tools thoughtfully tailored in your language.'}
+                ? 'صُممت المنصة لمساعدة الأفراد على فهم شخصياتهم بصورة أعمق، والتعرف إلى أنماط التفكير والسلوك لديهم، واكتشاف فرص التوافق مع شركاء الحياة والأصدقاء، مع توفير محتوى معرفي وأدبي يساهم في بناء وعي أكثر نضجاً بالذات والإنسان والحياة.'
+                : 'Designed to help individuals understand their personalities more deeply, recognize their thinking and behavioral patterns, and discover compatibility opportunities with life partners and friends, while providing knowledge and literary content that fosters a more mature awareness of self, humanity, and life.'}
+            </p>
+            <p
+              className={`text-sm sm:text-base font-semibold leading-relaxed ${
+                isLight ? 'text-indigo-600' : 'text-indigo-300'
+              }`}
+            >
+              {isAr
+                ? 'ابدأ رحلتك نحو فهم أعمق لنفسك وعلاقاتك من خلال أدوات تفاعلية ومحتوى موثوق وتجربة عربية متكاملة.'
+                : 'Start your journey toward a deeper understanding of yourself and your relationships through interactive tools, reliable content, and a complete Arabic experience.'}
             </p>
           </div>
 
@@ -321,6 +390,86 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               <Compass className="w-4 h-4 text-indigo-400" />
               <span>{isAr ? 'استكشف الأقسام' : 'Explore Sections'}</span>
             </button>
+          </div>
+        </div>
+
+        {/* 1.5 قسم "من أين أبدأ؟" في أعلى الصفحة الرئيسية */}
+        <div
+          className={`p-6 sm:p-8 rounded-3xl border transition-all duration-300 shadow-sm space-y-5 ${
+            isLight
+              ? 'bg-white border-indigo-200/80 text-slate-900'
+              : 'bg-slate-900/75 border-indigo-500/25 text-white'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${
+                isLight
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300'
+              }`}
+            >
+              <Compass className="w-5 h-5" />
+            </div>
+            <div>
+              <h2
+                className={`text-xl sm:text-2xl font-black font-['Alexandria'] ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}
+              >
+                {isAr ? 'من أين أبدأ؟' : 'Where Do I Start?'}
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {whereToStartItems.map((item) => {
+              const IconComp = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={item.action}
+                  className={`group w-full text-start p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 hover:-translate-y-0.5 shadow-xs hover:shadow-md ${
+                    isLight
+                      ? 'bg-slate-50/80 hover:bg-white border-slate-200 hover:border-indigo-300'
+                      : 'bg-slate-950/60 hover:bg-slate-900 border-white/10 hover:border-indigo-400/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div
+                      className={`w-11 h-11 rounded-2xl bg-gradient-to-tr ${item.accent} text-white flex items-center justify-center shadow-sm shrink-0`}
+                    >
+                      <IconComp className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <div
+                        className={`text-sm sm:text-base font-black font-['Alexandria'] ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {isAr ? item.intentAr : item.intentEn}
+                      </div>
+                      <div
+                        className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${
+                          isLight
+                            ? 'text-indigo-700 group-hover:text-indigo-800'
+                            : 'text-indigo-300 group-hover:text-indigo-200'
+                        }`}
+                      >
+                        <span>{isRTL ? '←' : '→'}</span>
+                        <span>{isAr ? item.ctaAr : item.ctaEn}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ArrowRight
+                    className={`w-4 h-4 shrink-0 transition-transform group-hover:translate-x-1 ${
+                      isLight ? 'text-slate-500 group-hover:text-indigo-600' : 'text-slate-400 group-hover:text-indigo-300'
+                    } ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : ''}`}
+                  />
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -552,71 +701,73 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {highlightedArticles.map((art) => (
-                <article
-                  key={art.id}
-                  onClick={() => {
-                    soundManager.playTap();
-                    try {
-                      sessionStorage.setItem('mirat_open_article_id', art.id);
-                    } catch {
-                      // ignore
-                    }
-                    if (props.onNavigatePage) {
-                      props.onNavigatePage('articles');
-                    } else if (props.onOpenArticles) {
-                      props.onOpenArticles();
-                    }
-                    window.location.hash = `#/articles/${art.id}`;
-                  }}
-                  className={`group rounded-2xl border overflow-hidden transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-1 shadow-xs hover:shadow-lg ${
-                    isLight
-                      ? 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-emerald-400'
-                      : 'bg-slate-950/60 hover:bg-slate-900 border-white/10 hover:border-emerald-400/50'
-                  }`}
-                >
-                  <div>
-                    {/* صورة مصغرة بارزة للمقال */}
-                    <div className="relative h-28 w-full bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 p-4 flex flex-col justify-between overflow-hidden">
-                      <div className="flex items-center justify-between gap-2 relative z-10">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/15 text-emerald-200 backdrop-blur-xs border border-white/15">
-                          {isAr ? art.readTime : art.readTimeEn}
-                        </span>
-                        <span className="text-3xl drop-shadow-md group-hover:scale-110 transition-transform">
-                          {art.icon}
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-bold text-emerald-100/90 truncate relative z-10">
-                        {isAr ? art.scientificFramework : art.scientificFrameworkEn}
-                      </span>
-                    </div>
+            {latestArticle && (
+              <article
+                key={latestArticle.id}
+                onClick={() => {
+                  soundManager.playTap();
+                  try {
+                    sessionStorage.setItem('mirat_open_article_id', latestArticle.id);
+                  } catch {
+                    // ignore
+                  }
+                  if (props.onNavigatePage) {
+                    props.onNavigatePage('articles');
+                  } else if (props.onOpenArticles) {
+                    props.onOpenArticles();
+                  }
+                  window.location.hash = `#/articles/${latestArticle.id}`;
+                }}
+                className={`group rounded-2xl border overflow-hidden transition-all duration-200 cursor-pointer flex flex-col md:flex-row justify-between hover:-translate-y-0.5 shadow-xs hover:shadow-lg ${
+                  isLight
+                    ? 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-emerald-400'
+                    : 'bg-slate-950/60 hover:bg-slate-900 border-white/10 hover:border-emerald-400/50'
+                }`}
+              >
+                {/* شريط تعريفي بارز لأحدث مقال */}
+                <div className="relative md:w-72 shrink-0 bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 p-5 flex flex-col justify-between gap-4 overflow-hidden">
+                  <div className="flex items-center justify-between gap-2 relative z-10">
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-400/20 text-emerald-200 border border-emerald-300/30">
+                      {isAr ? 'أحدث مقال' : 'Latest Article'}
+                    </span>
+                    <span className="text-3xl drop-shadow-md group-hover:scale-110 transition-transform">
+                      {latestArticle.icon}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 relative z-10">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-emerald-100 border border-white/15">
+                      {isAr ? latestArticle.readTime : latestArticle.readTimeEn}
+                    </span>
+                    <p className="text-[11px] font-bold text-emerald-100/90 line-clamp-2">
+                      {isAr ? latestArticle.scientificFramework : latestArticle.scientificFrameworkEn}
+                    </p>
+                  </div>
+                </div>
 
-                    {/* عنوان وملخص المقال */}
-                    <div className="p-4 space-y-2.5">
-                      <h4
-                        className={`text-sm sm:text-base font-black font-['Alexandria'] leading-snug transition-colors ${
-                          isLight
-                            ? 'text-slate-900 group-hover:text-emerald-700'
-                            : 'text-white group-hover:text-emerald-300'
-                        }`}
-                      >
-                        {isAr ? art.title : art.titleEn}
-                      </h4>
-                      <p
-                        className={`text-xs leading-relaxed line-clamp-3 ${
-                          isLight ? 'text-slate-600' : 'text-slate-300'
-                        }`}
-                      >
-                        {isAr ? art.summary : art.summaryEn}
-                      </p>
-                    </div>
+                {/* عنوان وملخص المقال + زر القراءة */}
+                <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                  <div className="space-y-2.5">
+                    <h4
+                      className={`text-base sm:text-lg font-black font-['Alexandria'] leading-snug transition-colors ${
+                        isLight
+                          ? 'text-slate-900 group-hover:text-emerald-700'
+                          : 'text-white group-hover:text-emerald-300'
+                      }`}
+                    >
+                      {isAr ? latestArticle.title : latestArticle.titleEn}
+                    </h4>
+                    <p
+                      className={`text-xs sm:text-sm leading-relaxed line-clamp-3 ${
+                        isLight ? 'text-slate-600' : 'text-slate-300'
+                      }`}
+                    >
+                      {isAr ? latestArticle.summary : latestArticle.summaryEn}
+                    </p>
                   </div>
 
-                  {/* زر قراءة المقال */}
-                  <div className="px-4 pb-4 pt-2">
+                  <div className="flex justify-end">
                     <div
-                      className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-extrabold flex items-center justify-between transition ${
+                      className={`py-2.5 px-5 rounded-xl text-xs font-extrabold inline-flex items-center gap-2 transition ${
                         isLight
                           ? 'bg-emerald-50 group-hover:bg-emerald-600 text-emerald-800 group-hover:text-white border border-emerald-200 group-hover:border-emerald-600'
                           : 'bg-emerald-500/15 group-hover:bg-emerald-600 text-emerald-300 group-hover:text-white border border-emerald-500/30 group-hover:border-emerald-500'
@@ -626,9 +777,9 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
                       <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
-                </article>
-              ))}
-            </div>
+                </div>
+              </article>
+            )}
           </div>
 
           {/* 2. قسم الروايات والقصص (القسم الحالي بعد تكبير مساحة العرض وإبراز الأغلفة والملخصات) */}
@@ -673,91 +824,84 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {highlightedNovels.map((novel) => {
-                const displayTitle = !isAr && novel.titleEn ? novel.titleEn : novel.titleAr;
-                const displaySubtitle = !isAr && novel.subtitleEn ? novel.subtitleEn : novel.subtitleAr;
-                const displaySynopsis = !isAr && novel.synopsisEn ? novel.synopsisEn : novel.synopsisAr;
-                const displayGenre = !isAr && novel.genreLabelEn ? novel.genreLabelEn : novel.genreLabelAr;
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {novelCategories.map((cat) => (
+                <button
+                  key={cat.genre}
+                  type="button"
+                  onClick={() => {
+                    soundManager.playTap();
+                    try {
+                      sessionStorage.setItem('mirat_open_novel_genre', cat.genre);
+                    } catch {
+                      // ignore
+                    }
+                    if (props.onNavigatePage) {
+                      props.onNavigatePage('novels');
+                    } else if (props.onOpenNovels) {
+                      props.onOpenNovels();
+                    }
+                  }}
+                  className={`group text-start rounded-2xl border p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 hover:-translate-y-1 shadow-xs hover:shadow-lg ${
+                    isLight
+                      ? 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-cyan-400'
+                      : 'bg-slate-950/60 hover:bg-slate-900 border-white/10 hover:border-cyan-400/50'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl border shrink-0"
+                        style={{
+                          borderColor: `${cat.accentColor}44`,
+                          backgroundColor: `${cat.accentColor}18`,
+                        }}
+                      >
+                        {cat.icon}
+                      </span>
+                      <span
+                        className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border"
+                        style={{
+                          borderColor: `${cat.accentColor}55`,
+                          backgroundColor: `${cat.accentColor}15`,
+                          color: cat.accentColor,
+                        }}
+                      >
+                        {isAr ? 'تصنيف متوفر' : 'Available Genre'}
+                      </span>
+                    </div>
 
-                return (
-                  <article
-                    key={novel.id}
-                    onClick={() => {
-                      soundManager.playTap();
-                      window.location.hash = `#/novels/${novel.id}`;
-                    }}
-                    className={`group rounded-2xl border overflow-hidden transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-1 shadow-xs hover:shadow-lg ${
+                    <h4
+                      className={`text-base font-black font-['Alexandria'] leading-snug transition-colors ${
+                        isLight
+                          ? 'text-slate-900 group-hover:text-cyan-700'
+                          : 'text-white group-hover:text-cyan-300'
+                      }`}
+                    >
+                      {isAr ? cat.titleAr : cat.titleEn}
+                    </h4>
+
+                    <p
+                      className={`text-xs leading-relaxed ${
+                        isLight ? 'text-slate-600' : 'text-slate-300'
+                      }`}
+                    >
+                      {isAr ? cat.descAr : cat.descEn}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`w-full py-2 px-3 rounded-xl text-xs font-extrabold flex items-center justify-between transition ${
                       isLight
-                        ? 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-cyan-400'
-                        : 'bg-slate-950/60 hover:bg-slate-900 border-white/10 hover:border-cyan-400/50'
+                        ? 'bg-cyan-50 group-hover:bg-cyan-600 text-cyan-800 group-hover:text-white border border-cyan-200 group-hover:border-cyan-600'
+                        : 'bg-cyan-500/15 group-hover:bg-cyan-600 text-cyan-300 group-hover:text-white border border-cyan-500/30 group-hover:border-cyan-500'
                     }`}
                   >
-                    <div>
-                      {/* غلاف الرواية البارز */}
-                      <div
-                        className="relative w-full h-44 bg-slate-950 border-b border-slate-800/80 overflow-hidden flex items-center justify-center p-1 group-hover:scale-[1.01] transition-transform"
-                        dangerouslySetInnerHTML={{ __html: novel.coverIllustrationSvg }}
-                      />
-
-                      {/* عنوان الرواية والملخص */}
-                      <div className="p-4 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span
-                            className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
-                            style={{
-                              borderColor: `${novel.genreBadgeColor}55`,
-                              backgroundColor: `${novel.genreBadgeColor}18`,
-                              color: novel.genreBadgeColor,
-                            }}
-                          >
-                            {displayGenre}
-                          </span>
-                          <span className={`text-[11px] font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                            {novel.chaptersCount || 0} {isAr ? 'فصول' : 'Chapters'}
-                          </span>
-                        </div>
-
-                        <h4
-                          className={`text-base sm:text-lg font-black font-['Alexandria'] leading-snug transition-colors ${
-                            isLight
-                              ? 'text-slate-900 group-hover:text-cyan-700'
-                              : 'text-white group-hover:text-cyan-300'
-                          }`}
-                        >
-                          {displayTitle}
-                        </h4>
-
-                        <p className={`text-xs font-semibold ${isLight ? 'text-cyan-800' : 'text-cyan-300/90'}`}>
-                          {displaySubtitle}
-                        </p>
-
-                        <p
-                          className={`text-xs leading-relaxed line-clamp-3 ${
-                            isLight ? 'text-slate-600' : 'text-slate-300'
-                          }`}
-                        >
-                          {displaySynopsis}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* زر قراءة الرواية */}
-                    <div className="px-4 pb-4 pt-2">
-                      <div
-                        className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-extrabold flex items-center justify-between transition ${
-                          isLight
-                            ? 'bg-cyan-50 group-hover:bg-cyan-600 text-cyan-800 group-hover:text-white border border-cyan-200 group-hover:border-cyan-600'
-                            : 'bg-cyan-500/15 group-hover:bg-cyan-600 text-cyan-300 group-hover:text-white border border-cyan-500/30 group-hover:border-cyan-500'
-                        }`}
-                      >
-                        <span>{isAr ? 'قراءة الرواية' : 'Read Novel'}</span>
-                        <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
+                    <span>{isAr ? 'استعراض الصنف' : 'Browse Genre'}</span>
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
