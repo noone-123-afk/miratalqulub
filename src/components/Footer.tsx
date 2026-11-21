@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import { navigateCleanUrl } from '../utils/navigation';
 
 export interface FooterProps {
   currentPage?: string;
@@ -87,6 +88,21 @@ export const Footer: React.FC<FooterProps> = ({
     } catch {
       setIsDeleting(false);
     }
+  };
+
+  const handleFooterLink = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    page: string,
+    cleanPath: string,
+    extraAction?: () => void
+  ) => {
+    e.preventDefault();
+    soundManager.playTap();
+    navigateCleanUrl(cleanPath);
+    if (onNavigatePage) {
+      onNavigatePage(page);
+    }
+    if (extraAction) extraAction();
   };
 
   return (
@@ -213,17 +229,14 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  soundManager.playTap();
-                  onOpenUserDashboard();
-                }}
+              <a
+                href="/profile"
+                onClick={(e) => handleFooterLink(e, 'profile', '/profile')}
                 className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-700 to-rose-700 hover:from-violet-600 hover:to-rose-600 text-white font-extrabold text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>{isAr ? 'فتح لوحة ملفي وسجلاتي' : 'Open My Profile & Dossier'}</span>
-              </button>
+              </a>
 
               {!confirmDelete && !deleteSuccess && (
                 <button
@@ -344,14 +357,10 @@ export const Footer: React.FC<FooterProps> = ({
 
               <ul className="space-y-2.5 text-xs font-bold">
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('home');
-                      onResetHome();
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/"
+                    onClick={(e) => handleFooterLink(e, 'home', '/', onResetHome)}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'home'
                         ? isLight
                           ? 'text-indigo-800'
@@ -362,16 +371,15 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'الرئيسية' : 'Home'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('personality-tests');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/personality-tests"
+                    onClick={(e) =>
+                      handleFooterLink(e, 'personality-tests', '/personality-tests')
+                    }
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'personality-tests'
                         ? isLight
                           ? 'text-indigo-800'
@@ -382,16 +390,13 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'قسم تحليل الشخصية' : 'Personality Analysis'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('compatibility');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/compatibility"
+                    onClick={(e) => handleFooterLink(e, 'compatibility', '/compatibility')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'compatibility'
                         ? isLight
                           ? 'text-indigo-800'
@@ -402,32 +407,47 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'قسم كاشف شريك الحياة' : 'Partner Compatibility Detector'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onOpenIntelligenceTests();
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
-                      isLight
-                        ? 'text-slate-700 hover:text-indigo-600'
+                  <a
+                    href="/iq-tests"
+                    onClick={(e) => handleFooterLink(e, 'iq-tests', '/iq-tests')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
+                      currentPage === 'iq-tests'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
+                        : isLight
+                        ? 'text-slate-700 hover:text-indigo-800'
                         : 'text-slate-200 hover:text-indigo-300'
                     }`}
                   >
                     <span>{isAr ? 'قسم اختبارات الذكاء' : 'Intelligence Tests'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('articles');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/tools"
+                    onClick={(e) => handleFooterLink(e, 'tools', '/tools')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
+                      currentPage === 'tools'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
+                        : isLight
+                        ? 'text-slate-700 hover:text-indigo-800'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'قسم الأدوات التفاعلية' : 'Interactive Tools'}</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/articles"
+                    onClick={(e) => handleFooterLink(e, 'articles', '/articles')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'articles'
                         ? isLight
                           ? 'text-indigo-800'
@@ -438,16 +458,13 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'قسم المقالات المعرفية والأبحاث' : 'Articles & Research'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('novels');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/novels"
+                    onClick={(e) => handleFooterLink(e, 'novels', '/novels')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'novels'
                         ? isLight
                           ? 'text-indigo-800'
@@ -458,7 +475,24 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'قسم الروايات والقصص' : 'Novels & Stories'}</span>
-                  </button>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/profile"
+                    onClick={(e) => handleFooterLink(e, 'profile', '/profile')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
+                      currentPage === 'profile'
+                        ? isLight
+                          ? 'text-indigo-800'
+                          : 'text-indigo-300'
+                        : isLight
+                        ? 'text-slate-700 hover:text-indigo-800'
+                        : 'text-slate-200 hover:text-indigo-300'
+                    }`}
+                  >
+                    <span>{isAr ? 'ملفي وسجلاتي' : 'My Profile'}</span>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -486,13 +520,10 @@ export const Footer: React.FC<FooterProps> = ({
 
               <ul className="space-y-2.5 text-xs font-bold">
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('about');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/about"
+                    onClick={(e) => handleFooterLink(e, 'about', '/about')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'about'
                         ? 'text-purple-600'
                         : isLight
@@ -501,16 +532,13 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'من نحن (About Us)' : 'About Us'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('methodology');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/methodology"
+                    onClick={(e) => handleFooterLink(e, 'methodology', '/methodology')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'methodology'
                         ? 'text-purple-600'
                         : isLight
@@ -519,16 +547,19 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'المنهجية العلمية والمصادر (APA)' : 'Scientific Methodology & APA Sources'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('how-results-are-calculated');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/how-results-are-calculated"
+                    onClick={(e) =>
+                      handleFooterLink(
+                        e,
+                        'how-results-are-calculated',
+                        '/how-results-are-calculated'
+                      )
+                    }
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'how-results-are-calculated'
                         ? isLight
                           ? 'text-purple-800'
@@ -543,16 +574,13 @@ export const Footer: React.FC<FooterProps> = ({
                         ? 'كيف يتم حساب نتائج الاختبارات؟ (Big Five • HEXACO • Attachment • EQ)'
                         : 'How Are Test Results Calculated? (Big Five • HEXACO • Attachment • EQ)'}
                     </span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('how-it-works');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/how-it-works"
+                    onClick={(e) => handleFooterLink(e, 'how-it-works', '/how-it-works')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'how-it-works'
                         ? 'text-purple-600'
                         : isLight
@@ -561,16 +589,13 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'كيف تعمل خوارزمية التوافق؟' : 'How the Compatibility Engine Works'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('faq');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/faq"
+                    onClick={(e) => handleFooterLink(e, 'faq', '/faq')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'faq'
                         ? 'text-purple-600'
                         : isLight
@@ -579,16 +604,13 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'الأسئلة الشائعة (FAQ)' : 'Frequently Asked Questions'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('contact');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/contact"
+                    onClick={(e) => handleFooterLink(e, 'contact', '/contact')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'contact'
                         ? 'text-purple-600'
                         : isLight
@@ -598,7 +620,7 @@ export const Footer: React.FC<FooterProps> = ({
                   >
                     <Mail className="w-3.5 h-3.5 text-sky-500 shrink-0" />
                     <span>{isAr ? 'اتصل بنا (Contact Us)' : 'Contact Us'}</span>
-                  </button>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -626,13 +648,10 @@ export const Footer: React.FC<FooterProps> = ({
 
               <ul className="space-y-2.5 text-xs font-bold">
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('privacy');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/privacy"
+                    onClick={(e) => handleFooterLink(e, 'privacy', '/privacy')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'privacy'
                         ? isLight
                           ? 'text-emerald-800'
@@ -643,16 +662,13 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'سياسة الخصوصية (Privacy Policy)' : 'Privacy Policy'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('terms');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/terms"
+                    onClick={(e) => handleFooterLink(e, 'terms', '/terms')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'terms'
                         ? isLight
                           ? 'text-emerald-800'
@@ -663,16 +679,13 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'شروط الاستخدام (Terms of Service)' : 'Terms of Service'}</span>
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playTap();
-                      onNavigatePage('disclaimer');
-                    }}
-                    className={`transition cursor-pointer flex items-center gap-2 ${
+                  <a
+                    href="/disclaimer"
+                    onClick={(e) => handleFooterLink(e, 'disclaimer', '/disclaimer')}
+                    className={`transition cursor-pointer inline-flex items-center gap-2 ${
                       currentPage === 'disclaimer'
                         ? isLight
                           ? 'text-amber-800'
@@ -683,21 +696,21 @@ export const Footer: React.FC<FooterProps> = ({
                     }`}
                   >
                     <span>{isAr ? 'إخلاء المسؤولية العلمي والقانوني' : 'Clinical & Legal Disclaimer'}</span>
-                  </button>
+                  </a>
                 </li>
                 {isOwner && (
                   <li className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() => onNavigatePage('admin-cms')}
-                      className={`font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    <a
+                      href="/admin-cms"
+                      onClick={(e) => handleFooterLink(e, 'admin-cms', '/admin-cms')}
+                      className={`font-bold transition cursor-pointer inline-flex items-center gap-1.5 ${
                         isLight
                           ? 'text-amber-800 hover:text-amber-900'
                           : 'text-amber-300 hover:text-amber-200'
                       }`}
                     >
                       <span>🛡️ {isAr ? 'مركز إدارة المحتوى وتحميل ملفات الموقع' : 'CMS & Website Files Download'}</span>
-                    </button>
+                    </a>
                   </li>
                 )}
               </ul>

@@ -202,7 +202,7 @@ export const NovelsDirectoryPage: React.FC<Props> = ({
             ? 'استكشف مكتبة روايات مرآة القلوب: رواية في بيتنا ياسمين، شيفرة الأندرويد، وظلال لا تترك أثراً، مع تفاصيل الزمان والمكان والملاحق العلمية والأدبية.'
             : 'Explore Mirror of Hearts novels: In Our House There Is Jasmine, The Android Cipher, and Shadows That Leave No Trace, with full chapters and interactive dossiers.'
         }
-        canonicalPath="/#/novels"
+        canonicalPath="/novels"
         language={language}
       />
 

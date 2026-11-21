@@ -41,6 +41,7 @@ import { PartnerAnalysisResult, UserProfile } from '../types';
 import { generateShareCardCanvas } from '../utils/shareCard';
 import { soundManager } from '../utils/sound';
 import { ImageViewerModal } from './ImageViewerModal';
+import { LazyImage } from './LazyImage';
 import { CompatibilityCharts } from './CompatibilityCharts';
 import { CompatibilityHeatmap } from './CompatibilityHeatmap';
 import { SocioculturalScienceSection } from './SocioculturalScienceSection';
@@ -691,9 +692,12 @@ export const ResultStep: React.FC<Props> = ({
                 ease: 'easeInOut',
               }}
             >
-              <img
+              <LazyImage
                 src={imageUrl}
                 alt={partnerName}
+                width={256}
+                height={256}
+                wrapperClassName="w-full h-full"
                 className="w-full h-full object-cover group-hover:scale-105 transition duration-500 cursor-pointer"
                 onClick={() => setShowLightbox(true)}
               />

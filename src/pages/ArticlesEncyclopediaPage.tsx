@@ -70,6 +70,7 @@ import {
   filterAndSortNarrativeArticles,
   filterAndSortAcademicPapers,
 } from '../utils/articleFilters';
+import { navigateCleanUrl } from '../utils/navigation';
 
 export { ResearchArticleModal };
 export type { ResearchArticleModalProps };
@@ -120,9 +121,11 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
     const checkDeepLinkedArticle = () => {
       try {
         const rawHash = window.location.hash.replace(/^#\/?/, '');
-        const [hashPath, queryStr] = rawHash.split('?');
+        const [hashPath, hashQueryStr] = rawHash.split('?');
         const hashParts = hashPath.split('/').filter(Boolean);
-        const searchParams = new URLSearchParams(queryStr || '');
+        const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
+
+        const searchParams = new URLSearchParams(window.location.search || hashQueryStr || '');
         const queryCat = searchParams.get('category') as FilterCategory | null;
         const storedCat = sessionStorage.getItem('mirat_open_article_category') as FilterCategory | null;
         const targetCategory = queryCat || storedCat;
@@ -132,11 +135,13 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
           setSelectedCategory(targetCategory);
         }
 
-        const hashArticleId =
-          (hashParts[0] === 'articles' || hashParts[0] === 'research') && hashParts[1]
+        const routeArticleId =
+          (pathParts[0] === 'articles' || pathParts[0] === 'research') && pathParts[1]
+            ? decodeURIComponent(pathParts[1])
+            : (hashParts[0] === 'articles' || hashParts[0] === 'research') && hashParts[1]
             ? decodeURIComponent(hashParts[1])
             : null;
-        const targetId = hashArticleId || sessionStorage.getItem('mirat_open_article_id');
+        const targetId = routeArticleId || sessionStorage.getItem('mirat_open_article_id');
         if (targetId) {
           sessionStorage.removeItem('mirat_open_article_id');
           if (validCategories.includes(targetId as FilterCategory)) {
@@ -148,7 +153,10 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
             setActiveTrack('narrative');
             setActiveAcademic(null);
             setActiveNarrative(foundNarrative);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            navigateCleanUrl(`/articles/${encodeURIComponent(foundNarrative.id)}`, {
+              replace: true,
+              scrollToTop: true,
+            });
             return;
           }
           const foundAcademic = ACADEMIC_PAPERS_CATALOG.find((p) => p.id === targetId);
@@ -156,8 +164,15 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
             setActiveTrack('academic');
             setActiveNarrative(null);
             setActiveAcademic(foundAcademic);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            navigateCleanUrl(`/articles/${encodeURIComponent(foundAcademic.id)}`, {
+              replace: true,
+              scrollToTop: true,
+            });
+            return;
           }
+        } else if (pathParts[0] === 'articles' && !pathParts[1]) {
+          setActiveNarrative(null);
+          setActiveAcademic(null);
         }
       } catch {
         // ignore storage errors
@@ -165,8 +180,14 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
     };
 
     checkDeepLinkedArticle();
+    window.addEventListener('popstate', checkDeepLinkedArticle);
     window.addEventListener('hashchange', checkDeepLinkedArticle);
-    return () => window.removeEventListener('hashchange', checkDeepLinkedArticle);
+    window.addEventListener('mirat:navigate', checkDeepLinkedArticle);
+    return () => {
+      window.removeEventListener('popstate', checkDeepLinkedArticle);
+      window.removeEventListener('hashchange', checkDeepLinkedArticle);
+      window.removeEventListener('mirat:navigate', checkDeepLinkedArticle);
+    };
   }, []);
 
   const featuredGccFamilyStudy =
@@ -198,10 +219,11 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
     if (e) e.stopPropagation();
     soundManager.playTap();
     const year = paper.publishDate.slice(0, 4) || '2026';
+    const citationUrl = `https://miratalqulub.com/articles/${encodeURIComponent(paper.id)}`;
     const citationText =
       language === 'ar'
-        ? `وحدة الأبحاث والدراسات النفسية - مرآة القلوب. (${year}). ${paper.titleAr}. موسوعة مرآة القلوب للأبحاث النفسية المحكّمة. https://miratalqulub.com/#/articles`
-        : `Mirror of Hearts Psychological Research Unit. (${year}). ${paper.titleEn}. Mirror of Hearts Peer-Reviewed Encyclopedia. https://miratalqulub.com/#/articles`;
+        ? `وحدة الأبحاث والدراسات النفسية - مرآة القلوب. (${year}). ${paper.titleAr}. موسوعة مرآة القلوب للأبحاث النفسية المحكّمة. ${citationUrl}`
+        : `Mirror of Hearts Psychological Research Unit. (${year}). ${paper.titleEn}. Mirror of Hearts Peer-Reviewed Encyclopedia. ${citationUrl}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(citationText);
       setCopiedCitationId(paper.id);
@@ -353,16 +375,35 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
     setSelectedKeyword('all');
   };
 
+  const openNarrativeArticle = (art: Article) => {
+    setActiveAcademic(null);
+    setActiveNarrative(art);
+    navigateCleanUrl(`/articles/${encodeURIComponent(art.id)}`);
+  };
+
+  const openAcademicPaper = (paper: AcademicPaper) => {
+    setActiveNarrative(null);
+    setActiveAcademic(paper);
+    navigateCleanUrl(`/articles/${encodeURIComponent(paper.id)}`);
+  };
+
   const handleBackToList = () => {
     soundManager.playTap();
     setActiveNarrative(null);
     setActiveAcademic(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateCleanUrl('/articles');
   };
+
+  const activeArticleCanonicalPath = activeNarrative
+    ? `/articles/${encodeURIComponent(activeNarrative.id)}`
+    : activeAcademic
+    ? `/articles/${encodeURIComponent(activeAcademic.id)}`
+    : '/articles';
 
   const handleShareContent = (title: string, summary: string) => {
     soundManager.playTap();
-    const textToShare = `📖 ${title}\n${summary}\nhttps://miratalqulub.com/#/articles`;
+    const shareTargetUrl = `https://miratalqulub.com${activeArticleCanonicalPath}`;
+    const textToShare = `📖 ${title}\n${summary}\n${shareTargetUrl}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(textToShare);
       setCopiedShare(true);
@@ -376,16 +417,29 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
     <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:py-10 space-y-8" dir={isRTL ? 'rtl' : 'ltr'}>
       <PageSEO
         title={
-          language === 'ar'
+          activeNarrative
+            ? `${language === 'ar' ? activeNarrative.title : activeNarrative.titleEn} | ${language === 'ar' ? 'مرآة القلوب' : 'Mirror of Hearts'}`
+            : activeAcademic
+            ? `${language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn} | ${language === 'ar' ? 'مرآة القلوب' : 'Mirror of Hearts'}`
+            : language === 'ar'
             ? 'موسوعة مرآة القلوب للمقالات والأبحاث النفسية المحكّمة (APA 7th) | مرآة القلوب'
             : 'Peer-Reviewed Psychological Research Papers & Clinical Articles | Mirror of Hearts'
         }
         description={
-          language === 'ar'
+          activeNarrative
+            ? language === 'ar'
+              ? activeNarrative.summary
+              : activeNarrative.summaryEn
+            : activeAcademic
+            ? language === 'ar'
+              ? activeAcademic.abstractAr
+              : activeAcademic.abstractEn
+            : language === 'ar'
             ? 'موسوعة مرآة القلوب للمقالات والأبحاث النفسية: أولاً الأبحاث العلمية الكاملة المحكّمة بتوثيق APA 7th، وثانياً المقالات القصصية العيادية من واقع الجلسات النفسية.'
             : 'Mirror of Hearts Encyclopedia: Full peer-reviewed academic research papers (APA 7th) and clinical narrative case studies on relationship compatibility, EQ, and digital psychology.'
         }
-        canonicalPath="/#/articles"
+        canonicalPath={activeArticleCanonicalPath}
+        pageType={isReading ? 'article' : 'website'}
         language={language}
       />
 
@@ -648,8 +702,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                     soundManager.playTap();
                     setSelectedCategory(art.category);
                     setActiveTrack('narrative');
-                    setActiveAcademic(null);
-                    setActiveNarrative(art);
+                    openNarrativeArticle(art);
                   }}
                   className={`p-3.5 rounded-2xl border text-start transition cursor-pointer flex flex-col justify-between gap-2 group ${
                     isLight
@@ -735,8 +788,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                     soundManager.playTap();
                     setSelectedCategory('applied_psychology');
                     setActiveTrack('narrative');
-                    setActiveAcademic(null);
-                    setActiveNarrative(art);
+                    openNarrativeArticle(art);
                   }}
                   className={`p-4 rounded-2xl border text-start transition cursor-pointer flex flex-col justify-between gap-2.5 group ${
                     isLight
@@ -829,8 +881,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                     soundManager.playTap();
                     setSelectedCategory('emotional_iq');
                     setActiveTrack('narrative');
-                    setActiveAcademic(null);
-                    setActiveNarrative(art);
+                    openNarrativeArticle(art);
                   }}
                   className={`p-3.5 rounded-2xl border text-start transition cursor-pointer flex flex-col justify-between gap-2 group ${
                     isLight
@@ -916,8 +967,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                     soundManager.playTap();
                     setSelectedCategory('relationships');
                     setActiveTrack('narrative');
-                    setActiveAcademic(null);
-                    setActiveNarrative(art);
+                    openNarrativeArticle(art);
                   }}
                   className={`p-3.5 rounded-2xl border text-start transition cursor-pointer flex flex-col justify-between gap-2 group ${
                     isLight
@@ -996,8 +1046,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   onClick={() => {
                     soundManager.playTap();
                     setActiveTrack('narrative');
-                    setActiveAcademic(null);
-                    setActiveNarrative(art);
+                    openNarrativeArticle(art);
                   }}
                   className={`p-3.5 rounded-2xl border text-start transition cursor-pointer flex flex-col justify-between gap-2 group ${
                     isLight
@@ -1479,7 +1528,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                       ? 'أبحاث علمية محكّمة بصيغة APA 7th ودراسات حالة عيادية وقصصية كاملة مع قارئ متكامل يدعم التحكم بحجم الخط والوضع الليلي.'
                       : 'Peer-reviewed APA 7th research papers and clinical case studies with an integrated reader supporting font-size control and Dark/Light mode.'
                   }
-                  shareUrl="https://miratalqulub.com/#/articles"
+                  shareUrl="https://miratalqulub.com/articles"
                   contentTypeLabelAr="للمقالات والأبحاث"
                   contentTypeLabelEn="Articles & Papers"
                 />
@@ -1517,15 +1566,13 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                           const paperId = val.replace('paper:', '');
                           const foundPaper = ACADEMIC_PAPERS_CATALOG.find((p) => p.id === paperId);
                           if (foundPaper) {
-                            setActiveAcademic(foundPaper);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            openAcademicPaper(foundPaper);
                           }
                         } else if (val.startsWith('article:')) {
                           const artId = val.replace('article:', '');
                           const foundArt = ARTICLES_CATALOG.find((a) => a.id === artId);
                           if (foundArt) {
-                            setActiveNarrative(foundArt);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            openNarrativeArticle(foundArt);
                           }
                         }
                       }}
@@ -1602,8 +1649,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                       whileHover={{ scale: 1.01, y: -3 }}
                       onClick={() => {
                         soundManager.playTap();
-                        setActiveNarrative(art);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        openNarrativeArticle(art);
                       }}
                       className={`p-6 rounded-3xl border transition cursor-pointer flex flex-col justify-between space-y-4 group shadow-md ${
                         isLight
@@ -1670,8 +1716,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                                 e.stopPropagation();
                                 soundManager.playTap();
                                 setReaderViewMode('continuous_only');
-                                setActiveNarrative(art);
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                openNarrativeArticle(art);
                               }}
                               className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer whitespace-nowrap ${
                                 isLight
@@ -1810,8 +1855,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                           onClick={() => {
                             soundManager.playTap();
                             setReaderViewMode('continuous_only');
-                            setActiveAcademic(featuredGccFamilyStudy);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            openAcademicPaper(featuredGccFamilyStudy);
                           }}
                           className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold border transition cursor-pointer flex items-center gap-1.5 ${
                             isLight
@@ -1861,8 +1905,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                       whileHover={{ scale: 1.005, y: -2 }}
                       onClick={() => {
                         soundManager.playTap();
-                        setActiveAcademic(paper);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        openAcademicPaper(paper);
                       }}
                       className={`p-6 sm:p-7 rounded-3xl border transition cursor-pointer flex flex-col justify-between space-y-4 group shadow-md ${
                         isLight
@@ -2001,8 +2044,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                               e.stopPropagation();
                               soundManager.playTap();
                               setReaderViewMode('continuous_only');
-                              setActiveAcademic(paper);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              openAcademicPaper(paper);
                             }}
                             className={`px-3 py-1 rounded-xl text-[11px] font-extrabold border transition cursor-pointer ${
                               isLight
@@ -2130,7 +2172,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               onOpenFullScreen={() => setFullScreenArticle(activeNarrative)}
               shareTitle={language === 'ar' ? activeNarrative.title : activeNarrative.titleEn}
               shareSummary={language === 'ar' ? activeNarrative.summary : activeNarrative.summaryEn}
-              shareUrl="https://miratalqulub.com/#/articles"
+              shareUrl={`https://miratalqulub.com/articles/${encodeURIComponent(activeNarrative.id)}`}
               contentTypeLabelAr="للقصة والسجل العيادي"
               contentTypeLabelEn="Story"
             />
@@ -2443,7 +2485,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
             <ArticleBottomSocialShare
               title={language === 'ar' ? activeNarrative.title : activeNarrative.titleEn}
               summary={language === 'ar' ? activeNarrative.summary : activeNarrative.summaryEn}
-              url="https://miratalqulub.com/#/articles"
+              url={`https://miratalqulub.com/articles/${encodeURIComponent(activeNarrative.id)}`}
               isLight={isLight}
               language={language}
             />
@@ -2612,7 +2654,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               onOpenFullScreen={() => setFullScreenPaper(activeAcademic)}
               shareTitle={language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn}
               shareSummary={language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
-              shareUrl="https://miratalqulub.com/#/articles"
+              shareUrl={`https://miratalqulub.com/articles/${encodeURIComponent(activeAcademic.id)}`}
               contentTypeLabelAr="للبحث العلمي"
               contentTypeLabelEn="Paper"
             />
@@ -3043,7 +3085,7 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
             <ArticleBottomSocialShare
               title={language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn}
               summary={language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
-              url="https://miratalqulub.com/#/articles"
+              url={`https://miratalqulub.com/articles/${encodeURIComponent(activeAcademic.id)}`}
               isLight={isLight}
               language={language}
             />

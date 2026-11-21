@@ -1,5 +1,6 @@
 import React from 'react';
 import { Brain, Heart, BookOpen, Trash2 } from 'lucide-react';
+import { navigateCleanUrl } from '../../utils/navigation';
 
 export interface NavbarMobileDrawerProps {
   isAr: boolean;
@@ -61,15 +62,18 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <button
-            type="button"
-            onClick={() =>
-              onNavAction(() =>
-                onNavigatePage
-                  ? onNavigatePage('personality-tests')
-                  : onOpenPsychologyTests && onOpenPsychologyTests()
-              )
-            }
+          <a
+            href="/personality-tests"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavAction(() => {
+                if (onNavigatePage) onNavigatePage('personality-tests');
+                else {
+                  navigateCleanUrl('/personality-tests');
+                  if (onOpenPsychologyTests) onOpenPsychologyTests();
+                }
+              });
+            }}
             className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
               isLight
                 ? 'bg-white border-purple-200 text-slate-800'
@@ -77,20 +81,27 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
             }`}
           >
             🧠 {isAr ? 'مقاييس الشخصية (MBTI & Big Five)' : 'Personality Lab (MBTI & Big Five)'}
-          </button>
-          {onOpenIntelligenceTests && (
-            <button
-              type="button"
-              onClick={() => onNavAction(onOpenIntelligenceTests)}
-              className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
-                isLight
-                  ? 'bg-white border-purple-200 text-slate-800'
-                  : 'bg-slate-900/90 border-white/10 text-slate-100'
-              }`}
-            >
-              💡 {isAr ? 'اختبارات الذكاء المتعدد و رافين' : 'Multiple Intelligences & IQ Lab'}
-            </button>
-          )}
+          </a>
+          <a
+            href="/iq-tests"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavAction(() => {
+                if (onNavigatePage) onNavigatePage('iq-tests');
+                else {
+                  navigateCleanUrl('/iq-tests');
+                  if (onOpenIntelligenceTests) onOpenIntelligenceTests();
+                }
+              });
+            }}
+            className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
+              isLight
+                ? 'bg-white border-purple-200 text-slate-800'
+                : 'bg-slate-900/90 border-white/10 text-slate-100'
+            }`}
+          >
+            💡 {isAr ? 'اختبارات الذكاء المتعدد و رافين' : 'Multiple Intelligences & IQ Lab'}
+          </a>
           {onOpenPsychologyTests && (
             <button
               type="button"
@@ -107,24 +118,27 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
                 : 'Specialized Clinical Scales (16PF • EPQ)'}
             </button>
           )}
-          {onNavigatePage && (
-            <button
-              type="button"
-              onClick={() =>
-                onNavAction(() => onNavigatePage('how-results-are-calculated'))
-              }
-              className={`p-2.5 rounded-xl border font-bold text-start sm:col-span-2 cursor-pointer ${
-                isLight
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                  : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
-              }`}
-            >
-              🛡️{' '}
-              {isAr
-                ? 'كيف يتم حساب نتائج الاختبارات؟ (Big Five • HEXACO • Attachment • EQ)'
-                : 'How Are Test Results Calculated? (Big Five • HEXACO • Attachment • EQ)'}
-            </button>
-          )}
+          <a
+            href="/how-results-are-calculated"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavAction(() =>
+                onNavigatePage
+                  ? onNavigatePage('how-results-are-calculated')
+                  : navigateCleanUrl('/how-results-are-calculated')
+              );
+            }}
+            className={`p-2.5 rounded-xl border font-bold text-start sm:col-span-2 cursor-pointer ${
+              isLight
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+            }`}
+          >
+            🛡️{' '}
+            {isAr
+              ? 'كيف يتم حساب نتائج الاختبارات؟ (Big Five • HEXACO • Attachment • EQ)'
+              : 'How Are Test Results Calculated? (Big Five • HEXACO • Attachment • EQ)'}
+          </a>
         </div>
       </div>
 
@@ -147,14 +161,16 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <button
-            type="button"
-            onClick={() =>
+          <a
+            href="/compatibility"
+            onClick={(e) => {
+              e.preventDefault();
               onNavAction(() => {
                 if (onNavigatePage) onNavigatePage('compatibility');
+                else navigateCleanUrl('/compatibility');
                 if (onReset) onReset();
-              })
-            }
+              });
+            }}
             className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
               isLight
                 ? 'bg-white border-rose-200 text-slate-800'
@@ -162,20 +178,27 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
             }`}
           >
             💖 {isAr ? 'كاشف التوافق الفكري والعاطفي' : 'Partner Compatibility Calculator'}
-          </button>
-          {onOpenBlindDate && (
-            <button
-              type="button"
-              onClick={() => onNavAction(onOpenBlindDate)}
-              className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
-                isLight
-                  ? 'bg-white border-rose-200 text-slate-800'
-                  : 'bg-slate-900/90 border-white/10 text-slate-100'
-              }`}
-            >
-              💬 {isAr ? 'اللقاء الأعمى (The Blind Date)' : 'The Blind Date Experience'}
-            </button>
-          )}
+          </a>
+          <a
+            href="/tools"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavAction(() => {
+                if (onNavigatePage) onNavigatePage('tools');
+                else {
+                  navigateCleanUrl('/tools');
+                  if (onOpenBlindDate) onOpenBlindDate();
+                }
+              });
+            }}
+            className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
+              isLight
+                ? 'bg-white border-rose-200 text-slate-800'
+                : 'bg-slate-900/90 border-white/10 text-slate-100'
+            }`}
+          >
+            🪄 {isAr ? 'الأدوات التفاعلية و The Blind Date' : 'Interactive Tools & Blind Date'}
+          </a>
         </div>
       </div>
 
@@ -200,15 +223,18 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          <button
-            type="button"
-            onClick={() =>
-              onNavAction(() =>
-                onNavigatePage
-                  ? onNavigatePage('articles')
-                  : onOpenArticles && onOpenArticles()
-              )
-            }
+          <a
+            href="/articles"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavAction(() => {
+                if (onNavigatePage) onNavigatePage('articles');
+                else {
+                  navigateCleanUrl('/articles');
+                  if (onOpenArticles) onOpenArticles();
+                }
+              });
+            }}
             className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
               isLight
                 ? 'bg-white border-emerald-200 text-slate-800'
@@ -216,16 +242,19 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
             }`}
           >
             📚 {isAr ? 'موسوعة المقالات والأبحاث المحكّمة' : 'Clinical Articles & Research'}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              onNavAction(() =>
-                onNavigatePage
-                  ? onNavigatePage('novels')
-                  : onOpenNovels && onOpenNovels()
-              )
-            }
+          </a>
+          <a
+            href="/novels"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavAction(() => {
+                if (onNavigatePage) onNavigatePage('novels');
+                else {
+                  navigateCleanUrl('/novels');
+                  if (onOpenNovels) onOpenNovels();
+                }
+              });
+            }}
             className={`p-2.5 rounded-xl border font-bold text-start cursor-pointer ${
               isLight
                 ? 'bg-white border-emerald-200 text-slate-800'
@@ -233,7 +262,7 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
             }`}
           >
             🕵️‍♂️ {isAr ? 'مكتبة الروايات والتحقيقات' : 'Novels & Forensic Library'}
-          </button>
+          </a>
         </div>
       </div>
 
@@ -251,19 +280,26 @@ export const NavbarMobileDrawer: React.FC<NavbarMobileDrawerProps> = ({
           <span>👤 {isAr ? 'ملفي والتحكم بالبيانات' : 'My Profile & Data Control'}</span>
         </div>
         <div className="grid grid-cols-2 gap-1.5">
-          {onOpenUserDashboard && (
-            <button
-              type="button"
-              onClick={() => onNavAction(onOpenUserDashboard)}
-              className={`p-2 rounded-xl border font-bold text-start cursor-pointer ${
-                isLight
-                  ? 'bg-white border-violet-200 text-slate-800'
-                  : 'bg-slate-900 border-white/10 text-slate-100'
-              }`}
-            >
-              {isAr ? 'لوحة ملفي الشامل' : 'Profile Dashboard'}
-            </button>
-          )}
+          <a
+            href="/profile"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavAction(() => {
+                if (onNavigatePage) onNavigatePage('profile');
+                else {
+                  navigateCleanUrl('/profile');
+                  if (onOpenUserDashboard) onOpenUserDashboard();
+                }
+              });
+            }}
+            className={`p-2 rounded-xl border font-bold text-start cursor-pointer ${
+              isLight
+                ? 'bg-white border-violet-200 text-slate-800'
+                : 'bg-slate-900 border-white/10 text-slate-100'
+            }`}
+          >
+            {isAr ? 'صفحة ملفي الشامل' : 'Profile Page'}
+          </a>
           {onOpenHistory && (
             <button
               type="button"

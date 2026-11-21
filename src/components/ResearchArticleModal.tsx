@@ -141,9 +141,13 @@ export const ResearchArticleModal: React.FC<ResearchArticleModalProps> = ({
     if (!paper) return;
     soundManager.playTap();
     const year = paper.publishDate.slice(0, 4) || '2025';
+    const targetId = paper?.id || article?.id;
+    const shareTargetUrl = targetId
+      ? `https://miratalqulub.com/articles/${encodeURIComponent(targetId)}`
+      : 'https://miratalqulub.com/articles';
     const citation = isAr
-      ? `وحدة الأبحاث والدراسات النفسية - مرآة القلوب. (${year}). ${paper.titleAr}. موسوعة مرآة القلوب للأبحاث النفسية المحكّمة. https://miratalqulub.com/#/articles`
-      : `Mirror of Hearts Psychological Research Unit. (${year}). ${paper.titleEn}. Mirror of Hearts Peer-Reviewed Encyclopedia. https://miratalqulub.com/#/articles`;
+      ? `وحدة الأبحاث والدراسات النفسية - مرآة القلوب. (${year}). ${paper.titleAr}. موسوعة مرآة القلوب للأبحاث النفسية المحكّمة. ${shareTargetUrl}`
+      : `Mirror of Hearts Psychological Research Unit. (${year}). ${paper.titleEn}. Mirror of Hearts Peer-Reviewed Encyclopedia. ${shareTargetUrl}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(citation);
       setCopiedApa(true);
@@ -761,7 +765,13 @@ export const ResearchArticleModal: React.FC<ResearchArticleModalProps> = ({
               <ArticleBottomSocialShare
                 title={displayTitle}
                 summary={displayAbstract}
-                url="https://miratalqulub.com/#/articles"
+                url={
+                  paper?.id
+                    ? `https://miratalqulub.com/articles/${encodeURIComponent(paper.id)}`
+                    : article?.id
+                    ? `https://miratalqulub.com/articles/${encodeURIComponent(article.id)}`
+                    : 'https://miratalqulub.com/articles'
+                }
                 isLight={isLight}
                 language={language}
               />

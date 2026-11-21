@@ -61,7 +61,7 @@ export const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
   const isAr = language === 'ar';
 
   const currentUrl =
-    shareUrl || (typeof window !== 'undefined' ? window.location.href : 'https://miratalqulub.com/#/articles');
+    shareUrl || (typeof window !== 'undefined' ? window.location.href : 'https://miratalqulub.com/articles');
   const fullShareText = `📖 ${shareTitle}\n\n${shareSummary.slice(0, 220)}...\n\n🔗 ${currentUrl}`;
   const encodedText = encodeURIComponent(fullShareText);
   const encodedUrl = encodeURIComponent(currentUrl);

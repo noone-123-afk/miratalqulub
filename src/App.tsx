@@ -14,6 +14,7 @@ import { isPinLockEnabled } from './utils/privacyLock';
 import { useAppTheme } from './utils/theme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { SitePage, parseAppRoute, navigateCleanUrl } from './utils/navigation';
 
 const Footer = lazy(() =>
   import('./components/Footer').then((m) => ({ default: m.Footer }))
@@ -86,6 +87,15 @@ const HowTestResultsCalculatedPage = lazy(() =>
     default: m.HowTestResultsCalculatedPage,
   }))
 );
+const IQTestsPage = lazy(() =>
+  import('./pages/IQTestsPage').then((m) => ({ default: m.IQTestsPage }))
+);
+const InteractiveToolsPage = lazy(() =>
+  import('./pages/InteractiveToolsPage').then((m) => ({ default: m.InteractiveToolsPage }))
+);
+const ProfilePage = lazy(() =>
+  import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
+);
 
 // Code-Split Lazy Loaded Modals (Mounted only when opened)
 const LiveChatModal = lazy(() =>
@@ -146,24 +156,7 @@ const BookClubCommunityModal = lazy(() =>
   }))
 );
 
-export type SitePage =
-  | 'home'
-  | 'about'
-  | 'how-it-works'
-  | 'privacy'
-  | 'terms'
-  | 'contact'
-  | 'faq'
-  | 'methodology'
-  | 'disclaimer'
-  | 'novels'
-  | 'novel-detail'
-  | 'chapter-reader'
-  | 'admin-cms'
-  | 'personality-tests'
-  | 'articles'
-  | 'compatibility'
-  | 'how-results-are-calculated';
+export type { SitePage };
 type AppStep = 'profile' | 'quiz' | 'analyzing' | 'result';
 
 function SectionLoadingFallback() {
@@ -214,89 +207,56 @@ function AppContent() {
   const [activeNovelId, setActiveNovelId] = useState<string>('room_104_cipher');
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
 
-  // Synchronize URL hash, pathname, and query params with currentPage for direct deep linking, OAuth/AdSense validators, and SEO crawlers
+  // Synchronize Clean URL pathname & History API state with currentPage for direct deep linking, OAuth/AdSense validators, and SEO crawlers
   useEffect(() => {
     const handleRouteChange = () => {
-      const rawHash = window.location.hash.toLowerCase().replace('#/', '').replace('#', '').trim();
-      const rawPath = window.location.pathname.toLowerCase().replace(/^\/+|\/+$/g, '').trim();
-      const searchParams = new URLSearchParams(window.location.search);
-      const queryPage = (searchParams.get('page') || '').toLowerCase().trim();
+      const parsed = parseAppRoute(
+        window.location.pathname,
+        window.location.search,
+        window.location.hash
+      );
 
-      const effectiveRoute = rawHash || queryPage || rawPath;
-      const parts = effectiveRoute.split('/');
-      const section = parts[0];
-
-      if (section === 'about' || section === 'about-us') {
-        setCurrentPage('about');
-      } else if (section === 'how-it-works' || section === 'howitworks') {
-        setCurrentPage('how-it-works');
-      } else if (section === 'privacy' || section === 'privacy-policy' || section === 'privacypolicy') {
-        setCurrentPage('privacy');
-      } else if (section === 'terms' || section === 'terms-of-service' || section === 'tos') {
-        setCurrentPage('terms');
-      } else if (section === 'contact' || section === 'contact-us') {
-        setCurrentPage('contact');
-      } else if (section === 'faq') {
-        setCurrentPage('faq');
-      } else if (section === 'methodology' || section === 'sources') {
-        setCurrentPage('methodology');
-      } else if (section === 'disclaimer') {
-        setCurrentPage('disclaimer');
-      } else if (section === 'admin' || section === 'admin-cms') {
-        setCurrentPage('admin-cms');
-      } else if (section === 'articles' || section === 'research') {
-        if (parts[1]) {
-          try {
-            sessionStorage.setItem('mirat_open_article_id', decodeURIComponent(parts[1]));
-          } catch {
-            // ignore
-          }
-        }
-        setCurrentPage('articles');
-      } else if (section === 'community' || section === 'book-club' || section === 'salon') {
-        setIsBookClubOpen(true);
-        setCurrentPage('home');
-      } else if (
-        section === 'how-results-are-calculated' ||
-        section === 'scoring-guide' ||
-        section === 'how-tests-work' ||
-        section === 'scoring'
-      ) {
-        setCurrentPage('how-results-are-calculated');
-      } else if (
-        section === 'personality-tests' ||
-        section === 'personality' ||
-        section === 'mbti' ||
-        section === 'big-five'
-      ) {
-        setCurrentPage('personality-tests');
-      } else if (
-        section === 'compatibility' ||
-        section === 'partner-detector' ||
-        section === 'partner'
-      ) {
-        setCurrentPage('compatibility');
-      } else if (section === 'novels') {
-        if (parts[1]) {
-          setActiveNovelId(parts[1]);
-          if (parts[2] === 'chapter' && parts[3]) {
-            const chNum = parseInt(parts[3], 10);
-            setActiveChapterIndex(Math.max(0, (isNaN(chNum) ? 1 : chNum) - 1));
-            setCurrentPage('chapter-reader');
-          } else {
-            setCurrentPage('novel-detail');
-          }
-        } else {
-          setCurrentPage('novels');
-        }
-      } else {
-        setCurrentPage('home');
+      if (parsed.redirectCleanPath) {
+        navigateCleanUrl(parsed.redirectCleanPath, {
+          replace: true,
+          scrollToTop: false,
+          silent: true,
+        });
       }
+
+      if (parsed.articleCategory) {
+        try {
+          sessionStorage.setItem('mirat_open_article_category', parsed.articleCategory);
+        } catch {
+          // ignore
+        }
+      }
+
+      if (parsed.articleId) {
+        try {
+          sessionStorage.setItem('mirat_open_article_id', parsed.articleId);
+        } catch {
+          // ignore
+        }
+      }
+
+      if (parsed.novelId) {
+        setActiveNovelId(parsed.novelId);
+      }
+      if (typeof parsed.chapterIndex === 'number') {
+        setActiveChapterIndex(parsed.chapterIndex);
+      }
+      if (parsed.openBookClub) {
+        setIsBookClubOpen(true);
+      }
+
+      setCurrentPage(parsed.page);
     };
 
     handleRouteChange();
-    window.addEventListener('hashchange', handleRouteChange);
     window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('hashchange', handleRouteChange);
+    window.addEventListener('mirat:navigate', handleRouteChange);
 
     const handleLaunchRecommendedTest = (e: Event) => {
       const custom = e as CustomEvent<ResolvedTestCard>;
@@ -306,8 +266,7 @@ function AppContent() {
       if (testCard.launchKind === 'compatibility') {
         setIsPsychologyTestsOpen(false);
         setIsIntelligenceModalOpen(false);
-        window.location.hash = '#/compatibility';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        navigateCleanUrl('/compatibility');
         return;
       }
 
@@ -325,7 +284,7 @@ function AppContent() {
         return;
       }
 
-      // personality_inline or tiered -> navigate to #/personality-tests where PersonalityTestsPage consumes mirat_pending_test_launch
+      // personality_inline or tiered -> navigate to /personality-tests where PersonalityTestsPage consumes mirat_pending_test_launch
       setIsPsychologyTestsOpen(false);
       setIsIntelligenceModalOpen(false);
       try {
@@ -333,14 +292,14 @@ function AppContent() {
       } catch {
         // ignore
       }
-      window.location.hash = '#/personality-tests';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigateCleanUrl('/personality-tests');
     };
 
     window.addEventListener('mirat:launch-test', handleLaunchRecommendedTest);
     return () => {
-      window.removeEventListener('hashchange', handleRouteChange);
       window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('hashchange', handleRouteChange);
+      window.removeEventListener('mirat:navigate', handleRouteChange);
       window.removeEventListener('mirat:launch-test', handleLaunchRecommendedTest);
     };
   }, []);
@@ -356,46 +315,36 @@ function AppContent() {
 
   const handleNavigatePage = (page: string) => {
     soundManager.playTap();
-    const validPages: SitePage[] = [
-      'about',
-      'how-it-works',
-      'privacy',
-      'terms',
-      'contact',
-      'faq',
-      'methodology',
-      'disclaimer',
-      'novels',
-      'admin-cms',
-      'personality-tests',
-      'articles',
-      'compatibility',
-      'how-results-are-calculated',
-    ];
+    const cleaned = page.replace(/^#?\/+/, '').trim();
+    if (!cleaned || cleaned === 'home') {
+      setCurrentPage('home');
+      navigateCleanUrl('/');
+      return;
+    }
 
-    if (page === 'community' || page === 'book-club' || page === 'salon') {
+    if (cleaned === 'community' || cleaned === 'book-club' || cleaned === 'salon') {
       setIsBookClubOpen(true);
       return;
     }
 
-    if (validPages.includes(page as SitePage)) {
-      setCurrentPage(page as SitePage);
-      window.location.hash = `#/${page}`;
-    } else {
-      setCurrentPage('home');
-      if (window.location.hash) {
-        history.pushState(null, '', window.location.pathname);
-      }
+    const parsed = parseAppRoute(`/${cleaned}`, '', '');
+    if (parsed.articleId) {
+      try {
+        sessionStorage.setItem('mirat_open_article_id', parsed.articleId);
+      } catch {}
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (parsed.novelId) setActiveNovelId(parsed.novelId);
+    if (typeof parsed.chapterIndex === 'number') setActiveChapterIndex(parsed.chapterIndex);
+
+    setCurrentPage(parsed.page);
+    navigateCleanUrl(parsed.cleanPath);
   };
 
   const handleSelectNovel = (novelId: string) => {
     soundManager.playTap();
     setActiveNovelId(novelId);
     setCurrentPage('novel-detail');
-    window.location.hash = `#/novels/${novelId}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateCleanUrl(`/novels/${encodeURIComponent(novelId)}`);
   };
 
   const handleReadChapter = (novelId: string, chapterIdx: number) => {
@@ -403,8 +352,7 @@ function AppContent() {
     setActiveNovelId(novelId);
     setActiveChapterIndex(chapterIdx);
     setCurrentPage('chapter-reader');
-    window.location.hash = `#/novels/${novelId}/chapter/${chapterIdx + 1}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateCleanUrl(`/novels/${encodeURIComponent(novelId)}/chapter/${chapterIdx + 1}`);
   };
 
   // Defer site analytics tracking & session loading to idle time without pulling 498 KB Firebase Firestore SDK for anonymous/Lighthouse visits
@@ -548,8 +496,7 @@ function AppContent() {
     setIsResultUnlocked(true);
     setStep('result');
     setCurrentPage('compatibility');
-    window.location.hash = '#/compatibility';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateCleanUrl('/compatibility');
   };
 
   const handleOpenWebsiteSection = (tab: WebsiteTabKey = 'about') => {
@@ -883,7 +830,7 @@ function AppContent() {
             onStart={(prof) => {
               handleStart(prof);
               setCurrentPage('compatibility');
-              window.location.hash = '#/compatibility';
+              navigateCleanUrl('/compatibility');
             }}
             initialProfile={profile}
             savedTestsCount={savedTestsCount}
@@ -1010,7 +957,7 @@ function AppContent() {
                   onStart={(prof) => {
                     handleStart(prof);
                     setCurrentPage('compatibility');
-                    window.location.hash = '#/compatibility';
+                    navigateCleanUrl('/compatibility');
                   }}
                   initialProfile={profile}
                   savedTestsCount={savedTestsCount}
@@ -1052,6 +999,41 @@ function AppContent() {
               <ArticlesEncyclopediaPage
                 onBackToHome={() => handleNavigatePage('home')}
                 onNavigatePage={handleNavigatePage}
+              />
+            )}
+
+            {currentPage === 'iq-tests' && (
+              <IQTestsPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+                onOpenIntelligenceBattery={(battery) => {
+                  setInitialIntelligenceBattery(battery || null);
+                  setIsIntelligenceModalOpen(true);
+                }}
+              />
+            )}
+
+            {currentPage === 'tools' && (
+              <InteractiveToolsPage
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+                onOpenBlindDate={() => setIsBlindDateOpen(true)}
+                onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
+                onOpenLiveChat={() => setIsLiveChatOpen(true)}
+                onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+                onOpenOnboardingWizard={() => setIsOnboardingWizardOpen(true)}
+              />
+            )}
+
+            {currentPage === 'profile' && (
+              <ProfilePage
+                savedTestsCount={savedTestsCount}
+                onBackToHome={() => handleNavigatePage('home')}
+                onNavigatePage={handleNavigatePage}
+                onOpenDashboard={(tab) => handleOpenUserDashboard(tab || 'overview')}
+                onOpenAuth={() => setIsAuthModalOpen(true)}
+                onDataDeleted={() => setSavedTestsCount(0)}
+                onReset={handleReset}
               />
             )}
 
@@ -1197,6 +1179,7 @@ function AppContent() {
             onStartQuiz={() => {
               setIsWebsiteSectionsOpen(false);
               handleReset();
+              handleNavigatePage('compatibility');
             }}
           />
         )}

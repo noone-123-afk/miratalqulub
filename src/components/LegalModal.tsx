@@ -25,6 +25,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
+import { navigateCleanUrl } from '../utils/navigation';
 
 export type LegalTab = 'privacy' | 'terms' | 'about';
 
@@ -231,12 +232,13 @@ export const LegalModal: React.FC<Props> = ({
                 onClick={() => {
                   soundManager.playTap();
                   onClose();
-                  window.location.hash =
+                  navigateCleanUrl(
                     activeTab === 'privacy'
-                      ? '#/privacy'
+                      ? '/privacy'
                       : activeTab === 'terms'
-                      ? '#/terms'
-                      : '#/about';
+                      ? '/terms'
+                      : '/about'
+                  );
                 }}
                 className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
                   isLight

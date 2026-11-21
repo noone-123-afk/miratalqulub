@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Share2 } from 'lucide-react';
+import { LazyImage } from './LazyImage';
 
 interface Props {
   imageUrl: string;
@@ -64,9 +65,10 @@ export const ImageViewerModal: React.FC<Props> = ({
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="relative rounded-3xl overflow-hidden border-2 border-rose-500/30 shadow-2xl shadow-rose-500/30 max-h-[70vh]"
             >
-              <img
+              <LazyImage
                 src={imageUrl}
                 alt={title}
+                wrapperClassName="w-full h-full max-h-[70vh] rounded-3xl"
                 className="w-full h-full object-cover max-h-[70vh] rounded-3xl"
               />
             </motion.div>

@@ -7,6 +7,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
+import { navigateCleanUrl } from '../utils/navigation';
 
 interface NextStepRecommendationsProps {
   bundle: NextStepRecommendationBundle;
@@ -34,8 +35,7 @@ export const NextStepRecommendations: React.FC<NextStepRecommendationsProps> = (
       // ignore storage errors
     }
     onBeforeNavigate?.();
-    window.location.hash = bundle.article.route;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateCleanUrl(bundle.article.route);
   };
 
   const handleOpenNovel = () => {
@@ -51,8 +51,7 @@ export const NextStepRecommendations: React.FC<NextStepRecommendationsProps> = (
       // ignore storage errors
     }
     onBeforeNavigate?.();
-    window.location.hash = bundle.novel.route;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateCleanUrl(bundle.novel.route);
   };
 
   const handleOpenTest = () => {
@@ -65,8 +64,7 @@ export const NextStepRecommendations: React.FC<NextStepRecommendationsProps> = (
     onBeforeNavigate?.();
 
     if (bundle.test.launchKind === 'compatibility') {
-      window.location.hash = '#/compatibility';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigateCleanUrl('/compatibility');
       return;
     }
 

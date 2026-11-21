@@ -1238,7 +1238,7 @@ export const HowTestResultsCalculatedPage: React.FC<HowTestResultsCalculatedPage
             ? 'شرح مبسط وشفاف لكيفية حساب نتائج الاختبارات النفسية واختبارات التوافق في مرآة القلوب: العوامل الخمسة الكبرى (Big Five)، نموذج هيكساكو (HEXACO)، أنماط التعلق (Attachment)، والذكاء العاطفي (Emotional Intelligence).'
             : 'A simple, transparent guide explaining how test results are calculated in Mirror of Hearts across Big Five, HEXACO, Attachment Styles, and Emotional Intelligence.'
         }
-        canonicalPath="/#/how-results-are-calculated"
+        canonicalPath="/how-results-are-calculated"
         language={language}
       />
 

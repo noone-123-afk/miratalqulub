@@ -49,7 +49,7 @@ export const ArticleBottomSocialShare: React.FC<{
   const isAr = language === 'ar';
 
   const shareUrl =
-    url || (typeof window !== 'undefined' ? window.location.href : 'https://miratalqulub.com/#/articles');
+    url || (typeof window !== 'undefined' ? window.location.href : 'https://miratalqulub.com/articles');
   const fullShareMessage = `📖 ${title}\n\n${summary.slice(0, 240)}...\n\n🔗 ${shareUrl}`;
   const encodedText = encodeURIComponent(fullShareMessage);
   const encodedUrl = encodeURIComponent(shareUrl);
@@ -261,9 +261,10 @@ export const FullScreenResearchStudyModal: React.FC<FullScreenResearchStudyModal
   const handleCopyApaCitation = () => {
     soundManager.playTap();
     const year = paper.publishDate.slice(0, 4) || '2025';
+    const paperUrl = `https://miratalqulub.com/articles/${encodeURIComponent(paper.id)}`;
     const citation = isAr
-      ? `وحدة الأبحاث والدراسات النفسية - مرآة القلوب. (${year}). ${paper.titleAr}. موسوعة مرآة القلوب للأبحاث النفسية المحكّمة. https://miratalqulub.com/#/articles`
-      : `Mirror of Hearts Psychological Research Unit. (${year}). ${paper.titleEn}. Mirror of Hearts Peer-Reviewed Encyclopedia. https://miratalqulub.com/#/articles`;
+      ? `وحدة الأبحاث والدراسات النفسية - مرآة القلوب. (${year}). ${paper.titleAr}. موسوعة مرآة القلوب للأبحاث النفسية المحكّمة. ${paperUrl}`
+      : `Mirror of Hearts Psychological Research Unit. (${year}). ${paper.titleEn}. Mirror of Hearts Peer-Reviewed Encyclopedia. ${paperUrl}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(citation);
       setCopiedApa(true);
@@ -909,7 +910,7 @@ export const FullScreenResearchStudyModal: React.FC<FullScreenResearchStudyModal
               <ArticleBottomSocialShare
                 title={displayTitle}
                 summary={displayAbstract}
-                url="https://miratalqulub.com/#/articles"
+                url={`https://miratalqulub.com/articles/${encodeURIComponent(paper.id)}`}
                 isLight={isLight}
                 language={language}
               />

@@ -34,10 +34,10 @@
       "identifier": "urn:air:miratalqulub.com:web:personality-tests",
       "displayName": "تحليل الشخصية السيكومتري",
       "type": "text/html",
-      "url": "https://miratalqulub.com/#/personality-tests",
+      "url": "https://miratalqulub.com/personality-tests",
       "description": "منظومة التحليل النفسي متعدد المستويات (السريع، المتقدم، الاحترافي) ومقارنة الشخصيات.",
       "version": "1.0.0",
-      "updatedAt": "2026-11-16T00:00:00Z",
+      "updatedAt": "2026-11-21T00:00:00Z",
       "tags": [
         "mbti",
         "big-five",
@@ -56,10 +56,10 @@
       "identifier": "urn:air:miratalqulub.com:web:compatibility",
       "displayName": "كاشف شريك الحياة والتوافق العاطفي",
       "type": "text/html",
-      "url": "https://miratalqulub.com/#/compatibility",
+      "url": "https://miratalqulub.com/compatibility",
       "description": "اختبار التوافق العاطفي والفكري والأسري المبني على النماذج السيكومترية المعتمدة.",
       "version": "1.0.0",
-      "updatedAt": "2026-11-16T00:00:00Z",
+      "updatedAt": "2026-11-21T00:00:00Z",
       "tags": [
         "relationship-compatibility",
         "partner-matching"

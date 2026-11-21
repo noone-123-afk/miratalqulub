@@ -178,7 +178,7 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
             ? 'لوحة الإدارة والتحكم الشاملة في الروايات والبيانات العامة وتدقيق جودة المنصة.'
             : 'Unified administration dashboard for novel management, dynamic CMS content, and platform quality audit.'
         }
-        canonicalPath="/#/admin-cms"
+        canonicalPath="/admin-cms"
         language={language}
       />
 

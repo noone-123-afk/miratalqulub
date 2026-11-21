@@ -85,6 +85,7 @@ function manualChunkMatcher(id: string): string | undefined {
   }
   if (
     id.includes('src/data/articlesData') ||
+    id.includes('src/data/homeArticlesRankData') ||
     id.includes('src/data/novelsData') ||
     id.includes('src/data/userNovelsData') ||
     id.includes('src/data/pdfFourBigFiveArticles') ||
@@ -92,7 +93,7 @@ function manualChunkMatcher(id: string): string | undefined {
     id.includes('src/data/emotionalIntelligenceSeriesArticles') ||
     id.includes('src/data/emotionalIntelligencePart2Articles') ||
     id.includes('src/data/platformIntroductoryArticles') ||
-    id.includes('src/data/clinicalChildhoodAnxietyOverthinkingArticle') ||
+    id.includes('src/data/clinical') ||
     id.includes('src/data/academicPapersData')
   ) {
     return 'data-content';
@@ -120,13 +121,14 @@ export default defineConfig(({ command }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        injectRegister: 'script-defer',
         includeAssets: [
           'icon.svg',
-          'logo.webp',
-          'logo.jpg',
+          'logo.avif',
           'apple-touch-icon.png',
-          'pwa-192x192.png',
-          'pwa-512x512.png',
+          'pwa-192x192.avif',
+          'pwa-512x512.avif',
+          'pwa-maskable-512x512.avif',
         ],
         manifest: {
           id: '/',
@@ -141,6 +143,24 @@ export default defineConfig(({ command }) => {
           start_url: '/',
           scope: '/',
           icons: [
+            {
+              src: '/pwa-192x192.avif',
+              sizes: '192x192',
+              type: 'image/avif',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-512x512.avif',
+              sizes: '512x512',
+              type: 'image/avif',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-maskable-512x512.avif',
+              sizes: '512x512',
+              type: 'image/avif',
+              purpose: 'maskable',
+            },
             {
               src: '/pwa-192x192.png',
               sizes: '192x192',
@@ -165,12 +185,69 @@ export default defineConfig(({ command }) => {
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
-          maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
+          maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+          globPatterns: [
+            'index.html',
+            'manifest.webmanifest',
+            'assets/index-*.{js,css}',
+            'assets/vendor-react-*.js',
+            'assets/vendor-icons-*.js',
+            'assets/rolldown-runtime-*.js',
+          ],
           globIgnores: [
             '**/ai-catalog.json',
             '**/.well-known/**',
             '**/ard.json',
             '**/llms*.txt',
+            '**/data-*.js',
+            '**/vendor-pdf-*.js',
+            '**/vendor-charts-*.js',
+            '**/vendor-firebase-*.js',
+            '**/psychologySuiteData-*.js',
+          ],
+          runtimeCaching: [
+            {
+              urlPattern: /\/assets\/.*\.(?:js|css|avif|webp|png|svg)$/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'mirat-lazy-assets-cache',
+                expiration: {
+                  maxEntries: 90,
+                  maxAgeSeconds: 60 * 60 * 24 * 30,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'gstatic-fonts-cache',
+                expiration: {
+                  maxEntries: 15,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
           ],
           navigateFallbackDenylist: [
             /^\/ai-catalog\.json$/,

@@ -3,6 +3,7 @@ import { Calculator, ShieldCheck, ExternalLink, Eye } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
+import { navigateCleanUrl } from '../utils/navigation';
 
 const LazyHowTestResultsCalculatedPage = lazy(() =>
   import('../pages/HowTestResultsCalculatedPage').then((m) => ({
@@ -30,8 +31,7 @@ export const TestScoringTrustBanner: React.FC<TestScoringTrustBannerProps> = ({
     if (onNavigatePage) {
       onNavigatePage('how-results-are-calculated');
     } else {
-      window.location.hash = '#/how-results-are-calculated';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigateCleanUrl('/how-results-are-calculated');
     }
   };
 
@@ -116,9 +116,12 @@ export const TestScoringTrustBanner: React.FC<TestScoringTrustBannerProps> = ({
               </span>
             </button>
 
-            <button
-              type="button"
-              onClick={openFullPage}
+            <a
+              href="/how-results-are-calculated"
+              onClick={(e) => {
+                e.preventDefault();
+                openFullPage();
+              }}
               className={`px-3.5 py-2.5 rounded-xl border font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${
                 isLight
                   ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
@@ -127,7 +130,7 @@ export const TestScoringTrustBanner: React.FC<TestScoringTrustBannerProps> = ({
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span>{isAr ? 'فتح الصفحة الكاملة' : 'Open Full Page'}</span>
-            </button>
+            </a>
           </div>
         </div>
       </div>

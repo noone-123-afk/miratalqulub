@@ -226,7 +226,7 @@ export const ChapterReaderPage: React.FC<Props> = ({
       <PageSEO
         title={`${displayChapterTitle} - ${displayNovelTitle} | ${language === 'ar' ? 'مرآة القلوب' : 'Mirror of Hearts'}`}
         description={currentChapter.synopsisAr}
-        canonicalPath={`/#/novels/${novel.id}/chapter/${currentChapter.chapterNumber}`}
+        canonicalPath={`/novels/${encodeURIComponent(novel.id)}/chapter/${currentChapter.chapterNumber}`}
         language={language}
       />
 

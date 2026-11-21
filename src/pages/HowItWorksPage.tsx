@@ -49,7 +49,7 @@ export const HowItWorksPage: React.FC<Props> = ({
     description: isAr
       ? 'دليل تفصيلي يشرح المنهجية العلمية لقياس التوافق السيكومتري وخوارزميات التحليل واستخدام الذكاء الاصطناعي وحدود التقنية في مرآة القلوب.'
       : 'Comprehensive breakdown of our scientific psychometric methodology, algorithmic scoring, responsible AI usage, and technical boundaries.',
-    url: 'https://miratalqulub.com/#/how-it-works',
+    url: 'https://miratalqulub.com/how-it-works',
     publisher: {
       '@type': 'Organization',
       name: 'مرآة القلوب - Mirror of Hearts',
@@ -76,7 +76,7 @@ export const HowItWorksPage: React.FC<Props> = ({
             ? 'اكتشف كيف تحسب خوارزميات مرآة القلوب مؤشرات التوافق الإنساني بدقة رياضية، ودور الذكاء الاصطناعي المسؤول وحدود التكنولوجيا والأطر العلمية.'
             : 'Learn how Mirror of Hearts calculates interpersonal compatibility using validated psychometrics, responsible AI, and deterministic scoring models.'
         }
-        canonicalPath="/#/how-it-works"
+        canonicalPath="/how-it-works"
         language={language}
         pageType="website"
         structuredData={structuredData}

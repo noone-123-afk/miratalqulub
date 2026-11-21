@@ -71,7 +71,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
     description: isAr
       ? 'وثيقة سياسة الخصوصية الرسمية لمنصة مرآة القلوب بإشراف هندسي في الأردن - عمّان، بروتوكول التشفير TLS 1.3، وحق المستخدم الكامل في حذف بياناته نهائياً.'
       : 'Official Privacy Policy of Mirror of Hearts supervised by our engineering team in Amman, Jordan, featuring TLS 1.3 encryption and the unconditional right to permanent data deletion.',
-    url: 'https://miratalqulub.com/#/privacy',
+    url: 'https://miratalqulub.com/privacy',
     publisher: {
       '@type': 'Organization',
       name: 'مرآة القلوب - Mirror of Hearts',
@@ -103,7 +103,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
             ? 'اطلع على سياسة الخصوصية الكاملة لمنصة مرآة القلوب (الإشراف الهندسي: الأردن - عمّان، البريد: one497303@gmail.com، بروتوكول التشفير TLS 1.3، وحق المستخدم في حذف بياناته نهائياً).'
             : 'Read the full Mirror of Hearts Privacy Policy: Engineering Supervision in Amman, Jordan, contact one497303@gmail.com, TLS 1.3 encryption, and permanent data deletion rights.'
         }
-        canonicalPath="/#/privacy"
+        canonicalPath="/privacy"
         language={language}
         pageType="privacy"
         structuredData={structuredData}

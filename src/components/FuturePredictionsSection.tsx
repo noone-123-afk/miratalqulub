@@ -24,6 +24,7 @@ import {
 import { UserProfile, PartnerAnalysisResult, FutureHorizonPrediction } from '../types';
 import { generateFuturePredictions } from '../utils/futurePredictions';
 import { soundManager } from '../utils/sound';
+import { LazyImage } from './LazyImage';
 
 interface Props {
   profile: UserProfile;
@@ -164,11 +165,11 @@ export const FuturePredictionsSection: React.FC<Props> = ({ profile, result }) =
                   whileHover={{ scale: 1.02, y: -3 }}
                   className="group relative rounded-2xl overflow-hidden border border-white/10 bg-slate-900 shadow-lg aspect-video sm:aspect-[4/3]"
                 >
-                  <img
+                  <LazyImage
                     src={img.url}
                     alt={img.captionAr}
+                    wrapperClassName="w-full h-full"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
                   />
                   {/* Subtle Gradient Scrim */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent opacity-90" />

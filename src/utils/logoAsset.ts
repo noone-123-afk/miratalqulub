@@ -1,4 +1,4 @@
-import officialLogoImg from '../assets/images/mirat_al_qulub_logo_1794297285302.webp';
+import officialLogoImg from '../assets/images/mirat_al_qulub_logo_1794297285302.avif';
 
 export const OFFICIAL_LOGO_URL: string = officialLogoImg;
 

@@ -39,6 +39,7 @@ import {
 import { PsychologyTestsModal } from '../components/PsychologyTestsModal';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
+import { LazyImage } from '../components/LazyImage';
 import { NextStepRecommendations } from '../components/NextStepRecommendations';
 import {
   getMBTIRecommendations,
@@ -403,7 +404,7 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
             ? 'مختبر المقاييس السيكومترية واختبارات الذكاء الموثق بمراجع APA: مؤشر مايرز-بريغز (MBTI)، العوامل الخمسة الكبرى (OCEAN)، الذكاءات المتعددة لجاردنر، مصفوفات رافين للذكاء، ومقياس كاتل 16PF.'
             : 'APA-referenced psychometric and intelligence laboratory: Myers-Briggs 16 Types (MBTI), Big Five (OCEAN), Gardner Multiple Intelligences, Raven Fluid IQ, and Cattell 16PF.'
         }
-        canonicalPath="/#/personality-tests"
+        canonicalPath="/personality-tests"
         language={language}
       />
 
@@ -490,9 +491,12 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
                 <div className="flex items-center gap-3.5">
                   <div className="w-14 h-14 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-lg shadow-rose-500/25 shrink-0 overflow-hidden">
                     <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
-                      <img
+                      <LazyImage
                         src={OFFICIAL_LOGO_URL}
                         alt={isAr ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                        width={56}
+                        height={56}
+                        wrapperClassName="w-full h-full"
                         className="w-full h-full object-cover rounded-[14px]"
                       />
                     </div>

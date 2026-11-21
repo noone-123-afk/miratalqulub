@@ -98,7 +98,7 @@ export const AboutUsPage: React.FC<AboutUsProps> = ({
     description: isAr
       ? 'مرآة القلوب منصة عربية معرفية وتفاعلية تهدف إلى مساعدة الأفراد على فهم أنفسهم وفهم الآخرين بصورة أعمق من خلال أدوات تحليل الشخصية ودراسة التوافق النفسي والعاطفي والمحتوى المعرفي المتخصص.'
       : 'Mirror of Hearts is an Arab knowledge and interactive platform designed to help individuals understand themselves and others more deeply through personality analysis tools, psychological compatibility, and specialized educational content.',
-    url: 'https://miratalqulub.com/#/about',
+    url: 'https://miratalqulub.com/about',
     publisher: {
       '@type': 'Organization',
       name: 'مرآة القلوب - Mirror of Hearts',
@@ -353,7 +353,7 @@ export const AboutUsPage: React.FC<AboutUsProps> = ({
             ? 'مرآة القلوب منصة عربية معرفية وتفاعلية تهدف إلى مساعدة الأفراد على فهم أنفسهم وفهم الآخرين بصورة أعمق من خلال أدوات تحليل الشخصية ودراسة التوافق النفسي والعاطفي.'
             : 'Mirror of Hearts is an Arab knowledge and interactive platform designed to help individuals understand themselves and others through personality analysis and emotional compatibility.'
         }
-        canonicalPath="/#/about"
+        canonicalPath="/about"
         language={language}
         pageType="about"
         structuredData={structuredData}

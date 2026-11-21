@@ -1,6 +1,6 @@
 import { Article } from '../data/articlesData';
 import { AcademicPaper } from '../data/academicPapersData';
-import { HOME_HIGHLIGHTED_ARTICLES } from '../data/homeHighlightsData';
+import { HOME_FEATURED_ARTICLE_RANK_IDS } from '../data/homeArticlesRankData';
 
 export type ArticleCategoryFilter =
   | 'all'
@@ -120,9 +120,9 @@ export const ARTICLE_KEYWORD_OPTIONS: KeywordFilterOption[] = [
 // Explicit highlight rank from homepage editorial spotlights (1-based)
 const HIGHLIGHT_RANK_MAP: Record<string, number> = (() => {
   const map: Record<string, number> = {};
-  HOME_HIGHLIGHTED_ARTICLES.forEach((h, idx) => {
-    map[h.id] = idx + 1;
-    map[`academic-${h.id}`] = idx + 1;
+  HOME_FEATURED_ARTICLE_RANK_IDS.forEach((id, idx) => {
+    map[id] = idx + 1;
+    map[`academic-${id}`] = idx + 1;
   });
   // Academic spotlight study highlighted in ArticlesEncyclopediaPage
   map['research-gcc-family-based-psychosocial-interventions-chronic-disorders'] = 0;

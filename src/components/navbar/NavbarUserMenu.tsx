@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { soundManager } from '../../utils/sound';
+import { navigateCleanUrl } from '../../utils/navigation';
 
 export interface NavbarUserMenuProps {
   isAr: boolean;
@@ -21,6 +22,7 @@ export interface NavbarUserMenuProps {
   onSetConfirmDeleteStep: (val: boolean) => void;
   onPermanentDeleteData: () => void;
   onNavAction: (callback?: () => void) => void;
+  onNavigatePage?: (page: string) => void;
   onOpenUserDashboard?: () => void;
   onOpenHistory?: () => void;
   onOpenAuth?: () => void;
@@ -36,6 +38,7 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
   onSetConfirmDeleteStep,
   onPermanentDeleteData,
   onNavAction,
+  onNavigatePage,
   onOpenUserDashboard,
   onOpenHistory,
   onOpenAuth,
@@ -71,18 +74,50 @@ export const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
         </span>
       </div>
 
-      {/* 1. Open User Psychometric Dashboard */}
+      {/* 0. Direct Profile Clean URL Page */}
+      <a
+        href="/profile"
+        onClick={(e) => {
+          e.preventDefault();
+          onNavAction(() => {
+            if (onNavigatePage) onNavigatePage('profile');
+            else {
+              navigateCleanUrl('/profile');
+              if (onOpenUserDashboard) onOpenUserDashboard();
+            }
+          });
+        }}
+        className={`w-full p-2.5 rounded-xl transition flex items-center gap-2.5 text-xs font-bold cursor-pointer text-start ${
+          isLight ? 'hover:bg-violet-50 text-slate-800' : 'hover:bg-white/10 text-white'
+        }`}
+      >
+        <User className="w-4 h-4 text-violet-500 shrink-0" />
+        <div>
+          <div>{isAr ? 'صفحة ملفي السيكومتري الشامل' : 'My Psychometric Profile Page'}</div>
+          <div
+            className={`text-[10px] font-normal ${
+              isLight ? 'text-slate-700' : 'text-slate-300'
+            }`}
+          >
+            {isAr
+              ? 'مركز إدارة حسابك، سجلاتك، والتحكم بالبيانات'
+              : 'Account center, saved assessments & privacy control'}
+          </div>
+        </div>
+      </a>
+
+      {/* 1. Open User Psychometric Dashboard Modal */}
       {onOpenUserDashboard && (
         <button
           type="button"
           onClick={() => onNavAction(onOpenUserDashboard)}
-          className={`w-full p-2.5 rounded-xl transition flex items-center gap-2.5 text-xs font-bold cursor-pointer ${
+          className={`w-full p-2.5 rounded-xl transition flex items-center gap-2.5 text-xs font-bold cursor-pointer text-start ${
             isLight ? 'hover:bg-violet-50 text-slate-800' : 'hover:bg-white/10 text-white'
           }`}
         >
-          <User className="w-4 h-4 text-violet-500 shrink-0" />
+          <User className="w-4 h-4 text-rose-500 shrink-0" />
           <div>
-            <div>{isAr ? 'لوحة ملفي السيكومتري الشامل' : 'My Psychometric Dashboard'}</div>
+            <div>{isAr ? 'فتح اللوحة التفاعلية السريعة' : 'Open Quick Dossier Modal'}</div>
             <div
               className={`text-[10px] font-normal ${
                 isLight ? 'text-slate-700' : 'text-slate-300'

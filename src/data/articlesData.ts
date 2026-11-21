@@ -15,6 +15,7 @@ import { CLINICAL_DEVELOPING_EI_GUIDE_ARTICLES } from './clinicalDevelopingEIGui
 import { CLINICAL_SELF_AWARENESS_ARTICLES } from './clinicalSelfAwarenessPersonalityArticle';
 import { CLINICAL_OVERCOMING_OVERTHINKING_ARTICLES } from './clinicalOvercomingOverthinkingArticle';
 import { CLINICAL_DAILY_HABITS_ARTICLES } from './clinicalDailyHabitsWellbeingArticle';
+import { CLINICAL_HEALTHY_BOUNDARIES_ARTICLES } from './clinicalHealthyBoundariesArticle';
 
 export interface DiagnosticComparisonRow {
   criterionAr: string;
@@ -488,6 +489,7 @@ export const DIGITAL_COMPANION_ILLUSION_FULL_TEXT_AR = `# وهم الرفيق ا
 الإنسان يحتاج إلى إنسان آخر ليؤكد (Confirm) وجوده. الآلة يمكنها محاكاة الكلام، لكنها لا يمكنها محاكاة **الحضور**.`;
 
 export const ARTICLES_CATALOG: Article[] = [
+  ...CLINICAL_HEALTHY_BOUNDARIES_ARTICLES,
   ...CLINICAL_DAILY_HABITS_ARTICLES,
   ...CLINICAL_OVERCOMING_OVERTHINKING_ARTICLES,
   ...CLINICAL_SELF_AWARENESS_ARTICLES,

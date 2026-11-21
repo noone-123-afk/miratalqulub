@@ -123,7 +123,7 @@ function resolveTestDescriptor(targetId: RecommendationTestTargetId): Omit<Resol
       titleEn: 'Partner Compatibility Detector Assessment',
       categoryLabelAr: 'التوافق الفكري والعاطفي',
       categoryLabelEn: 'Relational Compatibility',
-      route: '#/compatibility',
+      route: '/compatibility',
       launchKind: 'compatibility',
       icon: '💞',
     };
@@ -139,7 +139,7 @@ function resolveTestDescriptor(targetId: RecommendationTestTargetId): Omit<Resol
       titleEn: pTest.titleEn,
       categoryLabelAr: pTest.subtitleAr,
       categoryLabelEn: pTest.subtitleEn,
-      route: '#/personality-tests',
+      route: '/personality-tests',
       launchKind: 'personality_inline',
       launchParam: pTest.id,
       icon: '🧬',
@@ -155,7 +155,7 @@ function resolveTestDescriptor(targetId: RecommendationTestTargetId): Omit<Resol
       titleEn: `Tiered Psychometric Lab (${tier.titleEn})`,
       categoryLabelAr: 'تقييم سيكومتري متعدد المحاور',
       categoryLabelEn: 'Multi-Axis Psychometric Suite',
-      route: '#/personality-tests',
+      route: '/personality-tests',
       launchKind: 'tiered',
       launchParam: tier.id,
       icon: '📊',
@@ -172,7 +172,7 @@ function resolveTestDescriptor(targetId: RecommendationTestTargetId): Omit<Resol
       titleEn: found.titleEn,
       categoryLabelAr: found.categoryTitleAr,
       categoryLabelEn: 'Specialized Psychometric Scale',
-      route: '#/personality-tests',
+      route: '/personality-tests',
       launchKind: 'psych_modal',
       launchParam: found.id,
       icon: '🧠',
@@ -190,7 +190,7 @@ function resolveTestDescriptor(targetId: RecommendationTestTargetId): Omit<Resol
     titleEn: battery.titleEn,
     categoryLabelAr: 'مختبر الذكاء والقدرات المعرفية',
     categoryLabelEn: 'Cognitive & Intelligence Lab',
-    route: '#/personality-tests',
+    route: '/iq-tests',
     launchKind: 'intelligence_modal',
     launchParam: battery.id,
     icon: battery.icon || '💡',
@@ -256,7 +256,7 @@ function buildBundle(
       categoryLabelEn: nv.genreLabelEn || cat.titleEn,
       reasonAr: spec.novelReasonAr,
       reasonEn: spec.novelReasonEn,
-      route: `#/novels/${nv.id}`,
+      route: `/novels/${encodeURIComponent(nv.id)}`,
       icon: cat.icon || '📖',
     };
   } else {
@@ -271,7 +271,7 @@ function buildBundle(
       categoryLabelEn: 'Novels & Stories Genre',
       reasonAr: spec.novelReasonAr,
       reasonEn: spec.novelReasonEn,
-      route: '#/novels',
+      route: '/novels',
       icon: cat.icon || '📚',
     };
   }
@@ -291,7 +291,7 @@ function buildBundle(
       readTimeEn: art.readTimeEn,
       reasonAr: spec.articleReasonAr,
       reasonEn: spec.articleReasonEn,
-      route: `#/articles/${encodeURIComponent(art.id)}`,
+      route: `/articles/${encodeURIComponent(art.id)}`,
       icon: art.icon || '📖',
     },
     test: {

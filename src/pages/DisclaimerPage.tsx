@@ -37,7 +37,7 @@ export const DisclaimerPage: React.FC<Props> = ({
     description: isAr
       ? 'وثيقة إخلاء المسؤولية الرسمية لمنصة مرآة القلوب: توضيح حدود المسؤولية، طبيعة النتائج الاسترشادية والتثقيفية، وعدم تقديم استشارات طبية أو نفسية أو قانونية.'
       : 'Official Content Disclaimer of Mirror of Hearts: detailing advisory limitations, non-clinical nature, and non-guarantee of relationship success.',
-    url: 'https://miratalqulub.com/#/disclaimer',
+    url: 'https://miratalqulub.com/disclaimer',
     publisher: {
       '@type': 'Organization',
       name: 'مرآة القلوب - Mirror of Hearts',
@@ -63,7 +63,7 @@ export const DisclaimerPage: React.FC<Props> = ({
             ? 'تنبيه إخلاء المسؤولية الصريح لمنصة مرآة القلوب: النتائج لأغراض معرفية وتثقيفية فقط وليست استشارات طبية أو عيادية أو قانونية، ولا تضمن نجاح أو استمرار أي علاقة.'
             : 'Explicit Content Disclaimer for Mirror of Hearts: all results are purely educational and exploratory, with zero relationship guarantees.'
         }
-        canonicalPath="/#/disclaimer"
+        canonicalPath="/disclaimer"
         language={language}
         pageType="terms"
         structuredData={structuredData}

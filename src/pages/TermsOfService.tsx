@@ -68,7 +68,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
     description: isAr
       ? 'وثيقة شروط الاستخدام الرسمية لمنصة مرآة القلوب بإشراف هندسي في الأردن - عمّان، بروتوكول التشفير TLS 1.3، البريد one497303@gmail.com، وحق المستخدم في حذف بياناته نهائياً.'
       : 'Official Terms of Service of Mirror of Hearts platform supervised by our engineering team in Amman, Jordan, featuring TLS 1.3 security, one497303@gmail.com support, and permanent data deletion rights.',
-    url: 'https://miratalqulub.com/#/terms',
+    url: 'https://miratalqulub.com/terms',
     publisher: {
       '@type': 'Organization',
       name: 'مرآة القلوب - Mirror of Hearts',
@@ -100,7 +100,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
             ? 'اطلع على شروط استخدام منصة مرآة القلوب: الإشراف الهندسي في الأردن - عمّان، البريد one497303@gmail.com، بروتوكول التشفير TLS 1.3، إخلاء المسؤولية العلمي، وحق حذف البيانات نهائياً.'
             : 'Review the Terms of Service for Mirror of Hearts: Engineering supervision in Amman, Jordan, one497303@gmail.com, TLS 1.3 encryption, clinical disclaimer, and right to permanent data erasure.'
         }
-        canonicalPath="/#/terms"
+        canonicalPath="/terms"
         language={language}
         pageType="terms"
         structuredData={structuredData}

@@ -162,7 +162,7 @@ export const FAQPage: React.FC<Props> = ({
             ? 'إجابات واضحة وصادقة حول منصة مرآة القلوب: دقة النتائج، حماية الخصوصية، استقلالية الموقع، عدم تقديم استشارات طبية، ومصادر المقاييس النفسية.'
             : 'Clear, transparent answers about Mirror of Hearts: scoring accuracy, privacy guarantees, non-clinical nature, and academic sources.'
         }
-        canonicalPath="/#/faq"
+        canonicalPath="/faq"
         language={language}
         pageType="website"
         structuredData={structuredData}

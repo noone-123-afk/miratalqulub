@@ -153,7 +153,7 @@ export const NovelDetailPage: React.FC<Props> = ({
       <PageSEO
         title={`${displayTitle} | ${language === 'ar' ? 'مرآة القلوب' : 'Mirror of Hearts'}`}
         description={displaySynopsis.slice(0, 155)}
-        canonicalPath={`/#/novels/${novel.id}`}
+        canonicalPath={`/novels/${encodeURIComponent(novel.id)}`}
         language={language}
       />
 

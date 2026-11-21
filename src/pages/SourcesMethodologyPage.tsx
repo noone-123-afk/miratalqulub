@@ -136,7 +136,7 @@ export const SourcesMethodologyPage: React.FC<Props> = ({
     description: isAr
       ? 'المنهجية العلمية والأسس النفسية لمنصة «مرآة القلوب»: دراسة تحليلية في قياس التوافق الإنساني وأخلاقيات البيانات والنماذج الإكلينيكية (غوتمان، بيك، وبولبي).'
       : 'Scientific methodology and psychological underpinnings of Mirror of Hearts: Clinical models (Gottman, Beck, Bowlby), psychometric scoring, and data ethics.',
-    url: 'https://miratalqulub.com/#/methodology',
+    url: 'https://miratalqulub.com/methodology',
     publisher: {
       '@type': 'Organization',
       name: 'مرآة القلوب - Mirror of Hearts',
@@ -167,7 +167,7 @@ export const SourcesMethodologyPage: React.FC<Props> = ({
             ? 'المنهجية العلمية والأسس النفسية لمنصة «مرآة القلوب»: دراسة تحليلية في قياس التوافق الإنساني وأخلاقيات البيانات والنماذج الإكلينيكية المعتمدة.'
             : 'Scientific methodology and clinical foundations of Mirror of Hearts: Gottman, Beck, Bowlby models, psychometric scoring, and data ethics.'
         }
-        canonicalPath="/#/methodology"
+        canonicalPath="/methodology"
         language={language}
         pageType="website"
         structuredData={structuredData}

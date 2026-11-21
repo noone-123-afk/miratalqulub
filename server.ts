@@ -50,7 +50,17 @@ let activeHostingConfig = {
   activatedAt: new Date().toISOString(),
 };
 
-// Direct Binary Logo Serving & Download Endpoints (WebP, PNG & JPG)
+// Direct Binary Logo Serving & Download Endpoints (AVIF, WebP, PNG & JPG)
+app.get('/logo.avif', (_req: Request, res: Response) => {
+  const filePath = path.resolve('public', 'logo.avif');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'image/avif');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.sendFile(filePath);
+  }
+  res.status(404).end();
+});
+
 app.get('/logo.webp', (_req: Request, res: Response) => {
   const filePath = path.resolve('public', 'logo.webp');
   if (fs.existsSync(filePath)) {
@@ -91,7 +101,7 @@ app.get(['/llms.txt', '/llms-full.txt'], (_req: Request, res: Response) => {
     return res.sendFile(llmsPath);
   }
   return res.send(
-    `# مِـرآة القـلوب | Mirror of Hearts (miratalqulub.com)\n\n> منصة عربية معرفية وتفاعلية متخصصة في تحليل الشخصية والتوافق النفسي والعاطفي والفكري.\n\n## الأقسام الرئيسية\n- [الصفحة الرئيسية](https://miratalqulub.com/)\n- [تحليل الشخصية](https://miratalqulub.com/#/personality-tests)\n- [كاشف شريك الحياة](https://miratalqulub.com/#/compatibility)\n- [المقالات المعرفية](https://miratalqulub.com/#/articles)\n- [الروايات والقصص](https://miratalqulub.com/#/novels)\n- [من نحن](https://miratalqulub.com/#/about)\n- [المنهجية العلمية](https://miratalqulub.com/#/methodology)\n- [سياسة الخصوصية](https://miratalqulub.com/#/privacy)\n`
+    `# مِـرآة القـلوب | Mirror of Hearts (miratalqulub.com)\n\n> منصة عربية معرفية وتفاعلية متخصصة في تحليل الشخصية والتوافق النفسي والعاطفي والفكري.\n\n## الأقسام الرئيسية\n- [الصفحة الرئيسية](https://miratalqulub.com/)\n- [تحليل الشخصية](https://miratalqulub.com/personality-tests)\n- [اختبارات الذكاء](https://miratalqulub.com/iq-tests)\n- [كاشف شريك الحياة](https://miratalqulub.com/compatibility)\n- [الأدوات التفاعلية](https://miratalqulub.com/tools)\n- [المقالات المعرفية](https://miratalqulub.com/articles)\n- [الروايات والقصص](https://miratalqulub.com/novels)\n- [ملفي](https://miratalqulub.com/profile)\n- [من نحن](https://miratalqulub.com/about)\n- [المنهجية العلمية](https://miratalqulub.com/methodology)\n- [سياسة الخصوصية](https://miratalqulub.com/privacy)\n`
   );
 });
 

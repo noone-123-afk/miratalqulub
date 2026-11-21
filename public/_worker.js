@@ -100,11 +100,11 @@ export default {
                 identifier: 'urn:air:miratalqulub.com:web:personality-tests',
                 displayName: 'تحليل الشخصية السيكومتري',
                 type: 'text/html',
-                url: 'https://miratalqulub.com/#/personality-tests',
+                url: 'https://miratalqulub.com/personality-tests',
                 description:
                   'منظومة التحليل النفسي متعدد المستويات (السريع، المتقدم، الاحترافي) ومقارنة الشخصيات.',
                 version: '1.0.0',
-                updatedAt: '2026-11-16T00:00:00Z',
+                updatedAt: '2026-11-21T00:00:00Z',
                 tags: ['mbti', 'big-five', 'psychometrics'],
                 capabilities: ['TieredPersonalityAssessment', 'PersonalityComparison'],
                 representativeQueries: [
@@ -116,7 +116,7 @@ export default {
                 identifier: 'urn:air:miratalqulub.com:web:compatibility',
                 displayName: 'كاشف شريك الحياة والتوافق العاطفي',
                 type: 'text/html',
-                url: 'https://miratalqulub.com/#/compatibility',
+                url: 'https://miratalqulub.com/compatibility',
                 description:
                   'اختبار التوافق العاطفي والفكري والأسري المبني على النماذج السيكومترية المعتمدة.',
                 version: '1.0.0',
@@ -160,6 +160,22 @@ export default {
       );
     }
 
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    if (
+      request.method === 'GET' &&
+      response.status === 404 &&
+      !path.startsWith('/api/') &&
+      !/\.[a-z0-9]{1,8}$/i.test(path)
+    ) {
+      const indexUrl = new URL('/index.html', url.origin);
+      const indexRes = await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
+      const headers = new Headers(indexRes.headers);
+      headers.set('Content-Type', 'text/html; charset=utf-8');
+      return new Response(indexRes.body, {
+        status: 200,
+        headers,
+      });
+    }
+    return response;
   },
 };

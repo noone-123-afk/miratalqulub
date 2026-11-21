@@ -155,7 +155,11 @@ export const ArticlesSectionModal: React.FC<Props> = ({
 
   const handleShareContent = (title: string, summary: string) => {
     soundManager.playTap();
-    const textToShare = `📖 ${title}\n${summary}\nhttps://miratalqulub.com/#/articles`;
+    const activeId = activeNarrative?.id || activeAcademic?.id;
+    const shareTargetUrl = activeId
+      ? `https://miratalqulub.com/articles/${encodeURIComponent(activeId)}`
+      : 'https://miratalqulub.com/articles';
+    const textToShare = `📖 ${title}\n${summary}\n${shareTargetUrl}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(textToShare);
       setCopiedShare(true);
@@ -1088,7 +1092,7 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                   onChangeViewMode={setReaderViewMode}
                   shareTitle={language === 'ar' ? activeNarrative.title : activeNarrative.titleEn}
                   shareSummary={language === 'ar' ? activeNarrative.summary : activeNarrative.summaryEn}
-                  shareUrl="https://miratalqulub.com/#/articles"
+                  shareUrl={`https://miratalqulub.com/articles/${encodeURIComponent(activeNarrative.id)}`}
                   contentTypeLabelAr="للقصة والسجل العيادي"
                   contentTypeLabelEn="Story"
                 />
@@ -1405,7 +1409,7 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                 <ArticleBottomSocialShare
                   title={language === 'ar' ? activeNarrative.title : activeNarrative.titleEn}
                   summary={language === 'ar' ? activeNarrative.summary : activeNarrative.summaryEn}
-                  url="https://miratalqulub.com/#/articles"
+                  url={`https://miratalqulub.com/articles/${encodeURIComponent(activeNarrative.id)}`}
                   isLight={isLight}
                   language={language}
                 />
@@ -1490,7 +1494,7 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                   onChangeViewMode={setReaderViewMode}
                   shareTitle={language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn}
                   shareSummary={language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
-                  shareUrl="https://miratalqulub.com/#/articles"
+                  shareUrl={`https://miratalqulub.com/articles/${encodeURIComponent(activeAcademic.id)}`}
                   contentTypeLabelAr="للبحث العلمي"
                   contentTypeLabelEn="Paper"
                 />
@@ -1873,7 +1877,7 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                 <ArticleBottomSocialShare
                   title={language === 'ar' ? activeAcademic.titleAr : activeAcademic.titleEn}
                   summary={language === 'ar' ? activeAcademic.abstractAr : activeAcademic.abstractEn}
-                  url="https://miratalqulub.com/#/articles"
+                  url={`https://miratalqulub.com/articles/${encodeURIComponent(activeAcademic.id)}`}
                   isLight={isLight}
                   language={language}
                 />

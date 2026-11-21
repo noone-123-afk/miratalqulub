@@ -149,7 +149,7 @@ export const ContactUsPage: React.FC<Props> = ({
     description: isAr
       ? 'تواصل مع فريق تطوير وإدارة منصة مرآة القلوب في عمّان - الأردن للاستفسارات والاقتراحات والدعم الفني.'
       : 'Get in touch with the Mirror of Hearts engineering team in Amman, Jordan for inquiries, suggestions, and technical support.',
-    url: 'https://miratalqulub.com/#/contact',
+    url: 'https://miratalqulub.com/contact',
     mainEntity: {
       '@type': 'Organization',
       name: 'مرآة القلوب - Mirror of Hearts',
@@ -175,7 +175,7 @@ export const ContactUsPage: React.FC<Props> = ({
             ? 'تواصل مع إدارة منصة مرآة القلوب عبر البريد الإلكتروني الرسمي one497303@gmail.com أو نموذج الاتصال المباشر. مقرنا: عمّان - الأردن.'
             : 'Contact the Mirror of Hearts development team via official email one497303@gmail.com or our direct contact form. Located in Amman, Jordan.'
         }
-        canonicalPath="/#/contact"
+        canonicalPath="/contact"
         language={language}
         pageType="contact"
         structuredData={structuredData}
