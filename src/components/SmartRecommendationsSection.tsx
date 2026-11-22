@@ -4,7 +4,7 @@ import {
   getCompatibilityRecommendations,
   ResolvedTestCard,
 } from '../data/recommendationsMapping';
-import { NextStepRecommendations } from './NextStepRecommendations';
+import { TestResultRecommendationsSuite } from './TestResultRecommendationsSuite';
 
 interface Props {
   result: PartnerAnalysisResult;
@@ -27,8 +27,11 @@ export const SmartRecommendationsSection: React.FC<Props> = ({
 
   return (
     <div className="space-y-4">
-      <NextStepRecommendations
-        bundle={bundle}
+      <TestResultRecommendationsSuite
+        testId="compatibility"
+        sourcePage="/compatibility"
+        resultHintText={`${result.personalityArchetype || ''} ${result.partnerArchetype || ''} ${result.attachmentStyle || ''}`}
+        legacyBundle={bundle}
         onLaunchTest={handleLaunchTest}
         forceDark
       />

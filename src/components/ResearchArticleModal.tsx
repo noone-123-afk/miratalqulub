@@ -32,6 +32,7 @@ import { ArticleBottomSocialShare } from './FullScreenResearchStudyModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
+import { ArticleRecommendationsSection } from './ArticleRecommendationsSection';
 
 export interface ResearchArticleModalProps {
   isOpen: boolean;
@@ -757,6 +758,15 @@ export const ResearchArticleModal: React.FC<ResearchArticleModalProps> = ({
                     text={fullStudyContent}
                     fontSize={fontSize}
                     isLight={isLight}
+                    excludeArticleId={paper?.id || article?.id}
+                    excludeRoute={
+                      paper?.id
+                        ? `/articles/${encodeURIComponent(paper.id)}`
+                        : article?.id
+                        ? `/articles/${encodeURIComponent(article.id)}`
+                        : '/articles'
+                    }
+                    onBeforeNavigate={onClose}
                   />
                 </div>
               </div>
@@ -775,6 +785,21 @@ export const ResearchArticleModal: React.FC<ResearchArticleModalProps> = ({
                 isLight={isLight}
                 language={language}
               />
+
+              {/* Smart Recommendations & Learning Journey */}
+              {(paper || article) && (
+                <ArticleRecommendationsSection
+                  source={(paper || article)!}
+                  sourcePage={
+                    paper?.id
+                      ? `/articles/${encodeURIComponent(paper.id)}`
+                      : article?.id
+                      ? `/articles/${encodeURIComponent(article.id)}`
+                      : '/articles'
+                  }
+                  onBeforeNavigate={onClose}
+                />
+              )}
             </div>
           </div>
         </motion.div>

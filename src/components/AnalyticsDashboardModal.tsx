@@ -33,6 +33,7 @@ import {
   AnalyticsSummary,
 } from '../services/analyticsService';
 import { fetchFeedbackMessages, FeedbackMessage, OFFICIAL_EMAIL } from '../services/feedbackService';
+import { RecommendationAnalyticsPanel } from './RecommendationAnalyticsPanel';
 
 interface Props {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export const AnalyticsDashboardModal: React.FC<Props> = ({ isOpen, onClose }) =>
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [feedbackList, setFeedbackList] = useState<FeedbackMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'kpi' | 'tests' | 'feedback'>('kpi');
+  const [activeTab, setActiveTab] = useState<'kpi' | 'tests' | 'recommendations' | 'feedback'>('kpi');
   const [isSendingReport, setIsSendingReport] = useState(false);
   const [reportSuccessMessage, setReportSuccessMessage] = useState<string | null>(null);
 
@@ -256,6 +257,22 @@ export const AnalyticsDashboardModal: React.FC<Props> = ({ isOpen, onClose }) =>
             >
               <Brain className="w-3.5 h-3.5" />
               <span>الأقسام والاختبارات الأكثر استخداماً</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playTap();
+                setActiveTab('recommendations');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                activeTab === 'recommendations'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>أداء التوصيات ومعدل النقر (CTR)</span>
             </button>
 
             <button
@@ -509,6 +526,9 @@ export const AnalyticsDashboardModal: React.FC<Props> = ({ isOpen, onClose }) =>
                 )}
               </div>
             )}
+
+            {/* TAB 4: RECOMMENDATION ANALYTICS & CTR ENGINE */}
+            {activeTab === 'recommendations' && <RecommendationAnalyticsPanel />}
           </div>
 
           {/* Footer Bar with Dispatch Report to Email */}

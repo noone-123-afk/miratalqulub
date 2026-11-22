@@ -9,6 +9,7 @@ export type AssessmentCategory =
   | 'intellectual_cultural';
 
 export type AssessmentType =
+  | 'existential_fatigue'
   | 'big_five'
   | 'mmpi'
   | 'epq'
@@ -22,11 +23,14 @@ export interface AssessmentInfo {
   id: AssessmentType;
   category: AssessmentCategory;
   categoryTitleAr: string;
+  categoryTitleEn?: string;
   titleAr: string;
   titleEn: string;
   shortDesc: string;
+  shortDescEn?: string;
   scientificReference: string;
   badge: string;
+  badgeEn?: string;
   estimatedMinutes: number;
   questionCount: number;
   icon: string;
@@ -34,14 +38,33 @@ export interface AssessmentInfo {
 
 export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
   {
+    id: 'existential_fatigue',
+    category: 'psychiatry_psychology',
+    categoryTitleAr: 'مقاييس السمات الشخصية والاتزان (استكشافية)',
+    categoryTitleEn: 'Personality Traits & Balance Scales (Exploratory)',
+    titleAr: 'اختبار التعب الوجودي (تقييم التعب الجسدي، العقلي، والوجودي)',
+    titleEn: 'Existential Fatigue Assessment (Physical vs. Mental vs. Existential)',
+    shortDesc: 'مقياس مستند لمعايير المقال الخامس («لماذا تشعر بالتعب رغم حصولك على الراحة؟») لتمييز ما إذا كان استنزاف طاقتك جسدياً عضوياً، أم عقلياً معرفياً، أم وجودياً قيمياً، مع خطة استعادة مخصصة.',
+    shortDescEn: 'Diagnostic inventory grounded in Article 5 (“Why Do You Feel Tired Even After Rest?”) to distinguish whether your exhaustion is physical/biomedical, mental/cognitive, or existential/values-based—complete with a tailored recovery roadmap.',
+    scientificReference: 'Article 5 Fatigue Matrix • Frankl (1959), Hobfoll COR (1989), McEwen Allostatic Load & Deci-Ryan SDT (18 Items)',
+    badge: '18 سؤالاً تشخيصياً 🧭',
+    badgeEn: '18 Diagnostic Items 🧭',
+    estimatedMinutes: 7,
+    questionCount: 18,
+    icon: 'Compass',
+  },
+  {
     id: 'big_five',
     category: 'psychiatry_psychology',
     categoryTitleAr: 'مقاييس السمات الشخصية والاتزان (استكشافية)',
+    categoryTitleEn: 'Personality Traits & Balance Scales (Exploratory)',
     titleAr: 'نموذج العوامل الخمسة الكبرى للشخصية (Big Five / NEO-PI-R)',
     titleEn: 'Big Five Personality Traits (Costa & McCrae)',
     shortDesc: 'المعيار العلمي الأكثر اعتماداً في علم النفس الحديث لاستكشاف الأبعاد الخمسة الكبرى: الانبساط، الاستقرار الانفعالي، الانفتاح، الوفاق، واليقظة عبر 25 بنداً تثقيفياً.',
+    shortDescEn: 'The gold-standard five-factor framework measuring Extraversion, Emotional Stability, Openness, Agreeableness, and Conscientiousness across 25 items.',
     scientificReference: 'Costa & McCrae (1992) - Revised NEO Personality Inventory (25 Items)',
     badge: '25 سؤالاً علمياً 🌍',
+    badgeEn: '25 Scientific Items 🌍',
     estimatedMinutes: 12,
     questionCount: 25,
     icon: 'Brain',
@@ -50,11 +73,14 @@ export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
     id: 'mmpi',
     category: 'psychiatry_psychology',
     categoryTitleAr: 'مقاييس السمات الشخصية والاتزان (استكشافية)',
+    categoryTitleEn: 'Personality Traits & Balance Scales (Exploratory)',
     titleAr: 'مقياس الاتزان الانفعالي والشفافية الذاتية المتعدد الأوجه (استكشافي)',
     titleEn: 'Multidimensional Emotional Balance & Self-Transparency Inventory (Exploratory)',
     shortDesc: 'أداة استكشافية وتثقيفية متكاملة مع مؤشرات الشفافية الذاتية (L/K Validity) لاستكشاف الاتزان الانفعالي، إدارة الضغوط، التناغم الجسدي-النفسي، والصراحة الذاتية عبر 24 بنداً.',
+    shortDescEn: 'Exploratory emotional balance inventory incorporating L/K validity scales to evaluate stress regulation, mind-body harmony, and self-transparency.',
     scientificReference: 'Hathaway & McKinley Framework (Exploratory Educational Adaptation - 24 Items)',
     badge: '24 سؤالاً استكشافياً 🛡️',
+    badgeEn: '24 Exploratory Items 🛡️',
     estimatedMinutes: 12,
     questionCount: 24,
     icon: 'ShieldCheck',
@@ -63,11 +89,14 @@ export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
     id: 'epq',
     category: 'psychiatry_psychology',
     categoryTitleAr: 'مقاييس السمات الشخصية والاتزان (استكشافية)',
+    categoryTitleEn: 'Personality Traits & Balance Scales (Exploratory)',
     titleAr: 'استبيان آيزنك للأمزجة والحيوية الشخصية (EPQ-R)',
     titleEn: 'Eysenck Personality & Temperament Questionnaire (Revised)',
     shortDesc: 'استبيان استكشافي شامل يقيس الانبساط الاجتماعي، الاستقرار الانفعالي، الرقة مقابل الحزم العقلي، ومؤشر الشفافية عبر 24 سؤالاً لتحديد نمط مزاجك التفاعلي.',
+    shortDescEn: 'Exploratory biological temperament questionnaire assessing Extraversion, Neuroticism/Stability, Tough-Mindedness, and Social Desirability across 24 items.',
     scientificReference: 'Hans & Sybil Eysenck (1975/1985) - Temperament Model (24 Items)',
     badge: '24 سؤالاً تفاعلياً ⚡',
+    badgeEn: '24 Temperament Items ⚡',
     estimatedMinutes: 12,
     questionCount: 24,
     icon: 'Activity',
@@ -76,11 +105,14 @@ export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
     id: 'rorschach',
     category: 'projective',
     categoryTitleAr: 'الاختبارات الإسقاطية والتعبيرية الاستكشافية',
+    categoryTitleEn: 'Exploratory Projective & Expressive Tests',
     titleAr: 'اختبار الإدراك البصري والتداعي الإسقاطي (Rorschach - Exner)',
     titleEn: 'Visual Perception & Projective Association Assessment (Exner System)',
     shortDesc: 'أداة إسقاطية استكشافية عبر 20 بنداً تحليلياً للأشكال المتماثلة لاستكشاف نمط الإدراك الكلي، الخيال الإبداعي، وأساليب التكيف الوجداني.',
+    shortDescEn: '20-plate symmetrical inkblot projective assessment exploring holistic perception, creative imagination, and affective coping patterns.',
     scientificReference: 'Hermann Rorschach (1921) & John Exner Comprehensive System (20 Items)',
     badge: '20 سؤالاً إسقاطياً 🎨',
+    badgeEn: '20 Projective Plates 🎨',
     estimatedMinutes: 10,
     questionCount: 20,
     icon: 'Eye',
@@ -89,11 +121,14 @@ export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
     id: 'tat',
     category: 'projective',
     categoryTitleAr: 'الاختبارات الإسقاطية والتعبيرية الاستكشافية',
+    categoryTitleEn: 'Exploratory Projective & Expressive Tests',
     titleAr: 'اختبار تفهم الموضوع والدوافع الإنسانية (TAT - Murray)',
     titleEn: 'Thematic Apperception & Human Motivations Assessment',
     shortDesc: '20 مشهداً تصويرياً لمواقف إنسانية تأملية تستكشف الدوافع الذاتية العميقة (الحاجة للإنجاز، الانتماء، الاستقلالية، والرعاية) وفق نموذج هنري موراي التربوي.',
+    shortDescEn: '20 reflective narrative scenes examining core psychological motives—Achievement, Affiliation, Autonomy, and Nurturance—based on Murray’s framework.',
     scientificReference: 'Henry A. Murray (1935) - Harvard Psychological Research (20 Items)',
     badge: '20 مشهداً سردياً 📖',
+    badgeEn: '20 Narrative Scenes 📖',
     estimatedMinutes: 12,
     questionCount: 20,
     icon: 'BookOpen',
@@ -102,11 +137,14 @@ export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
     id: 'attachment_style',
     category: 'sociological',
     categoryTitleAr: 'علوم الاجتماع البشري ونمط الارتباط',
+    categoryTitleEn: 'Relational Sociology & Attachment Patterns',
     titleAr: 'مقياس نمط الارتباط البشري والتوافق الاجتماعي (ECR-R)',
     titleEn: 'Experiences in Close Relationships & Attachment Scale',
     shortDesc: 'مقياس معمق من 24 سؤالاً مستند لنظرية جون بولبي وماري إينسورث ومقياس ECR-R لتحديد نمط الارتباط (آمن، قلق، تجنبي) وإصلاح الخلافات.',
+    shortDescEn: '24-item Bowlby/Ainsworth & ECR-R scale identifying Secure, Anxious, Avoidant, and Fearful attachment patterns and conflict-repair habits.',
     scientificReference: 'John Bowlby, Mary Ainsworth & Fraley ECR-R (24 Items)',
     badge: '24 سؤالاً علائقياً 🤝',
+    badgeEn: '24 Attachment Items 🤝',
     estimatedMinutes: 12,
     questionCount: 24,
     icon: 'Users',
@@ -115,11 +153,14 @@ export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
     id: 'sixteen_pf',
     category: 'intellectual_cultural',
     categoryTitleAr: 'الجانب الفكري والتنمية البشرية',
+    categoryTitleEn: 'Cognitive Profiling & Human Development',
     titleAr: 'مقياس كاتل للعوامل الـ 16 للشخصية (Cattell 16PF الكامل)',
     titleEn: 'Cattell 16 Personality Factor Questionnaire',
     shortDesc: 'التحليل العاملي الكامل لريموند كاتل عبر 32 موقفاً واقعياً (سؤالان لكل عامل من العوامل الـ 16: الدفء، الذكاء التحليلي، قوة الأنا، القيادة، والضمير).',
+    shortDescEn: 'Raymond Cattell’s factor-analytic profile across 32 situational items measuring all 16 primary personality factors and 5 global factors with Sten 1–10 scores.',
     scientificReference: 'Raymond B. Cattell (1949/1993) - 16PF Fifth Edition (32 Items)',
     badge: '32 سؤالاً عاملياً 📊',
+    badgeEn: '32 Factor Items 📊',
     estimatedMinutes: 15,
     questionCount: 32,
     icon: 'Layers',
@@ -128,11 +169,14 @@ export const ASSESSMENTS_CATALOG: AssessmentInfo[] = [
     id: 'cultural_eq',
     category: 'intellectual_cultural',
     categoryTitleAr: 'الجانب الفكري والتنمية البشرية',
+    categoryTitleEn: 'Cognitive Profiling & Human Development',
     titleAr: 'مقياس الذكاء العاطفي والأبعاد الثقافية (Goleman & Hofstede)',
     titleEn: 'Emotional Intelligence & Cultural Values Matrix',
     shortDesc: 'توليفة علمية من 24 سؤالاً تجمع نموذج دانيال جولمان للذكاء الوجداني الخماسي مع أبعاد هوفستيد للأصالة، اللباقة، والقيم المجتمعية.',
+    shortDescEn: '24-item synthesis blending Daniel Goleman’s five EQ pillars with Geert Hofstede’s cultural alignment and relational communication values.',
     scientificReference: 'Daniel Goleman (1995) & Geert Hofstede Cultural Dimensions (24 Items)',
     badge: '24 سؤالاً وجدانياً 🌟',
+    badgeEn: '24 EQ & Culture Items 🌟',
     estimatedMinutes: 12,
     questionCount: 24,
     icon: 'Sparkles',
@@ -143,14 +187,18 @@ export interface TestQuestion {
   id: string;
   testId: AssessmentType;
   promptAr: string;
+  promptEn?: string;
   subPromptAr?: string;
+  subPromptEn?: string;
   imageSvg?: string; // For projective visual tests
   dimensionKey: string;
   options: {
     id: string;
     textAr: string;
+    textEn?: string;
     scoreWeight: number; // 1-5 or trait score
     traitLabel: string;
+    traitLabelEn?: string;
     scientificTrait: string;
   }[];
 }
@@ -2448,9 +2496,236 @@ const EXTENDED_CULTURAL_EQ_ITEMS: TestQuestion[] = [
   },
 ];
 
-// Helper to get questions for any assessment (20 to 32 questions per scale)
+// 9. EXISTENTIAL FATIGUE TEST (18 Items grounded in Article 5: Physical, Mental, Existential)
+export const EXISTENTIAL_FATIGUE_QUESTIONS: TestQuestion[] = [
+  // Axis 1: Physical Fatigue (6 items)
+  {
+    id: 'ef_1',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_physical',
+    promptAr: 'عند الاستيقاظ صباحاً بعد نوم 7 إلى 9 ساعات كاملة:',
+    promptEn: 'When waking up in the morning after a full 7 to 9 hours of sleep:',
+    options: [
+      { id: 'a', textAr: 'أستيقظ بثقل عضلي وإرهاق بدني وكأنني لم أنم قط رغم طول الساعات', textEn: 'I wake up with heavy limbs and bodily exhaustion as if I barely slept at all', scoreWeight: 5, traitLabel: 'استنزاف جسدي ونومي عميق', traitLabelEn: 'Deep Physical & Sleep Depletion', scientificTrait: 'Unrefreshing Sleep Architecture' },
+      { id: 'b', textAr: 'أشعر بخمول خفيف صباحاً ثم يتحسن نشاطي الجسدي بعد القهوة والحركة', textEn: 'I feel mild morning grogginess that improves after coffee and light movement', scoreWeight: 3, traitLabel: 'ثقل جسدي معتدل', traitLabelEn: 'Moderate Somatic Inertia', scientificTrait: 'Moderate Somatic Inertia' },
+      { id: 'c', textAr: 'أشعر غالباً بأن جسدي ارتاح واستعاد طاقته العضلية عند انتظام نومي', textEn: 'My body usually feels rested and physically restored when my sleep is consistent', scoreWeight: 1, traitLabel: 'تعافٍ جسدي سليم', traitLabelEn: 'Healthy Physical Restoration', scientificTrait: 'Restorative Physical Sleep' },
+    ],
+  },
+  {
+    id: 'ef_2',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_physical',
+    promptAr: 'ما وضع طاقتك العضلية وقدرتك على التحمل في المهام الجسدية اليومية (كالمشي أو صعود الدرج)؟',
+    promptEn: 'How is your muscular energy and stamina during everyday physical tasks (walking, climbing stairs)?',
+    options: [
+      { id: 'a', textAr: 'أشعر بثقل عام في الأطراف، آلام جسم متفرقة، وتعب بدني سريع بعد مجهود بسيط', textEn: 'General limb heaviness, scattered body aches, and rapid physical tiredness after minimal effort', scoreWeight: 5, traitLabel: 'وهن عضلي وجهدي مرتفع', traitLabelEn: 'High Somatic & Exertional Fatigue', scientificTrait: 'High Somatic Exhaustion' },
+      { id: 'b', textAr: 'تتذبذب قوتي الجسدية بين أيام نشيطة وأيام أشعر فيها بخمول واضح', textEn: 'My physical strength fluctuates between active days and sluggish low-energy days', scoreWeight: 3, traitLabel: 'تذبذب حيوي متوسط', traitLabelEn: 'Fluctuating Physical Stamina', scientificTrait: 'Fluctuating Physical Stamina' },
+      { id: 'c', textAr: 'أتمتع بنشاط بدني مستقر وقدرة طبيعية على التحمل دون إرهاق عضلي سريع', textEn: 'Stable physical vitality and natural endurance without quick muscular exhaustion', scoreWeight: 1, traitLabel: 'لياقة واستقرار بدني', traitLabelEn: 'Healthy Somatic Stamina', scientificTrait: 'Healthy Somatic Stamina' },
+    ],
+  },
+  {
+    id: 'ef_3',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_physical',
+    promptAr: 'هل تصاحب تعبك مؤشرات حيوية صامتة (مثل برودة الأطراف، دوار خفيف، تقطع النوم، أو نعاس نهاري لا يُقاوم)؟',
+    promptEn: 'Is your fatigue accompanied by silent physical cues (cold hands/feet, light dizziness, fragmented sleep, or daytime drowsiness)?',
+    options: [
+      { id: 'a', textAr: 'نعم، تتكرر معي غالباً مع تشتبه في نقص فيتامينات (D/B12/الحديد) أو إجهاد الغدة الدرقية', textEn: 'Yes, frequently—raising concern over Vitamin D/B12/iron deficits, sleep apnea, or thyroid strain', scoreWeight: 5, traitLabel: 'مؤشرات حيوية وعضوية متكررة', traitLabelEn: 'Frequent Biomedical Fatigue Signals', scientificTrait: 'Biomedical Fatigue Signals' },
+      { id: 'b', textAr: 'ألاحظ بعض هذه الأعراض الجسدية أحياناً في أوقات الإجهاد أو سوء التغذية', textEn: 'I notice some of these physical signals occasionally during stress or poor nutrition', scoreWeight: 3, traitLabel: 'مؤشرات حيوية متقطعة', traitLabelEn: 'Intermittent Somatic Cues', scientificTrait: 'Intermittent Somatic Cues' },
+      { id: 'c', textAr: 'نادراً جداً، ومؤشراتي الجسدية ونومي ونشاطي الحيوي بحالة جيدة عموماً', textEn: 'Very rarely; my physical markers, sleep continuity, and vitality are generally steady', scoreWeight: 1, traitLabel: 'استقرار حيوي سليم', traitLabelEn: 'Stable Physiological Baseline', scientificTrait: 'Stable Physiological Baseline' },
+    ],
+  },
+  {
+    id: 'ef_4',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_physical',
+    promptAr: 'كيف يتفاعل جسدك مع دورة الطاقة والغذاء (السكريات، الكافيين، والماء) خلال اليوم؟',
+    promptEn: 'How does your body respond to daily fuel, hydration, sugar, and caffeine cycles?',
+    options: [
+      { id: 'a', textAr: 'أعتمد على المنبهات والسكريات للبقاء يقظاً ثم أعاني هبوطاً جسدياً حاداً بعدها', textEn: 'I rely on sugar and caffeine to stay upright, followed by sharp afternoon physical crashes', scoreWeight: 5, traitLabel: 'هبوط أيضي واعتماد منبهات', traitLabelEn: 'Glycemic & Stimulant Crash Loop', scientificTrait: 'Glycemic & Caffeine Crash Loop' },
+      { id: 'b', textAr: 'أمر ببعض هبوط الطاقة بعد الظهر لكنه يتحسن بتناول وجبة متوازنة وشرب الماء', textEn: 'I experience mild midday dips that improve with hydration and balanced meals', scoreWeight: 3, traitLabel: 'تفاوت طاقة متوسط', traitLabelEn: 'Moderate Midday Energy Dip', scientificTrait: 'Moderate Energy Dip' },
+      { id: 'c', textAr: 'طاقتي البدنية متوازنة طوال النهار بفضل التغذية المتزنة والترطيب الكافي', textEn: 'Steady physical energy throughout the day supported by consistent nutrition and hydration', scoreWeight: 1, traitLabel: 'اتزان حيوي وأيضي', traitLabelEn: 'Steady Metabolic Energy', scientificTrait: 'Metabolic Stability' },
+    ],
+  },
+  {
+    id: 'ef_5',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_physical',
+    promptAr: 'كيف يبدو إيقاع حركتك البدنية الأسبوعي وعلاقته بمستوى نشاطك؟',
+    promptEn: 'What does your weekly physical movement rhythm look like and how does it affect your energy?',
+    options: [
+      { id: 'a', textAr: 'خمول شبه تام وأغلب يومي جلوس، وإذا حاولت بذل جهد يرهقني التعب لاحقاً لساعات', textEn: 'Mostly sedentary days, and even moderate physical exertion leaves me drained for hours afterward', scoreWeight: 5, traitLabel: 'دائرة الخمول والتعب البدني', traitLabelEn: 'Sedentary Deconditioning Loop', scientificTrait: 'Sedentary Deconditioning / PEM' },
+      { id: 'b', textAr: 'أتحرك أحياناً بشكل غير منتظم وأشعر بتثاقل في استعادة روتين الرياضة', textEn: 'Irregular movement and noticeable heaviness when trying to sustain an exercise routine', scoreWeight: 3, traitLabel: 'نشاط حركي غير منتظم', traitLabelEn: 'Irregular Movement Rhythm', scientificTrait: 'Irregular Physical Activity' },
+      { id: 'c', textAr: 'أحافظ على مشي أو حركة بدنية منتظمة تنشط دورتي الدموية وتجدد حيويتي', textEn: 'Regular walking or physical activity that boosts circulation and refreshes my energy', scoreWeight: 1, traitLabel: 'حيوية حركية منتظمة', traitLabelEn: 'Active Somatic Conditioning', scientificTrait: 'Active Somatic Conditioning' },
+    ],
+  },
+  {
+    id: 'ef_6',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_physical',
+    promptAr: 'لو حصلت على عطلة هادئة تماماً خالية من التفكير والضغوط، كيف يكون حال جسدك؟',
+    promptEn: 'If you took a genuinely quiet vacation free of deadlines or worries, how would your body feel?',
+    options: [
+      { id: 'a', textAr: 'يظل جسدي ثقيلاً ومستنزفاً عضوياً حتى لو كان مزاجي هادئاً وبالِي غير مشغول', textEn: 'My body remains heavy and physically depleted even when my mind is completely calm', scoreWeight: 5, traitLabel: 'تعب جسدي مستقل عن المزاج', traitLabelEn: 'Autonomous Physical Exhaustion', scientificTrait: 'Autonomous Physical Exhaustion' },
+      { id: 'b', textAr: 'يرتاح جسدي جزئياً بعد عدة أيام، لكن يبقى أثر خمول بسيط متكرر', textEn: 'Partially relieved after a few days, though a lingering sluggishness remains', scoreWeight: 3, traitLabel: 'تعافٍ جسدي بطيء', traitLabelEn: 'Delayed Somatic Recovery', scientificTrait: 'Delayed Somatic Recovery' },
+      { id: 'c', textAr: 'يتعافى جسدي بسرعة وحيوية بمجرد أخذ قسط حقيقي من النوم والراحة البدنية', textEn: 'My body rebounds rapidly with true physical rest and deep sleep', scoreWeight: 1, traitLabel: 'استجابة سريعة للراحة البدنية', traitLabelEn: 'Responsive Physical Recovery', scientificTrait: 'Responsive Physical Recovery' },
+    ],
+  },
+
+  // Axis 2: Mental Fatigue (6 items)
+  {
+    id: 'ef_7',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_mental',
+    promptAr: 'كيف تصف صفاء ذهنك وقدرتك على التركيز عند البدء بعمل أو قراءة تتطلب انتباهاً؟',
+    promptEn: 'How clear is your mind and ability to focus when starting reading or mentally demanding tasks?',
+    options: [
+      { id: 'a', textAr: 'أعاني «ضبابية دماغ» شديدة وبطئاً في استيعاب الكلمات واتخاذ أبسط القرارات', textEn: 'Severe brain fog, sluggish reading comprehension, and trouble handling basic decisions', scoreWeight: 5, traitLabel: 'ضبابية معرفية واستنزاف انتباه', traitLabelEn: 'Severe Brain Fog & Executive Load', scientificTrait: 'Severe Brain Fog & Executive Load' },
+      { id: 'b', textAr: 'يتشتت ذهني بسرعة بعد فترة قصيرة وأحتاج جهداً أكبر للعودة للتركيز', textEn: 'Attention drifts quickly after short bursts, requiring extra effort to refocus', scoreWeight: 3, traitLabel: 'إجهاد معرفي متوسط', traitLabelEn: 'Moderate Cognitive Fatigue', scientificTrait: 'Moderate Cognitive Fatigue' },
+      { id: 'c', textAr: 'ذهني صافٍ وحاضر وأستطيع التركيز وترتيب أفكاري بسلاسة معظم الوقت', textEn: 'Clear, present focus with smooth mental organization most of the time', scoreWeight: 1, traitLabel: 'صفاء ذهني وتنفيذي', traitLabelEn: 'Clear Executive Functioning', scientificTrait: 'Clear Cognitive Functioning' },
+    ],
+  },
+  {
+    id: 'ef_8',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_mental',
+    promptAr: 'ما حال عقلك عند محاولة الاسترخاء أو قبل النوم ليلاً؟',
+    promptEn: 'What does your mind do when you try to unwind or fall asleep at night?',
+    options: [
+      { id: 'a', textAr: 'عقلي لا يتوقف عن إعادة المواقف والسيناريوهات والقلق حتى وأنا مستلقٍ للراحة', textEn: 'My mind endlessly replays conversations, scenarios, and worries even while lying down to rest', scoreWeight: 5, traitLabel: 'اجترار ذهني مفرط', traitLabelEn: 'Chronic Mental Rumination Loop', scientificTrait: 'Chronic Rumination Loop' },
+      { id: 'b', textAr: 'تراودني بعض الأفكار المتكررة لوقت ثم تهدأ تدريجياً إذا شغلت نفسي', textEn: 'Repetitive thoughts surface for a while before gradually settling down', scoreWeight: 3, traitLabel: 'تفكير متكرر متوسط', traitLabelEn: 'Episodic Overthinking', scientificTrait: 'Episodic Overthinking' },
+      { id: 'c', textAr: 'أستطيع إيقاف التحليل والعمل العقلي والدخول في سكينة ذهنية مريحة قبل النوم', textEn: 'I can switch off analytical problem-solving and transition smoothly into mental quiet', scoreWeight: 1, traitLabel: 'قدرة جيدة على التهدئة الذهنية', traitLabelEn: 'Healthy Cognitive Decompression', scientificTrait: 'Healthy Cognitive Decompression' },
+    ],
+  },
+  {
+    id: 'ef_9',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_mental',
+    promptAr: 'كيف يشعر جهازك العصبي في خلفيتك اليومية تجاه القلق واليقظة المفرطة (Fight-or-Flight)؟',
+    promptEn: 'How does your nervous system feel in the background of daily life regarding vigilance and anxiety?',
+    options: [
+      { id: 'a', textAr: 'أشعر بتأهب وحذر عصبي متواصل في الخلفية يستهلك طاقتي دون وجود خطر فعلي', textEn: 'A constant background Fight-or-Flight tension draining my reserves even without real danger', scoreWeight: 5, traitLabel: 'فرط يقظة واستنزاف عصبي', traitLabelEn: 'Chronic Sympathetic Hypervigilance', scientificTrait: 'Chronic Sympathetic Hypervigilance' },
+      { id: 'b', textAr: 'أتوتر ذهنياً في أيام الضغط والمواعيد ثم أخفف توتري بعد انتهاء الحدث', textEn: 'Mental tension rises around deadlines and eases once intense days pass', scoreWeight: 3, traitLabel: 'توتر ظرفي مؤقت', traitLabelEn: 'Situational Cognitive Stress', scientificTrait: 'Situational Cognitive Stress' },
+      { id: 'c', textAr: 'جهازي العصبي مطمئن وهادئ غالباً ولا أعيش في حالة استنفار ذهني مستمر', textEn: 'Mostly calm and regulated nervous system without chronic background alarm', scoreWeight: 1, traitLabel: 'أمان وهدوء عصبي', traitLabelEn: 'Regulated Nervous System', scientificTrait: 'Regulated Nervous System' },
+    ],
+  },
+  {
+    id: 'ef_10',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_mental',
+    promptAr: 'ما علاقتك بالتدفق المعلوماتي والشاشات (الإشعارات، الأخبار، التمرير قبل النوم)؟',
+    promptEn: 'How do screens, notifications, news feeds, and late-night scrolling affect your mental energy?',
+    options: [
+      { id: 'a', textAr: 'تخمة رقمية وتنقل متسارع بين الشاشات يترك دماغي منهكاً ومشتتاً حتى ساعة متأخرة', textEn: 'Heavy digital overload and fast screen-switching leave my brain overstimulated late at night', scoreWeight: 5, traitLabel: 'تخمة رقمية واستنزاف انتباه', traitLabelEn: 'Digital & Information Overload', scientificTrait: 'Digital & Information Overload' },
+      { id: 'b', textAr: 'أفرط في استخدام الهاتف في أيام معينة ثم أحاول تقليل الشاشات لأستعيد هدوئي', textEn: 'Screen overuse creeps up on certain days before I consciously pull back', scoreWeight: 3, traitLabel: 'تأثر رقمي معتدل', traitLabelEn: 'Moderate Screen Fatigue', scientificTrait: 'Moderate Screen Fatigue' },
+      { id: 'c', textAr: 'أفصل عن الشاشات بوعي وأمنح عقلي فترات صمت حقيقي بعيداً عن المحتوى', textEn: 'I unplug mindfully and protect quiet screen-free blocks for my brain', scoreWeight: 1, traitLabel: 'صحة رقمية متزنة', traitLabelEn: 'Mindful Digital Boundaries', scientificTrait: 'Mindful Digital Boundaries' },
+    ],
+  },
+  {
+    id: 'ef_11',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_mental',
+    promptAr: 'عندما تتراكم قرارات صغيرة متتالية في يومك (ماذا أرتدي، ماذا أرد، أي مهمة أبدأ):',
+    promptEn: 'When small consecutive choices pile up during the day (messages, tasks, minor logistics):',
+    options: [
+      { id: 'a', textAr: 'أشعر بشلل ذهني وإرهاق من اتخاذ أبسط القرارات وكأن بطارية عقلي فارغة تماماً', textEn: 'I feel mental paralysis over even trivial choices as if my cognitive battery is completely empty', scoreWeight: 5, traitLabel: 'إعياء القرار (Decision Fatigue)', traitLabelEn: 'Acute Decision Fatigue', scientificTrait: 'Acute Decision Fatigue' },
+      { id: 'b', textAr: 'أؤجل بعض القرارات غير العاجلة عندما يزدحم يومي بالمهام الذهنية', textEn: 'I postpone non-urgent decisions whenever my mental workload spikes', scoreWeight: 3, traitLabel: 'إجهاد قرار متوسط', traitLabelEn: 'Moderate Executive Strain', scientificTrait: 'Moderate Executive Strain' },
+      { id: 'c', textAr: 'أحسم الأمور البسيطة والعملية بمرونة ودون استنزاف لطاقتي الفكرية', textEn: 'I handle routine everyday decisions briskly without draining mental energy', scoreWeight: 1, traitLabel: 'كفاءة تنفيذية متزنة', traitLabelEn: 'Intact Executive Energy', scientificTrait: 'Intact Executive Energy' },
+    ],
+  },
+  {
+    id: 'ef_12',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_mental',
+    promptAr: 'كيف تقضي وقت راحتك من العمل عادةً؟',
+    promptEn: 'How do you typically spend your off-work hours or supposed "downtime"?',
+    options: [
+      { id: 'a', textAr: 'حتى وقت فراغي يمتلئ بالتخطيط، التصفح المرهق، أو التفكير القسري في الغد بلا راحة ذهنية', textEn: 'Even downtime stays packed with planning, heavy scrolling, or worrying about tomorrow', scoreWeight: 5, traitLabel: 'غياب الراحة العقلية الحقيقية', traitLabelEn: 'Deficit of True Cognitive Rest', scientificTrait: 'Deficit of True Cognitive Rest' },
+      { id: 'b', textAr: 'أحصل على هدوء متقطع لكن عقلي يعود سريعاً للانشغال بالواجبات', textEn: 'I get brief moments of calm, though my thoughts quickly snap back to obligations', scoreWeight: 3, traitLabel: 'راحة ذهنية جزئية', traitLabelEn: 'Partial Mental Restoration', scientificTrait: 'Partial Mental Restoration' },
+      { id: 'c', textAr: 'أمارس راحة عقلية واعية (تأمل، طبيعة، هدوء صامت) تعيد لدماغي صفاءه ونشاطه', textEn: 'I practice deliberate mental rest (nature, quiet reflection, mindfulness) that clears my head', scoreWeight: 1, traitLabel: 'استعادة ذهنية فعالة', traitLabelEn: 'Restorative Mindfulness & Nature', scientificTrait: 'Restorative Mindfulness & Nature' },
+    ],
+  },
+
+  // Axis 3: Existential / Spiritual Fatigue (6 items)
+  {
+    id: 'ef_13',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_existential',
+    promptAr: 'حين تتوقف لحظة وسط روتينك اليومي المعتاد، ما السؤال الصامت الذي يتكرر في داخلك؟',
+    promptEn: 'When you pause in the middle of your daily routine, what quiet question lingers inside you?',
+    options: [
+      { id: 'a', textAr: 'شعور عميق بالفراغ والتساؤل: «لماذا كل هذا؟ وما المعنى أو الفائدة من كل ما أفعله؟»', textEn: 'A deep sense of emptiness asking: “Why all of this? What is the point of what I am doing?”', scoreWeight: 5, traitLabel: 'فراغ وجودي وفقدان معنى', traitLabelEn: 'Existential Vacuum & Meaning Loss', scientificTrait: 'Frankl Existential Vacuum' },
+      { id: 'b', textAr: 'تزورني هذه التساؤلات أحياناً عندما تشتد الرتابة أو تقل الإنجازات ذات الأثر', textEn: 'Those questions visit occasionally during monotonous weeks or low-impact work', scoreWeight: 3, traitLabel: 'تساؤل قيمي متقطع', traitLabelEn: 'Episodic Meaning Doubt', scientificTrait: 'Episodic Meaning Doubt' },
+      { id: 'c', textAr: 'أشعر بأن لحياتي وأيامي غاية واضحة ومعنى داخلياً يمنحني دافعاً للاستمرار', textEn: 'My days feel anchored in clear purpose and an inner sense of meaning', scoreWeight: 1, traitLabel: 'وضوح الغاية والمعنى', traitLabelEn: 'Strong Sense of Purpose', scientificTrait: 'Strong Sense of Purpose' },
+    ],
+  },
+  {
+    id: 'ef_14',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_existential',
+    promptAr: 'إلى أي مدى تتوافق حياتك وعملك اليومي حالياً مع قيمك الجوهرية الحقيقية (مثل الإبداع، الحرية، الأسرة، أو العطاء)؟',
+    promptEn: 'How closely do your daily work and schedule align with your deepest personal values (freedom, creativity, family, service)?',
+    options: [
+      { id: 'a', textAr: 'أعيش «تنافراً معرفياً» حاداً؛ فأعمالي ومسؤولياتي تتعارض مع أهم قيمي وتستنزف روحي', textEn: 'Sharp cognitive dissonance—my daily obligations clash directly with my core values and drain my spirit', scoreWeight: 5, traitLabel: 'تعارض قيمي وتنافر معرفي', traitLabelEn: 'Value-Life Cognitive Dissonance', scientificTrait: 'Value-Life Cognitive Dissonance' },
+      { id: 'b', textAr: 'أحقق توازناً جزئياً لكنني أتنازل كثيراً عن أولوياتي وقيمي لصالح الضغوط', textEn: 'Partial balance, though I frequently compromise personal priorities for external demands', scoreWeight: 3, traitLabel: 'توافق قيمي جزئي', traitLabelEn: 'Partial Value Alignment', scientificTrait: 'Partial Value Alignment' },
+      { id: 'c', textAr: 'خياراتي وعلاقاتي اليومية متسقة بصدق مع قيمي ومبادئي الأساسية', textEn: 'My daily commitments and choices feel authentically aligned with my core principles', scoreWeight: 1, traitLabel: 'انسجام قيمي أصيل', traitLabelEn: 'Authentic Value Alignment', scientificTrait: 'Authentic Self-Determination' },
+    ],
+  },
+  {
+    id: 'ef_15',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_existential',
+    promptAr: 'كم من طاقتك اليومية يُستهلك في «ارتداء قناع الشخصية الزائفة» لإرضاء توقعات المجتمع والآخرين؟',
+    promptEn: 'How much of your daily energy is spent wearing a "false-self mask" to satisfy others’ expectations?',
+    options: [
+      { id: 'a', textAr: 'أمثل دوراً لا يشبهني باستمرار خوفاً من «ماذا سيقول الناس؟»، وهذا التمثيل يستنزفني حتى النخاع', textEn: 'I constantly perform a role that is not me out of social pressure, leaving me exhausted to the bone', scoreWeight: 5, traitLabel: 'استنزاف القناع الاجتماعي الزائف', traitLabelEn: 'False-Self Masking Exhaustion', scientificTrait: 'False-Self Masking Exhaustion' },
+      { id: 'b', textAr: 'أضطر أحياناً لتجميل مشاعري وإرضاء التوقعات على حساب راحتي الداخلية', textEn: 'I sometimes polish my feelings and accommodate expectations at my own inner expense', scoreWeight: 3, traitLabel: 'مجاملة اجتماعية منهكة أحياناً', traitLabelEn: 'Moderate Social Camouflaging', scientificTrait: 'Moderate Social Camouflaging' },
+      { id: 'c', textAr: 'أظهر على سجيتي بصدق وحدود واضحة دون استنزاف في إرضاء القوالب المفروضة', textEn: 'I show up authentically with healthy boundaries rather than exhausting self-performance', scoreWeight: 1, traitLabel: 'أصالة وتعبير حقيقي', traitLabelEn: 'High Authenticity & Low Masking', scientificTrait: 'Low Masking / High Authenticity' },
+    ],
+  },
+  {
+    id: 'ef_16',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_existential',
+    promptAr: 'كيف تشعر بعد تحقيق نجاح أو إجازة لطالما انتظرتها؟',
+    promptEn: 'How do you feel right after achieving a major milestone or finishing a long-awaited vacation?',
+    options: [
+      { id: 'a', textAr: 'حتى بعد الإجازات أو الإنجازات يظل بداخلي خواء وفتور غريب لا يملؤه شيء خارجي', textEn: 'Even after holidays or achievements, a stubborn hollow flatness stays inside me', scoreWeight: 5, traitLabel: 'خواء وجداني مقاوم للإجازات', traitLabelEn: 'Existential Anhedonia', scientificTrait: 'Existential Anhedonia' },
+      { id: 'b', textAr: 'أفرح لفترة وجيزة جداً ثم يعود الإحساس بالرتابة والفتور الداخلي سريعاً', textEn: 'Brief enjoyment fades quickly as inner flatness returns', scoreWeight: 3, traitLabel: 'شغف قصير الأمد', traitLabelEn: 'Transient Fulfillment', scientificTrait: 'Transient Fulfillment' },
+      { id: 'c', textAr: 'أستمتع بطعم الإنجاز والراحة وأشعر بالامتنان والامتلاء والاتصال بالحياة', textEn: 'I genuinely savor achievements and rest, feeling grateful and connected to life', scoreWeight: 1, traitLabel: 'امتلاء وشغف حي', traitLabelEn: 'Vital Eudaimonic Well-Being', scientificTrait: 'Vital Eudaimonic Well-Being' },
+    ],
+  },
+  {
+    id: 'ef_17',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_existential',
+    promptAr: 'ما مدى إحساسك بالانفصال عن ذاتك الحقيقية، أو أنك تعيش حياةً «مُعارة» اختارها غيرك لك؟',
+    promptEn: 'To what extent do you feel disconnected from your real self—or living a borrowed script chosen by others?',
+    options: [
+      { id: 'a', textAr: 'أشعر باغتراب عميق عن نفسي وكأنني أسير على مسار آلي لم أختره بقلبي', textEn: 'Deep self-alienation—walking an autopilot path my heart never chose', scoreWeight: 5, traitLabel: 'اغتراب وجودي عن الذات', traitLabelEn: 'Deep Self-Alienation', scientificTrait: 'Deep Self-Alienation' },
+      { id: 'b', textAr: 'أتساءل بين حين وآخر هل هذا هو فعلاً الطريق الذي يناسب روحي وطموحي', textEn: 'I wonder from time to time whether this trajectory truly fits my spirit', scoreWeight: 3, traitLabel: 'بحث عن الذات الحقيقية', traitLabelEn: 'Emerging Existential Questioning', scientificTrait: 'Emerging Existential Questioning' },
+      { id: 'c', textAr: 'أشعر بملكية كاملة لحياتي وقراراتي وتناغم مع هويتي الداخلية', textEn: 'Strong ownership of my life path and steady harmony with my identity', scoreWeight: 1, traitLabel: 'اتصال راسخ بالذات', traitLabelEn: 'Integrated Self-Ownership', scientificTrait: 'Integrated Self-Ownership' },
+    ],
+  },
+  {
+    id: 'ef_18',
+    testId: 'existential_fatigue',
+    dimensionKey: 'fatigue_existential',
+    promptAr: 'كيف تصف صلتك بالجانب الروحي، الطبيعة، أو العطاء الإبداعي الذي يغذي روحك؟',
+    promptEn: 'How connected are you to spiritual stillness, nature, or creative service that nourishes your soul?',
+    options: [
+      { id: 'a', textAr: 'انقطعت تماماً عن لحظات السكينة الروحية والطبيعة والإبداع وأشعر بجفاف روحي مستمر', textEn: 'Completely disconnected from spiritual stillness, nature, and creativity—feeling inner dryness', scoreWeight: 5, traitLabel: 'جفاف روحي وانقطاع المعنى', traitLabelEn: 'Spiritual & Creative Depletion', scientificTrait: 'Spiritual & Creative Depletion' },
+      { id: 'b', textAr: 'ألتفت لهذه المصادر نادراً عندما أصل لمرحلة اختناق داخلي شديد', textEn: 'I only turn toward these nourishing sources when inner suffocation hits a breaking point', scoreWeight: 3, traitLabel: 'تغذية روحية متقطعة', traitLabelEn: 'Inconsistent Spiritual Nourishment', scientificTrait: 'Inconsistent Spiritual Nourishment' },
+      { id: 'c', textAr: 'أحافظ على ممارسات روحية أو تأملية أو إبداعية تمنح روحي سكينة وطاقة متجددة', textEn: 'I sustain contemplative, spiritual, or creative habits that steadily renew my inner peace', scoreWeight: 1, traitLabel: 'توازن واتصال روحي عميق', traitLabelEn: 'Sustained Spiritual Vitality', scientificTrait: 'Sustained Spiritual Vitality' },
+    ],
+  },
+];
+
+// Helper to get questions for any assessment (18 to 32 questions per scale)
 export function getQuestionsForAssessment(type: AssessmentType): TestQuestion[] {
   switch (type) {
+    case 'existential_fatigue':
+      return EXISTENTIAL_FATIGUE_QUESTIONS; // 18 items
     case 'big_five':
       return [...BIG_FIVE_QUESTIONS, ...EXTENDED_BIG_FIVE_ITEMS]; // 25 items
     case 'mmpi':
@@ -2488,8 +2763,11 @@ export interface PsychometricQuestionAuditItem {
   questionNumber: number;
   questionId: string;
   promptAr: string;
+  promptEn?: string;
   selectedOptionAr: string;
+  selectedOptionEn?: string;
   traitMeasuredAr: string;
+  traitMeasuredEn?: string;
   scientificTraitEn: string;
   scoreWeight: number;
   maxWeight: number;
@@ -2498,7 +2776,9 @@ export interface PsychometricQuestionAuditItem {
 export interface PsychometricReport {
   testId: AssessmentType;
   testTitleAr: string;
+  testTitleEn?: string;
   completionDate: string;
+  completionDateEn?: string;
   isCompleted?: boolean;
   answeredCount?: number;
   totalQuestionsCount?: number;
@@ -2506,37 +2786,55 @@ export interface PsychometricReport {
   overallPercentile: number;
   validityStatus: 'valid' | 'moderately_defensive' | 'invalid';
   validityMessageAr: string;
+  validityMessageEn?: string;
   primaryArchetypeAr: string;
   primaryArchetypeEn: string;
   summaryAr?: string;
+  summaryEn?: string;
   dimensionScores: {
     key: string;
     factorCode?: string;
     labelAr: string;
+    labelEn?: string;
     score: number; // 0-100
     stenScore?: number; // 1-10 Sten standard score
     lowPoleAr?: string;
+    lowPoleEn?: string;
     highPoleAr?: string;
+    highPoleEn?: string;
     levelAr: 'مرتفع' | 'متوسط' | 'منخفض';
+    levelEn?: 'High' | 'Moderate' | 'Low';
     analysisAr: string;
+    analysisEn?: string;
     plainExplanationAr?: string;
+    plainExplanationEn?: string;
     adviceAr: string;
+    adviceEn?: string;
     color: string;
   }[];
   cattellGlobalFactors?: CattellGlobalFactor[];
   questionAudit?: PsychometricQuestionAuditItem[];
   userStrengthsAr: string[];
+  userStrengthsEn?: string[];
   userAspirationsAr: string[];
+  userAspirationsEn?: string[];
   userInterestsAr: string[];
+  userInterestsEn?: string[];
   idealPartnerProfile: {
     recommendedArchetypeAr: string;
     recommendedArchetypeEn: string;
     complementaryTraits: string[];
+    complementaryTraitsEn?: string[];
     emotionalNeedsAr: string;
+    emotionalNeedsEn?: string;
     communicationStyleAr: string;
+    communicationStyleEn?: string;
     lifestyleHarmonyAr: string;
+    lifestyleHarmonyEn?: string;
     redFlagsToAvoidAr: string[];
+    redFlagsToAvoidEn?: string[];
     greenFlagsToSeekAr: string[];
+    greenFlagsToSeekEn?: string[];
   };
 }
 
@@ -2584,6 +2882,11 @@ export function calculatePsychometricReport(
     month: 'long',
     day: 'numeric',
   });
+  const nowEn = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
   const answeredKeys = Object.keys(answers).filter((k) =>
     questions.some((q) => q.id === k && answers[k])
@@ -2596,7 +2899,8 @@ export function calculatePsychometricReport(
   let lieScoreMax = 0;
   const questionAudit: PsychometricQuestionAuditItem[] = [];
   const chosenHighTraits: string[] = [];
-  const chosenAllOptionTexts: { dim: string; textAr: string; traitLabel: string; weight: number }[] = [];
+  const chosenHighTraitsEn: string[] = [];
+  const chosenAllOptionTexts: { dim: string; textAr: string; textEn: string; traitLabel: string; traitLabelEn: string; weight: number }[] = [];
 
   questions.forEach((q, idx) => {
     const selectedOptId = answers[q.id];
@@ -2614,12 +2918,17 @@ export function calculatePsychometricReport(
     dimensionPoints[q.dimensionKey].count += 1;
 
     if (matchedOpt) {
+      const enTrait = matchedOpt.traitLabelEn || matchedOpt.scientificTrait;
+      const enOptText = matchedOpt.textEn || matchedOpt.textAr;
       questionAudit.push({
         questionNumber: idx + 1,
         questionId: q.id,
         promptAr: q.promptAr,
+        promptEn: q.promptEn || q.promptAr,
         selectedOptionAr: matchedOpt.textAr,
+        selectedOptionEn: enOptText,
         traitMeasuredAr: matchedOpt.traitLabel,
+        traitMeasuredEn: enTrait,
         scientificTraitEn: matchedOpt.scientificTrait,
         scoreWeight: matchedOpt.scoreWeight,
         maxWeight: 5,
@@ -2627,11 +2936,14 @@ export function calculatePsychometricReport(
       chosenAllOptionTexts.push({
         dim: q.dimensionKey,
         textAr: matchedOpt.textAr,
+        textEn: enOptText,
         traitLabel: matchedOpt.traitLabel,
+        traitLabelEn: enTrait,
         weight: matchedOpt.scoreWeight,
       });
       if (matchedOpt.scoreWeight >= 4) {
         chosenHighTraits.push(`${matchedOpt.traitLabel}: ${matchedOpt.textAr}`);
+        chosenHighTraitsEn.push(`${enTrait}: ${enOptText}`);
       }
     }
 
@@ -2646,6 +2958,9 @@ export function calculatePsychometricReport(
   let validityMessageAr = isCompleted
     ? `تم تحليل ${answeredKeys.length} من أصل ${questions.length} بنداً محكماً بمعامل صدق وثبات إحصائي ممتاز استناداً لإجاباتك الفعلية.`
     : `لم يتم إجراء هذا المقياس بعد — الإحصائيات أدناه تمثل خط الأساس المحايد (50%). يُرجى بدء الاختبار أو تعبئة استبيانك الشخصي لعرض نتائجك الحقيقية الدقيقة.`;
+  let validityMessageEn = isCompleted
+    ? `Analyzed ${answeredKeys.length} out of ${questions.length} structured items directly from your recorded responses.`
+    : `Assessment not yet completed — metrics below represent a neutral baseline (50%). Start the scale to generate your true psychometric profile.`;
 
   if (isCompleted && lieScoreMax > 0) {
     const lieRatio = lieScoreTotal / lieScoreMax;
@@ -2653,11 +2968,151 @@ export function calculatePsychometricReport(
       validityStatus = 'moderately_defensive';
       validityMessageAr =
         'تم رصد ميل لتقديم صورة ذاتية مثالية في بنود الصدق والشفافية (L/K Validity Scale)، وتمت معايرة الدرجات إحصائياً لضمان الدقة.';
+      validityMessageEn =
+        'A tendency toward idealized self-presentation was observed on L/K validity items; scores have been statistically calibrated for accuracy.';
     }
   }
 
   const dimensionScores: PsychometricReport['dimensionScores'] = [];
   let cattellGlobalFactors: CattellGlobalFactor[] | undefined = undefined;
+
+  if (testId === 'existential_fatigue') {
+    const physScore = calcDimPct(dimensionPoints, 'fatigue_physical', 50);
+    const mentalScore = calcDimPct(dimensionPoints, 'fatigue_mental', 50);
+    const existScore = calcDimPct(dimensionPoints, 'fatigue_existential', 50);
+
+    dimensionScores.push(
+      {
+        key: 'fatigue_physical',
+        factorCode: 'EF-PHYS',
+        labelAr: 'التعب الجسدي والحيوي (Physical Fatigue Load)',
+        labelEn: 'Physical & Biomedical Fatigue Load',
+        score: physScore,
+        stenScore: pctToSten(physScore),
+        lowPoleAr: 'حيوية بدنية ونوم مجدِّد',
+        lowPoleEn: 'Restorative sleep & steady somatic energy',
+        highPoleAr: 'استنزاف جسدي أو عضوي صامت',
+        highPoleEn: 'Silent somatic / biomedical exhaustion',
+        levelAr: physScore >= 65 ? 'مرتفع' : physScore >= 42 ? 'متوسط' : 'منخفض',
+        levelEn: physScore >= 65 ? 'High' : physScore >= 42 ? 'Moderate' : 'Low',
+        analysisAr:
+          physScore >= 65
+            ? `مؤشر الاستنزاف الجسدي مرتفع (${physScore}%): يشير وفق معايير المقال الخامس إلى ثقل عضلي، نوم غير منعش رغم طول ساعاته، أو احتمالية أسباب عضوية صامتة (جودة النوم/انقطاع التنفس، نقص فيتامين D أو B12 أو الحديد أو المغنيسيوم، أو الغدة الدرقية).`
+            : physScore >= 42
+            ? `مؤشر التعب الجسدي معتدل (${physScore}%): توجد مؤشرات إرهاق بدني متقطع يرتبط أحياناً بتذبذب النوم أو الحركة أو تقلبات الكافيين والسكريات.`
+            : `مؤشر التعب الجسدي منخفض (${physScore}%): استجابة جسدك للنوم والراحة البدنية سليمة عموماً، مما يرجّح أن مصدر أي تعب مستمر لديك ليس بدنياً بحتاً.`,
+        analysisEn:
+          physScore >= 65
+            ? `High physical fatigue load (${physScore}%): Reflects muscular heaviness, unrefreshing sleep despite adequate hours, or silent biomedical factors (sleep apnea, Vitamin D/B12/iron/magnesium deficits, or thyroid dysfunction).`
+            : physScore >= 42
+            ? `Moderate physical fatigue load (${physScore}%): Indicates intermittent bodily sluggishness tied to sleep rhythm variability, movement gaps, or caffeine/sugar swings.`
+            : `Low physical fatigue load (${physScore}%): Your body responds smoothly to sleep and physical rest, suggesting persistent tiredness stems from non-bodily roots.`,
+        plainExplanationAr:
+          physScore >= 65
+            ? 'جسدك يرسل إشارات استنزاف عضوي ونومي تتطلب فحصاً طبياً أساسياً وتغذية ونظافة نوم، وليس مجرد ساعات إضافية على السرير.'
+            : 'طاقتك البدنية الأساسية متماسكة نسبياً ولا يبدو أنها المصدر الوحيد للاستنزاف.',
+        plainExplanationEn:
+          physScore >= 65
+            ? 'Your body is signaling organic and sleep-architecture depletion requiring basic lab screening and nutrition—not just extra hours in bed.'
+            : 'Your baseline physical vitality is relatively intact and not the primary driver of exhaustion.',
+        adviceAr:
+          physScore >= 65
+            ? 'اطلب فحص دم شامل (CBC، Ferritin، فيتامين D، فيتامين B12، TSH للغدة الدرقية)، وحسّن نظافة النوم مع مشي يومي متدرج (15 دقيقة).'
+            : 'حافظ على الترطيب الكافي، تقليل السكريات المسائية، والحركة النهارية الخفيفة لحماية رصيدك البدني.',
+        adviceEn:
+          physScore >= 65
+            ? 'Request a baseline medical panel (CBC, Ferritin, Vitamin D, Vitamin B12, Thyroid TSH), optimize sleep hygiene, and add a gradual 15-minute daily walk.'
+            : 'Maintain steady hydration, moderate evening sugars, and gentle daytime movement to guard physical stamina.',
+        color: '#06b6d4',
+      },
+      {
+        key: 'fatigue_mental',
+        factorCode: 'EF-MENT',
+        labelAr: 'التعب العقلي والمعرفي (Mental & Cognitive Fatigue)',
+        labelEn: 'Mental & Cognitive Fatigue',
+        score: mentalScore,
+        stenScore: pctToSten(mentalScore),
+        lowPoleAr: 'صفاء ذهني وسكينة انتباه',
+        lowPoleEn: 'Clear focus & cognitive decompression',
+        highPoleAr: 'ضبابية دماغ واجترار وفرط يقظة',
+        highPoleEn: 'Brain fog, rumination & hypervigilance',
+        levelAr: mentalScore >= 65 ? 'مرتفع' : mentalScore >= 42 ? 'متوسط' : 'منخفض',
+        levelEn: mentalScore >= 65 ? 'High' : mentalScore >= 42 ? 'Moderate' : 'Low',
+        analysisAr:
+          mentalScore >= 65
+            ? `مؤشر الاستنزاف العقلي مرتفع (${mentalScore}%): يدل على «ضبابية الدماغ»، إعياء اتخاذ القرارات، حلقات الاجترار والقلق المستمر (تأهب Fight-or-Flight)، وفيض المعلومات الرقمية التي تمنع الراحة العقلية الحقيقية حتى أثناء الإجازة.`
+            : mentalScore >= 42
+            ? `مؤشر التعب العقلي متوسط (${mentalScore}%): يمر ذهنك بنوبات تشتت وإجهاد معلوماتي في أوقات الضغط ويستفيد من جدولة فواصل ذهنية هادئة.`
+            : `مؤشر التعب العقلي منخفض (${mentalScore}%): تحتفظ بصفاء إدراكي وقدرة جيدة على تهدئة العقل وفصل ضجيج الأفكار.`,
+        analysisEn:
+          mentalScore >= 65
+            ? `High cognitive fatigue (${mentalScore}%): Points to brain fog, acute decision fatigue, nonstop rumination loops, Fight-or-Flight hypervigilance, and digital overstimulation that prevents genuine mental rest.`
+            : mentalScore >= 42
+            ? `Moderate cognitive fatigue (${mentalScore}%): Intermittent scatter and information overload during busy stretches that benefits from scheduled quiet breaks.`
+            : `Low cognitive fatigue (${mentalScore}%): You retain clear executive focus and solid ability to quiet analytical mental noise.`,
+        plainExplanationAr:
+          mentalScore >= 65
+            ? 'دماغك يعمل في الخلفية بلا توقف عبر الاجترار والتأهب والشاشات، لذا لا يكفيه النوم بل يحتاج إلى راحة عقلية واعية.'
+            : 'الأعباء المعرفية والاجترار الذهني في حدود قابلة للإدارة دون شلل فكري حاد.',
+        plainExplanationEn:
+          mentalScore >= 65
+            ? 'Your brain runs nonstop in the background through rumination, hypervigilance, and screens—sleep cannot replace intentional cognitive rest.'
+            : 'Cognitive workload and rumination remain manageable without severe executive depletion.',
+        adviceAr:
+          mentalScore >= 65
+            ? 'طبّق قطع الشاشات قبل النوم بساعة، خصص 15 دقيقة يومياً لليقظة الذهنية أو المشي في الطبيعة، وحدد «وقتاً مجدولاً للقلق» لوقف الاجترار.'
+            : 'حافظ على فواصل استرخاء ذهني من 10 دقائق بعيداً عن الإشعارات بين فترات التركيز.',
+        adviceEn:
+          mentalScore >= 65
+            ? 'Enforce a 60-minute pre-sleep screen cutoff, schedule 15 minutes of daily nature/mindfulness decompression, and contain rumination inside a fixed 15-minute worry window.'
+            : 'Protect 10-minute notification-free mental resets between intense focus blocks.',
+        color: '#8b5cf6',
+      },
+      {
+        key: 'fatigue_existential',
+        factorCode: 'EF-EXIS',
+        labelAr: 'التعب الوجودي والروحي (Existential & Value-Misalignment Fatigue)',
+        labelEn: 'Existential & Value-Misalignment Fatigue',
+        score: existScore,
+        stenScore: pctToSten(existScore),
+        lowPoleAr: 'معنى واضح وأصالة وتوافق قيمي',
+        lowPoleEn: 'Clear purpose, authenticity & value harmony',
+        highPoleAr: 'خواء وجودي وتنافر قيمي وقناع زائف',
+        highPoleEn: 'Existential vacuum, cognitive dissonance & masking',
+        levelAr: existScore >= 65 ? 'مرتفع' : existScore >= 42 ? 'متوسط' : 'منخفض',
+        levelEn: existScore >= 65 ? 'High' : existScore >= 42 ? 'Moderate' : 'Low',
+        analysisAr:
+          existScore >= 65
+            ? `مؤشر التعب الوجودي مرتفع (${existScore}%): يكشف عن «فراغ وجودي» («لماذا كل هذا؟»)، تعارض حاد بين مسار حياتك وقيمك الجوهرية (التنافر المعرفي)، أو استهلاك هائل للطاقة في ارتداء «قناع الشخصية الزائفة» لإرضاء التوقعات الخارجية، وهو تعب لا تعالجه الإجازات أو النوم.`
+            : existScore >= 42
+            ? `مؤشر التعب الوجودي متوسط (${existScore}%): تمر بلحظات رتابة أو تساؤل حول اتساق خياراتك اليومية مع قيمك الحقيقية وأولوياتك الروحية.`
+            : `مؤشر التعب الوجودي منخفض (${existScore}%): لديك اتصال مطمئن بالمعنى الشخصي والأصالة الداخلية، وقيمك متسقة عموماً مع نمط حياتك.`,
+        analysisEn:
+          existScore >= 65
+            ? `High existential fatigue (${existScore}%): Reveals an existential vacuum (“What is the point?”), sharp value-life cognitive dissonance, or severe exhaustion from wearing a false-self social mask—a deficit ordinary vacations or sleep cannot cure.`
+            : existScore >= 42
+            ? `Moderate existential fatigue (${existScore}%): Periodic monotony and questioning around how closely your weekly routine reflects your deepest values.`
+            : `Low existential fatigue (${existScore}%): You maintain an authentic connection to purpose and core values that replenishes inner vitality.`,
+        plainExplanationAr:
+          existScore >= 65
+            ? 'تعبك نابع من جفاف المعنى أو العيش عكس قيمك أو التمثيل الدائم لإرضاء الآخرين؛ وعلاجه في المواءمة القيمية والأصالة، لا في السرير.'
+            : 'ارتباطك بالمعنى الشخصي وأصالة ذاتك يمنحك رصيداً روحياً داعماً.',
+        plainExplanationEn:
+          existScore >= 65
+            ? 'Your exhaustion flows from meaning dryness, living against your values, or chronic false-self performance—the remedy is values alignment and authenticity, not longer sleep.'
+            : 'Your grounding in purpose and authenticity sustains strong inner resilience.',
+        adviceAr:
+          existScore >= 65
+            ? 'أجرِ جرداً لقيمك الخمس الكبرى («ما الذي يهمك حقاً؟»)، خفّض ارتداء القناع الاجتماعي تدريجياً، وأعد وصل يومك بالسكينة الروحية أو الإبداع أو العطاء ذا المعنى.'
+            : 'احرص أسبوعياً على نشاط صغير يعبر عن قيمك الحقيقية وهويتك الأصيلة بعيداً عن ضغوط الإنجاز المادي.',
+        adviceEn:
+          existScore >= 65
+            ? 'Audit your top 5 core values (“What truly matters to me?”), gradually lower exhausting social masking, and weave one small meaningful, creative, or spiritual practice into your week.'
+            : 'Protect one weekly activity rooted purely in personal meaning rather than external productivity.',
+        color: '#f43f5e',
+      }
+    );
+  }
 
   if (testId === 'big_five') {
     const extraScore = calcDimPct(dimensionPoints, 'extraversion', 50);
@@ -3647,7 +4102,43 @@ export function calculatePsychometricReport(
   let idealPartnerArchetypeAr = '';
   let idealPartnerArchetypeEn = '';
 
-  if (testId === 'epq') {
+  if (testId === 'existential_fatigue') {
+    const p = dimensionScores.find((d) => d.key === 'fatigue_physical')?.score ?? 50;
+    const m = dimensionScores.find((d) => d.key === 'fatigue_mental')?.score ?? 50;
+    const e = dimensionScores.find((d) => d.key === 'fatigue_existential')?.score ?? 50;
+    const highAxes = [
+      { key: 'existential', score: e, label: 'الوجودي' },
+      { key: 'mental', score: m, label: 'العقلي' },
+      { key: 'physical', score: p, label: 'الجسدي' },
+    ].filter((x) => x.score >= 65);
+
+    if (highAxes.length >= 2) {
+      primaryArchetypeAr = `تعب مختلط متعدد المصادر (${highAxes.map((h) => h.label).join(' + ')})`;
+      primaryArchetypeEn = `Multi-Dimensional Fatigue (${highAxes.map((h) => h.key).join(' + ')})`;
+      idealPartnerArchetypeAr = 'بروتوكول التدخل المتسلسل ذو الـ 6 خطوات (المقال الخامس): طبي ← نمط حياة ← نفسي ← قيمي/علائقي';
+      idealPartnerArchetypeEn = 'Sequential 6-Step Medical, Cognitive & Existential Triage Protocol';
+    } else if (Math.max(p, m, e) <= 45) {
+      primaryArchetypeAr = 'رصيد طاقة متوازن نسبياً ومستقر (Low Fatigue Load)';
+      primaryArchetypeEn = 'Balanced Energy & Resilient Recovery Profile';
+      idealPartnerArchetypeAr = 'خطة الوقاية والصيانة اليومية: حماية النوم، الصوم الرقمي، ومواءمة القيم';
+      idealPartnerArchetypeEn = 'Preventive Vitality & Boundary Maintenance Plan';
+    } else if (e >= m && e >= p) {
+      primaryArchetypeAr = 'التعب الوجودي والروحي السائد (أزمة المعنى وتعارض القيم والقناع الزائف)';
+      primaryArchetypeEn = 'Predominant Existential Fatigue (Meaning Vacuum & Value Dissonance)';
+      idealPartnerArchetypeAr = 'بروتوكول الاستعادة الوجودية: إعادة مواءمة القيم، خلع القناع الزائف، وعلاج ACT/المعنى عند استمراره >3 أشهر';
+      idealPartnerArchetypeEn = 'Values Realignment, Dropping False-Self Mask & Meaning Therapy (ACT/Logotherapy)';
+    } else if (m >= p && m >= e) {
+      primaryArchetypeAr = 'التعب العقلي والمعرفي السائد (ضبابية الدماغ، الاجترار، والتخمة الرقمية)';
+      primaryArchetypeEn = 'Predominant Mental Fatigue (Brain Fog, Rumination & Hypervigilance)';
+      idealPartnerArchetypeAr = 'بروتوكول الراحة العقلية الحقيقية: اليقظة الذهنية، وقت القلق المجدول، وقطع الشاشات قبل النوم';
+      idealPartnerArchetypeEn = 'True Cognitive Rest, Mindfulness, Worry Scheduling & Pre-Sleep Digital Cutoff';
+    } else {
+      primaryArchetypeAr = 'التعب الجسدي والعضوي السائد (نوم غير مجدِّد واستنزاف حيوي)';
+      primaryArchetypeEn = 'Predominant Physical Fatigue (Sleep Architecture & Somatic Depletion)';
+      idealPartnerArchetypeAr = 'بروتوكول الفرز الطبي: تحاليل CBC / Ferritin / Vit D / B12 / TSH ونظافة النوم والحركة المتدرجة';
+      idealPartnerArchetypeEn = 'Biomedical Blood & Sleep Screening + Gradual Movement Protocol';
+    }
+  } else if (testId === 'epq') {
     const extraScore = dimensionScores.find((d) => d.key === 'eysenck_extraversion')?.score ?? 50;
     const stabilityScore = dimensionScores.find((d) => d.key === 'eysenck_stability')?.score ?? 50;
     const isExtraverted = extraScore >= 52;
@@ -3705,11 +4196,13 @@ export function calculatePsychometricReport(
     }
   });
 
-  // Build dynamic userInterestsAr from actual answered traits & dimensions
+  // Build dynamic userInterestsAr & userInterestsEn from actual answered traits & dimensions
   const dynamicInterests: string[] = [];
+  const dynamicInterestsEn: string[] = [];
   chosenAllOptionTexts.forEach((item) => {
     if (item.weight >= 4 && dynamicInterests.length < 5) {
       dynamicInterests.push(`ميل سلوكي مرصود (${item.traitLabel}): ${item.textAr}`);
+      dynamicInterestsEn.push(`Observed behavioral pattern (${item.traitLabelEn}): ${item.textEn}`);
     }
   });
   if (dynamicInterests.length === 0) {
@@ -3717,10 +4210,28 @@ export function calculatePsychometricReport(
       `الأنشطة المرتبطة بـ ${topDim1?.labelAr.split('(')[0]?.trim() || 'التطوير الذاتي'} (${topDim1?.score || 50}%)`,
       `الحوارات والممارسات التي تعزز ${topDim2?.labelAr.split('(')[0]?.trim() || 'التوافق النفسي'} (${topDim2?.score || 50}%)`
     );
+    dynamicInterestsEn.push(
+      `Practices connected to ${topDim1?.labelEn || topDim1?.key || 'Self-Growth'} (${topDim1?.score || 50}%)`,
+      `Reflections supporting ${topDim2?.labelEn || topDim2?.key || 'Psychological Balance'} (${topDim2?.score || 50}%)`
+    );
   }
 
   // Build dynamic userAspirationsAr based on actual dimension advice & top dimensions
   const dynamicAspirations: string[] = sortedDims.slice(0, 4).map((d) => d.adviceAr);
+  const dynamicAspirationsEn: string[] = sortedDims.slice(0, 4).map(
+    (d) =>
+      d.adviceEn ||
+      `Continue nurturing balance in ${d.labelEn || d.key} (score: ${d.score}%, Sten ${d.stenScore || pctToSten(d.score)}/10).`
+  );
+  const dynamicStrengthsEn: string[] = sortedDims.slice(0, 4).map(
+    (d) =>
+      `${d.labelEn || d.key} (${d.score}%): ${d.plainExplanationEn || d.analysisEn || `Measured Sten ${d.stenScore || pctToSten(d.score)}/10.`}`
+  );
+  chosenHighTraitsEn.slice(0, 3).forEach((tr) => {
+    if (!dynamicStrengthsEn.includes(tr)) {
+      dynamicStrengthsEn.push(tr);
+    }
+  });
 
   // Build dynamic idealPartnerProfile based on actual top & low dimensions
   const complementaryTraits: string[] = [
@@ -3729,15 +4240,31 @@ export function calculatePsychometricReport(
     `الارتباط الآمن والقدرة على الحوار الهادئ المباشر دون صمت عقابي`,
     `تقدير نقاط قوتك في «${topDim2?.labelAr.split('(')[0]?.trim()}» وتشجيع طموحاتك المشتركة`,
   ];
+  const complementaryTraitsEn: string[] = [
+    `Shared value harmony in "${topDim1?.labelEn || topDim1?.key}" (${topDim1?.score}%)`,
+    `Supportive complementarity around "${lowDim?.labelEn || lowDim?.key}" (${lowDim?.score}%)`,
+    `Secure attachment and direct, respectful conflict repair`,
+    `Appreciation for your strengths in "${topDim2?.labelEn || topDim2?.key}"`,
+  ];
 
   const emotionalNeedsAr = `بناءً على درجتك في ${topDim1?.labelAr.split('(')[0]?.trim()} (${topDim1?.score}%) و${lowDim?.labelAr.split('(')[0]?.trim()} (${lowDim?.score}%)، تحتاج لشريك يمنحك الطمأنينة الوجدانية، يقدر طبيعتك، ويبادلك التقدير والاحتواء الصادق.`;
+  const emotionalNeedsEn = `Based on your scores across ${topDim1?.labelEn || topDim1?.key} (${topDim1?.score}%) and ${lowDim?.labelEn || lowDim?.key} (${lowDim?.score}%), you thrive with a partner offering emotional safety, mutual respect, and steady containment.`;
   const communicationStyleAr = `أسلوب الحوار الأنسب لشخصيتك هو الحوار الواضح الدافئ الذي يجمع بين ${topDim1?.plainExplanationAr || 'الاحترام المتبادل'} والإنصات الفعال دون أحكام مسبقة.`;
+  const communicationStyleEn = `Your ideal communication style pairs warm clarity with active, non-judgmental listening.`;
   const lifestyleHarmonyAr = `انسجام نمط الحياة يتحقق مع شريك يوازن بين ${topDim1?.labelAr.split('(')[0]?.trim()} و${topDim2?.labelAr.split('(')[0]?.trim()}، مع اتفاق مشترك وشفاف على إدارة البيت والأولويات.`;
+  const lifestyleHarmonyEn = `Daily lifestyle harmony grows when both partners align routines transparently around shared values and rest rhythms.`;
+
+  const isFatigue = testId === 'existential_fatigue';
+  const fatigueP = isFatigue ? (dimensionScores.find((d) => d.key === 'fatigue_physical')?.score ?? 50) : 0;
+  const fatigueM = isFatigue ? (dimensionScores.find((d) => d.key === 'fatigue_mental')?.score ?? 50) : 0;
+  const fatigueE = isFatigue ? (dimensionScores.find((d) => d.key === 'fatigue_existential')?.score ?? 50) : 0;
 
   return {
     testId,
     testTitleAr: catalogItem.titleAr,
+    testTitleEn: catalogItem.titleEn,
     completionDate: now,
+    completionDateEn: nowEn,
     isCompleted,
     answeredCount: answeredKeys.length,
     totalQuestionsCount: questions.length,
@@ -3745,40 +4272,139 @@ export function calculatePsychometricReport(
     overallPercentile,
     validityStatus,
     validityMessageAr,
+    validityMessageEn,
     primaryArchetypeAr,
     primaryArchetypeEn,
     summaryAr:
-      testId === 'epq'
+      testId === 'existential_fatigue'
+        ? `تقييم تشخيصي استكشافي عبر ${answeredKeys.length}/${questions.length} بنداً مستنداً لمعايير المقال الخامس («لماذا تشعر بالتعب رغم حصولك على الراحة؟»): التعب الجسدي ${fatigueP}%، التعب العقلي ${fatigueM}%، والتعب الوجودي ${fatigueE}% (متوسط عبء الاستنزاف الكلي ${totalScore}%). ملاحظة: إذا استمر هذا التعب أكثر من 3 أشهر رغم تعديل نمط الحياة، يُنصح بإجراء فحص طبي شامل واستشارة نفسية متخصصة.`
+        : testId === 'epq'
         ? `تحليل بيولوجي عصبي مبني على إجاباتك (${answeredKeys.length}/${questions.length} سؤالاً) يعكس مستوى استثارة الجهاز العصبي ونمط المزاج الفطري والتوافق الحيوي مع الشريك.`
         : testId === 'sixteen_pf'
         ? `تحليل عاملي شامل مبسط لغير المختصين مبني على إجاباتك (${answeredKeys.length}/${questions.length} سؤالاً) يوضح سماتك الـ 16 الأساسية بالدرجات المعيارية (Sten 1-10) والعوامل العالمية الخمسة الكبرى.`
         : `تحليل سيكومتري علمي مبني على إجاباتك الفعلية (${answeredKeys.length}/${questions.length} سؤالاً) في ${catalogItem.titleAr}، بمتوسط اتزان ${totalScore}% وترتيب معياري ${overallPercentile}%.`,
+    summaryEn:
+      testId === 'existential_fatigue'
+        ? `Exploratory diagnostic assessment across ${answeredKeys.length}/${questions.length} items grounded in Article 5 (“Why Do You Feel Tired Even After Rest?”): Physical Fatigue ${fatigueP}%, Mental Fatigue ${fatigueM}%, and Existential Fatigue ${fatigueE}% (overall depletion load ${totalScore}%). Note: if exhaustion persists for more than 3 months despite lifestyle adjustments, seek a medical workup and specialized psychological consultation.`
+        : `Psychometric evaluation computed directly from your ${answeredKeys.length}/${questions.length} responses on ${catalogItem.titleEn}, yielding an overall index of ${totalScore}% (${overallPercentile}th percentile).`,
     dimensionScores,
     cattellGlobalFactors,
     questionAudit,
-    userStrengthsAr: dynamicStrengths,
+    userStrengthsAr: isFatigue
+      ? [
+          `مستوى العبء الجسدي المرصود (${fatigueP}%): ${fatigueP < 50 ? 'استجابة بدنية متماسكة نسبياً' : 'مؤشر يستدعي مراجعة جودة النوم والتحاليل الحيوية (D/B12/الحديد/TSH)'}.`,
+          `مستوى العبء العقلي المرصود (${fatigueM}%): ${fatigueM < 50 ? 'صفاء ذهني وتهدئة جيدة للأفكار' : 'اجترار وحمل معرفي ورقمي يتطلب راحة عقلية لا نوماً إضافياً فقط'}.`,
+          `مستوى العبء الوجودي المرصود (${fatigueE}%): ${fatigueE < 50 ? 'وضوح معنى واتساق قيمي مع ذاتك الحقيقية' : 'تنافر قيمي أو استنزاف القناع الاجتماعي الزائف يتطلب مراجعة الغاية والقيم'}.`,
+        ]
+      : dynamicStrengths,
+    userStrengthsEn: isFatigue
+      ? [
+          `Measured Physical Load (${fatigueP}%): ${fatigueP < 50 ? 'Relatively cohesive somatic recovery response' : 'Warrants checking sleep architecture and basic blood labs (D/B12/Iron/TSH)'}.`,
+          `Measured Mental Load (${fatigueM}%): ${fatigueM < 50 ? 'Clear cognitive focus and mental decompression' : 'Rumination and digital load call for intentional cognitive rest—not merely longer sleep'}.`,
+          `Measured Existential Load (${fatigueE}%): ${fatigueE < 50 ? 'Clear sense of meaning and value alignment' : 'Value dissonance or social masking drain calls for realigning life choices with core values'}.`,
+        ]
+      : dynamicStrengthsEn,
     userInterestsAr: dynamicInterests,
-    userAspirationsAr: dynamicAspirations,
-    idealPartnerProfile: {
-      recommendedArchetypeAr: idealPartnerArchetypeAr,
-      recommendedArchetypeEn: idealPartnerArchetypeEn,
-      complementaryTraits,
-      emotionalNeedsAr,
-      communicationStyleAr,
-      lifestyleHarmonyAr,
-      redFlagsToAvoidAr: [
-        'الغموض العاطفي أو ممارسة الصمت العقابي والانسحاب وقت الخلاف',
-        'كثرة النقد اللاذع أو التقليل من المشاعر والطموحات الشخصية',
-        'إفشاء أسرار العلاقة الزوجية للأطراف الخارجية وعدم صيانة الخصوصية',
-        'التصلب في الرأي وغياب المرونة في إدارة المسؤوليات المشتركة',
-      ],
-      greenFlagsToSeekAr: [
-        'الارتباط الآمن والقدرة على التهدئة الحنونة وإصلاح الخلاف بالحوار',
-        'الوفاء الصادق بالوعود وتحمل المسؤولية الأسرية بروح الفريق',
-        'الإنصات المتعاطف والتعبير اليومي عن التقدير والمودة',
-        'احترام الخصوصية العائلية وتقدير طموحك واهتماماتك الفكرية',
-      ],
-    },
+    userInterestsEn: dynamicInterestsEn,
+    userAspirationsAr: isFatigue
+      ? [
+          '1) الفحص الطبي الأساسي: CBC، فيتامين D، فيتامين B12، مخزون الحديد (Ferritin)، والمغنيسيوم، ووظائف الغدة الدرقية (TSH) عند ارتفاع البعد الجسدي.',
+          '2) الراحة العقلية الحقيقية: وقف الشاشات قبل النوم بساعة، المشي بالطبيعة 15 دقيقة، وممارسة التنفس أو اليقظة الذهنية وتحديد «وقت القلق المجدول».',
+          '3) الاستعادة الوجودية والقيمية: تحديد 5 قيم جوهرية وإدخال خطوة أسبوعية تتسق معها، وتقليل التمثيل وإرضاء التوقعات على حساب ذاتك.',
+          '4) علامات الاستشارة المهنية: استمرار التعب أكثر من 3 أشهر، انعدام التلذذ (Anhedonia)، أو تعطل العمل والعلاقات يستدعي مختصاً (CBT/ACT/طبيب).',
+        ]
+      : dynamicAspirations,
+    userAspirationsEn: isFatigue
+      ? [
+          '1) Baseline Medical Check: Screen CBC, Vitamin D, Vitamin B12, Ferritin, Magnesium, and Thyroid (TSH) when physical fatigue is elevated.',
+          '2) True Cognitive Rest: Enforce a 60-minute screen-free wind-down before bed, take a 15-minute nature walk, and schedule a fixed daily worry window.',
+          '3) Existential & Values Reset: Write down your 5 core values, weave one aligned action into this week, and drop exhausting social masking.',
+          '4) When to Consult a Specialist: Fatigue lasting over 3 months, persistent anhedonia, or work/relationship impairment warrants medical and CBT/ACT support.',
+        ]
+      : dynamicAspirationsEn,
+    idealPartnerProfile: isFatigue
+      ? {
+          recommendedArchetypeAr: idealPartnerArchetypeAr,
+          recommendedArchetypeEn: idealPartnerArchetypeEn,
+          complementaryTraits: [
+            'تجنب محاكمة التعب بوصفه كسلاً؛ التعب رسالة تشخيصية تحدد موضع نزيف الطاقة',
+            'بناء حدود صحية مع العلاقات المستنزفة وتقليص الاحتكاك بالبيئات السامة',
+            'مشاركة الدعم الصادق دون مطالبتك بالتمثيل الدائم بأنك بخير',
+          ],
+          complementaryTraitsEn: [
+            'Stop judging exhaustion as laziness—treat fatigue as a diagnostic messenger pointing to the true energy leak',
+            'Build protective boundaries around draining relationships and chronic stress environments',
+            'Lean into honest supportive spaces where you do not have to pretend you are fine',
+          ],
+          emotionalNeedsAr:
+            'تحتاج في هذه المرحلة إلى بيئة دافئة لا تعاقبك على انخفاض طاقتك، وإلى مساحة صادقة تخلع فيها قناع التحمل الزائف وتعبر عن احتياجك للراحة أو الدعم.',
+          emotionalNeedsEn:
+            'At this stage you need a safe, non-punitive environment where lowering your false-self armor and voicing a need for rest is met with warmth.',
+          communicationStyleAr:
+            'مارس الاعتذار اللطيف والواضح عن الالتزامات غير الضرورية («طاقتي هذه الفترة محدودة وأحتاج استراحة قصيرة») لحماية رصيدك النفسي والجسدي.',
+          communicationStyleEn:
+            'Practice clear, gentle boundary statements (“My energy bandwidth is limited right now, so I need a brief pause”) to protect mental and bodily reserves.',
+          lifestyleHarmonyAr:
+            'الجمع المتدرج بين الفحص العضوي السليم، والصوم الرقمي قبل النوم، وقضاء وقت أسبوعي في نشاط يمنح روحك معنى حقيقياً يسرّع عودة الحيوية.',
+          lifestyleHarmonyEn:
+            'Combining medical clearance, pre-sleep digital rest, and weekly value-aligned meaning activities steadily accelerates whole-person recovery.',
+          redFlagsToAvoidAr: [
+            'محاولة علاج التعب الوجودي أو العاطفي بالنوم الإضافي والمنبهات فقط',
+            'جلد الذات والانصياع لثقافة تمجيد الانشغال الدائم رغم الاستنزاف',
+            'تجاهل التعب المزمن لأكثر من 3 أشهر دون فحص دم أو استشارة نفسية',
+          ],
+          redFlagsToAvoidEn: [
+            'Trying to fix emotional or existential exhaustion solely with extra sleep or caffeine',
+            'Shaming yourself under hustle culture despite genuine nervous-system depletion',
+            'Ignoring chronic fatigue lasting longer than 3 months without medical or clinical screening',
+          ],
+          greenFlagsToSeekAr: [
+            'استبدال النوم غير المجدد بنوع الراحة المطابق لنوع التعب (جسدي/عقلي/وجودي)',
+            'البدء بخطوات صغيرة مجهرية ومتدرجة بدلاً من انتظار الشفاء الفوري',
+            'طلب الدعم الطبي أو العلاجي (CBT / ACT) عند تعطل الأداء اليومي',
+          ],
+          greenFlagsToSeekEn: [
+            'Matching the exact type of rest to the exact source of depletion (physical, cognitive, or existential)',
+            'Taking patient, micro-sized daily recovery steps rather than chasing instant overnight fixes',
+            'Engaging medical care or CBT/ACT therapy when exhaustion disrupts daily functioning',
+          ],
+        }
+      : {
+          recommendedArchetypeAr: idealPartnerArchetypeAr,
+          recommendedArchetypeEn: idealPartnerArchetypeEn,
+          complementaryTraits,
+          complementaryTraitsEn,
+          emotionalNeedsAr,
+          emotionalNeedsEn,
+          communicationStyleAr,
+          communicationStyleEn,
+          lifestyleHarmonyAr,
+          lifestyleHarmonyEn,
+          redFlagsToAvoidAr: [
+            'الغموض العاطفي أو ممارسة الصمت العقابي والانسحاب وقت الخلاف',
+            'كثرة النقد اللاذع أو التقليل من المشاعر والطموحات الشخصية',
+            'إفشاء أسرار العلاقة الزوجية للأطراف الخارجية وعدم صيانة الخصوصية',
+            'التصلب في الرأي وغياب المرونة في إدارة المسؤوليات المشتركة',
+          ],
+          redFlagsToAvoidEn: [
+            'Emotional ambiguity, stonewalling, or punitive withdrawal during conflict',
+            'Harsh criticism or dismissal of feelings and personal aspirations',
+            'Breaching relationship privacy with outside parties',
+            'Rigid inflexibility around shared family responsibilities',
+          ],
+          greenFlagsToSeekAr: [
+            'الارتباط الآمن والقدرة على التهدئة الحنونة وإصلاح الخلاف بالحوار',
+            'الوفاء الصادق بالوعود وتحمل المسؤولية الأسرية بروح الفريق',
+            'الإنصات المتعاطف والتعبير اليومي عن التقدير والمودة',
+            'احترام الخصوصية العائلية وتقدير طموحك واهتماماتك الفكرية',
+          ],
+          greenFlagsToSeekEn: [
+            'Secure attachment, gentle co-regulation, and constructive conflict repair',
+            'Consistent follow-through and collaborative team-mindedness',
+            'Empathic listening paired with steady daily appreciation',
+            'Respect for relational privacy and encouragement of personal growth',
+          ],
+        },
   };
 }
 

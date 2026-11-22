@@ -63,7 +63,8 @@ import {
   UnifiedTestRecord,
 } from '../services/userHistoryService';
 import { getTieredAssessmentRecommendations } from '../data/recommendationsMapping';
-import { NextStepRecommendations } from './NextStepRecommendations';
+import { TestResultRecommendationsSuite } from './TestResultRecommendationsSuite';
+import { TestPreResultRecommendationCard } from './TestPreResultRecommendationCard';
 import {
   COMMUNITY_PROFILES,
   loadUserPersonalQuestionnaire,
@@ -115,6 +116,7 @@ export const TieredAssessmentModule: React.FC<Props> = ({
   const [pausedNotice, setPausedNotice] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [report, setReport] = useState<TieredAssessmentReport | null>(null);
+  const [pendingTierReport, setPendingTierReport] = useState<TieredAssessmentReport | null>(null);
   const [isSavedRecord, setIsSavedRecord] = useState(false);
 
   // My Reports & Longitudinal Change Tracking State (Task 3)
@@ -358,7 +360,7 @@ export const TieredAssessmentModule: React.FC<Props> = ({
       clearTieredProgressAutoSave(selectedTier);
       refreshSavedProgress();
       soundManager.playResultReveal();
-      setReport(computed);
+      setPendingTierReport(computed);
       setSelectedTier(null);
 
       // Build rawScores & standardizedScores dictionaries for DB
@@ -658,6 +660,20 @@ export const TieredAssessmentModule: React.FC<Props> = ({
     ? 'bg-white border-slate-200 text-slate-900 shadow-lg'
     : 'bg-slate-900/80 border-white/10 text-slate-100 shadow-xl';
 
+  // 0. Pre-Result Recommendation Gate
+  if (pendingTierReport && !report) {
+    return (
+      <TestPreResultRecommendationCard
+        testId="tiered_assessment"
+        sourcePage="/personality-tests"
+        onRevealResult={() => {
+          setReport(pendingTierReport);
+          setPendingTierReport(null);
+        }}
+      />
+    );
+  }
+
   // 1. Report Screen
   if (report) {
     return (
@@ -885,8 +901,11 @@ export const TieredAssessmentModule: React.FC<Props> = ({
           <LazyScientificVisualDashboards charts={report.visualCharts} userName={report.userName} />
         </Suspense>
 
-        <NextStepRecommendations
-          bundle={getTieredAssessmentRecommendations(report)}
+        <TestResultRecommendationsSuite
+          testId="tiered_assessment"
+          sourcePage="/personality-tests"
+          resultHintText={report.archetypeTitleAr}
+          legacyBundle={getTieredAssessmentRecommendations(report)}
         />
       </div>
     );

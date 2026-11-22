@@ -71,6 +71,9 @@ import {
   filterAndSortAcademicPapers,
 } from '../utils/articleFilters';
 import { navigateCleanUrl } from '../utils/navigation';
+import { ContextualLinkedText } from '../components/ContextualLinkedText';
+import { ArticleRecommendationsSection } from '../components/ArticleRecommendationsSection';
+import { ExistentialFatigueQuiz } from '../components/ExistentialFatigueQuiz';
 
 export { ResearchArticleModal };
 export type { ResearchArticleModalProps };
@@ -2235,34 +2238,46 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                 </div>
 
                 <div className="space-y-4">
-                  {activeNarrative.contentParagraphs.map((para, i) => (
-                    <div
-                      key={i}
-                      className={`p-6 rounded-3xl border space-y-2.5 ${
-                        isLight
-                          ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                          : 'bg-white/[0.02] border-white/10 text-gray-200'
-                      }`}
-                    >
-                      <h3
-                        className={`font-extrabold font-['Alexandria'] flex items-center gap-2 ${
-                          isLight ? 'text-slate-900' : 'text-white'
+                  {(() => {
+                    const narrativeUsedTargets = new Set<string>();
+                    const narrativeRoute = `/articles/${encodeURIComponent(activeNarrative.id)}`;
+                    return activeNarrative.contentParagraphs.map((para, i) => (
+                      <div
+                        key={i}
+                        className={`p-6 rounded-3xl border space-y-2.5 ${
+                          isLight
+                            ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                            : 'bg-white/[0.02] border-white/10 text-gray-200'
                         }`}
-                        style={{ fontSize: `${readerFontSize + 2}px` }}
                       >
-                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
-                        <span>{language === 'ar' ? para.heading : para.headingEn}</span>
-                      </h3>
-                      <p
-                        className={`leading-loose whitespace-pre-line ${
-                          isLight ? 'text-slate-700' : 'text-gray-300'
-                        }`}
-                        style={{ fontSize: `${readerFontSize}px` }}
-                      >
-                        {language === 'ar' ? para.text : para.textEn}
-                      </p>
-                    </div>
-                  ))}
+                        <h3
+                          className={`font-extrabold font-['Alexandria'] flex items-center gap-2 ${
+                            isLight ? 'text-slate-900' : 'text-white'
+                          }`}
+                          style={{ fontSize: `${readerFontSize + 2}px` }}
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+                          <span>{language === 'ar' ? para.heading : para.headingEn}</span>
+                        </h3>
+                        <p
+                          className={`leading-loose whitespace-pre-line ${
+                            isLight ? 'text-slate-700' : 'text-gray-300'
+                          }`}
+                          style={{ fontSize: `${readerFontSize}px` }}
+                        >
+                          <ContextualLinkedText
+                            text={language === 'ar' ? para.text : para.textEn}
+                            excludeArticleId={activeNarrative.id}
+                            excludeRoute={narrativeRoute}
+                            usedTargets={narrativeUsedTargets}
+                            maxLinksInParagraph={2}
+                            maxTotalLinks={7}
+                            isLight={isLight}
+                          />
+                        </p>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 {activeNarrative.diagnosticTable && (
@@ -2360,6 +2375,14 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                     ))}
                   </div>
                 </div>
+
+                {activeNarrative.id === 'why-do-you-feel-tired-despite-rest' && (
+                  <ExistentialFatigueQuiz
+                    onNavigateToArticle={() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  />
+                )}
 
                 {activeNarrative.conclusionAr && (
                   <div
@@ -2477,6 +2500,8 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   text={getFullContinuousNarrativeText(activeNarrative, language)}
                   fontSize={readerFontSize}
                   isLight={isLight}
+                  excludeArticleId={activeNarrative.id}
+                  excludeRoute={`/articles/${encodeURIComponent(activeNarrative.id)}`}
                 />
               </div>
             </div>
@@ -2488,6 +2513,12 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               url={`https://miratalqulub.com/articles/${encodeURIComponent(activeNarrative.id)}`}
               isLight={isLight}
               language={language}
+            />
+
+            {/* Smart Recommendation Engine + Personalized Learning Path */}
+            <ArticleRecommendationsSection
+              source={activeNarrative}
+              sourcePage={`/articles/${encodeURIComponent(activeNarrative.id)}`}
             />
           </motion.article>
         ) : activeAcademic ? (
@@ -2741,14 +2772,26 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   <h2 className="text-lg font-black text-indigo-600 dark:text-cyan-300 font-['Alexandria']">
                     {language === 'ar' ? '1. المقدمة (Introduction)' : '1. Introduction'}
                   </h2>
-                  {(language === 'ar'
-                    ? activeAcademic.introductionAr
-                    : activeAcademic.introductionEn
-                  ).map((p, idx) => (
-                    <p key={idx} className="leading-loose" style={{ fontSize: `${readerFontSize}px` }}>
-                      {p}
-                    </p>
-                  ))}
+                  {(() => {
+                    const academicIntroTargets = new Set<string>();
+                    const academicRoute = `/articles/${encodeURIComponent(activeAcademic.id)}`;
+                    return (language === 'ar'
+                      ? activeAcademic.introductionAr
+                      : activeAcademic.introductionEn
+                    ).map((p, idx) => (
+                      <p key={idx} className="leading-loose" style={{ fontSize: `${readerFontSize}px` }}>
+                        <ContextualLinkedText
+                          text={p}
+                          excludeArticleId={activeAcademic.id}
+                          excludeRoute={academicRoute}
+                          usedTargets={academicIntroTargets}
+                          maxLinksInParagraph={2}
+                          maxTotalLinks={5}
+                          isLight={isLight}
+                        />
+                      </p>
+                    ));
+                  })()}
                 </div>
 
                 <div
@@ -2776,7 +2819,14 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                           {sec.sectionNumber} {language === 'ar' ? sec.titleAr : sec.titleEn}
                         </h3>
                         <p className="leading-relaxed" style={{ fontSize: `${readerFontSize}px` }}>
-                          {language === 'ar' ? sec.contentAr : sec.contentEn}
+                          <ContextualLinkedText
+                            text={language === 'ar' ? sec.contentAr : sec.contentEn}
+                            excludeArticleId={activeAcademic.id}
+                            excludeRoute={`/articles/${encodeURIComponent(activeAcademic.id)}`}
+                            maxLinksInParagraph={1}
+                            maxTotalLinks={2}
+                            isLight={isLight}
+                          />
                         </p>
                         {sec.subPointsAr && (
                           <ul className="space-y-1.5 pt-2" style={{ fontSize: `${Math.max(14, readerFontSize - 1)}px` }}>
@@ -3077,6 +3127,8 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                   text={getFullContinuousAcademicText(activeAcademic, language)}
                   fontSize={readerFontSize}
                   isLight={isLight}
+                  excludeArticleId={activeAcademic.id}
+                  excludeRoute={`/articles/${encodeURIComponent(activeAcademic.id)}`}
                 />
               </div>
             </div>
@@ -3088,6 +3140,12 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               url={`https://miratalqulub.com/articles/${encodeURIComponent(activeAcademic.id)}`}
               isLight={isLight}
               language={language}
+            />
+
+            {/* Smart Recommendation Engine + Personalized Learning Path */}
+            <ArticleRecommendationsSection
+              source={activeAcademic}
+              sourcePage={`/articles/${encodeURIComponent(activeAcademic.id)}`}
             />
 
             {/* Scientific & Clinical Disclaimer Box */}

@@ -54,7 +54,8 @@ import {
   getObjectiveBatteryRecommendations,
   ResolvedTestCard,
 } from '../data/recommendationsMapping';
-import { NextStepRecommendations } from './NextStepRecommendations';
+import { TestResultRecommendationsSuite } from './TestResultRecommendationsSuite';
+import { TestPreResultRecommendationCard } from './TestPreResultRecommendationCard';
 
 interface Props {
   isOpen: boolean;
@@ -63,7 +64,7 @@ interface Props {
   onSaveResultToProfile?: (result: IntelligenceTestResult) => void;
 }
 
-type StepMode = 'welcome' | 'instructions' | 'test' | 'results';
+type StepMode = 'welcome' | 'instructions' | 'test' | 'pre_result' | 'results';
 
 function buildExecutiveSummaryText(
   iqLevel: string,
@@ -408,7 +409,7 @@ export const IntelligenceTestModal: React.FC<Props> = ({
     if (isMultipleIntelligences) {
       const result = calculateIntelligenceResults(answers, ageGroup, gender);
       setTestResult(result);
-      setStep('results');
+      setStep('pre_result');
       setActiveCategoryDetail(result.primaryIntelligence);
 
       try {
@@ -438,7 +439,7 @@ export const IntelligenceTestModal: React.FC<Props> = ({
         ageGroup
       );
       setObjResult(result);
-      setStep('results');
+      setStep('pre_result');
 
       try {
         localStorage.setItem(`${STORAGE_OBJ_RESULT_KEY}${activeBattery}`, JSON.stringify(result));
@@ -1721,6 +1722,28 @@ export const IntelligenceTestModal: React.FC<Props> = ({
           </div>
         )}
 
+        {/* ================= STAGE 5B: PRE-RESULT SIMILAR TEST GATE ================= */}
+        {step === 'pre_result' && (
+          <div className="flex-1 overflow-y-auto p-4 sm:p-7 custom-scrollbar">
+            <TestPreResultRecommendationCard
+              testId={activeBattery}
+              sourcePage="/iq-tests"
+              forceDark
+              onRevealResult={() => setStep('results')}
+              onLaunchTest={(testCard: ResolvedTestCard) => {
+                if (testCard.launchKind === 'intelligence_modal' && testCard.launchParam) {
+                  setActiveBattery(testCard.launchParam as IntelligenceBatteryType);
+                  setStep('instructions');
+                  setUnansweredWarning(false);
+                  return true;
+                }
+                onClose();
+                return false;
+              }}
+            />
+          </div>
+        )}
+
         {/* ================= STAGE 6A: MULTIPLE INTELLIGENCES 360 REPORT ================= */}
         {step === 'results' && isMultipleIntelligences && testResult && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-6 custom-scrollbar max-w-5xl mx-auto w-full">
@@ -1964,9 +1987,12 @@ export const IntelligenceTestModal: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Deterministic Next-Step Recommendations (Multiple Intelligences) */}
-            <NextStepRecommendations
-              bundle={getMultipleIntelligencesRecommendations(testResult)}
+            {/* Full Recommendation Suite (Multiple Intelligences) */}
+            <TestResultRecommendationsSuite
+              testId={activeBattery}
+              sourcePage="/iq-tests"
+              resultHintText={INTELLIGENCE_CATEGORIES[testResult.primaryIntelligence].titleAr}
+              legacyBundle={getMultipleIntelligencesRecommendations(testResult)}
               forceDark
               onBeforeNavigate={() => onClose()}
               onLaunchTest={(testCard: ResolvedTestCard) => {
@@ -2273,9 +2299,12 @@ export const IntelligenceTestModal: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Deterministic Next-Step Recommendations (Objective Batteries) */}
-            <NextStepRecommendations
-              bundle={getObjectiveBatteryRecommendations(objResult)}
+            {/* Full Recommendation Suite (Objective Batteries) */}
+            <TestResultRecommendationsSuite
+              testId={activeBattery}
+              sourcePage="/iq-tests"
+              resultHintText={objResult.classificationTitleAr}
+              legacyBundle={getObjectiveBatteryRecommendations(objResult)}
               forceDark
               onBeforeNavigate={() => onClose()}
               onLaunchTest={(testCard: ResolvedTestCard) => {

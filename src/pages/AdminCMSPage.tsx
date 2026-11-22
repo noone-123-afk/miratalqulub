@@ -30,6 +30,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
+import { RecommendationAnalyticsPanel } from '../components/RecommendationAnalyticsPanel';
 import { Novel, NOVELS_CATALOG } from '../data/novelsData';
 import {
   getAllNovels,
@@ -714,6 +715,8 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
                 ? 'نظام الروايات الأدبية في مرآة القلوب يوفر محتوى نصي معمق وموسع يعزز القيمة المعرفية والأدبية الفريدة للمنصة.'
                 : 'The forensic novel system in Mirror of Hearts supplies significant original editorial and literary content for readers.'}
             </div>
+
+            <RecommendationAnalyticsPanel />
           </div>
         )}
       </div>

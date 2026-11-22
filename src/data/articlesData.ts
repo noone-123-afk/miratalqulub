@@ -16,6 +16,11 @@ import { CLINICAL_SELF_AWARENESS_ARTICLES } from './clinicalSelfAwarenessPersona
 import { CLINICAL_OVERCOMING_OVERTHINKING_ARTICLES } from './clinicalOvercomingOverthinkingArticle';
 import { CLINICAL_DAILY_HABITS_ARTICLES } from './clinicalDailyHabitsWellbeingArticle';
 import { CLINICAL_HEALTHY_BOUNDARIES_ARTICLES } from './clinicalHealthyBoundariesArticle';
+import { CLINICAL_CONFLICT_RESOLUTION_ARTICLES } from './clinicalConflictResolutionSkillsArticle';
+import { CLINICAL_BALANCED_PERSONALITY_ARTICLES } from './clinicalBalancedPersonalityArticle';
+import { MENTAL_HEALTH_SERIES_ARTICLES } from './mentalHealthSeriesArticles';
+import { PSYCHOLOGICAL_COUNSELING_ARTICLES } from './psychologicalCounselingArticles';
+import { CBT_SERIES_ARTICLES } from './cbtSeriesArticles';
 
 export interface DiagnosticComparisonRow {
   criterionAr: string;
@@ -489,6 +494,11 @@ export const DIGITAL_COMPANION_ILLUSION_FULL_TEXT_AR = `# وهم الرفيق ا
 الإنسان يحتاج إلى إنسان آخر ليؤكد (Confirm) وجوده. الآلة يمكنها محاكاة الكلام، لكنها لا يمكنها محاكاة **الحضور**.`;
 
 export const ARTICLES_CATALOG: Article[] = [
+  ...CBT_SERIES_ARTICLES,
+  ...PSYCHOLOGICAL_COUNSELING_ARTICLES,
+  ...MENTAL_HEALTH_SERIES_ARTICLES,
+  ...CLINICAL_BALANCED_PERSONALITY_ARTICLES,
+  ...CLINICAL_CONFLICT_RESOLUTION_ARTICLES,
   ...CLINICAL_HEALTHY_BOUNDARIES_ARTICLES,
   ...CLINICAL_DAILY_HABITS_ARTICLES,
   ...CLINICAL_OVERCOMING_OVERTHINKING_ARTICLES,

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Heart, Brain, Fingerprint } from 'lucide-react';
 import { UserProfile } from '../types';
+import { TestPreResultRecommendationCard } from './TestPreResultRecommendationCard';
 
 interface Props {
   profile: UserProfile;
@@ -167,6 +168,15 @@ export const AnalyzingStep: React.FC<Props> = ({ profile }) => {
           <Heart className="w-3 h-3 text-pink-400" /> صورة واقعية 100%
         </span>
       </motion.div>
+
+      <div className="mt-6 text-start">
+        <TestPreResultRecommendationCard
+          testId="compatibility"
+          sourcePage="/compatibility"
+          embedded
+          forceDark
+        />
+      </div>
     </motion.div>
   );
 };

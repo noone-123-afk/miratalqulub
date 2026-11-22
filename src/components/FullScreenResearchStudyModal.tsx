@@ -29,6 +29,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
+import { ArticleRecommendationsSection } from './ArticleRecommendationsSection';
 
 interface FullScreenResearchStudyModalProps {
   paper: AcademicPaper | null;
@@ -902,6 +903,9 @@ export const FullScreenResearchStudyModal: React.FC<FullScreenResearchStudyModal
                     text={fullContinuousText}
                     fontSize={fontSize}
                     isLight={isLight}
+                    excludeArticleId={paper.id}
+                    excludeRoute={`/articles/${encodeURIComponent(paper.id)}`}
+                    onBeforeNavigate={onClose}
                   />
                 </div>
               </div>
@@ -913,6 +917,13 @@ export const FullScreenResearchStudyModal: React.FC<FullScreenResearchStudyModal
                 url={`https://miratalqulub.com/articles/${encodeURIComponent(paper.id)}`}
                 isLight={isLight}
                 language={language}
+              />
+
+              {/* Smart Recommendations & Learning Journey */}
+              <ArticleRecommendationsSection
+                source={paper}
+                sourcePage={`/articles/${encodeURIComponent(paper.id)}`}
+                onBeforeNavigate={onClose}
               />
             </div>
           </div>

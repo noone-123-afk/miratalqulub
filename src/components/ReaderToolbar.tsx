@@ -13,6 +13,7 @@ import {
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
+import { ContextualLinkedText } from './ContextualLinkedText';
 
 export type ContinuousViewMode = 'segmented_and_continuous' | 'continuous_only';
 
@@ -377,9 +378,29 @@ interface FormattedContinuousManuscriptProps {
   text: string;
   fontSize: number;
   isLight: boolean;
+  enableContextualLinks?: boolean;
+  excludeArticleId?: string;
+  excludeRoute?: string;
+  usedTargets?: Set<string>;
+  onOpenArticleDirect?: (articleId: string) => void;
+  onBeforeNavigate?: () => void;
 }
 
-function renderFormattedInline(line: string, isLight: boolean): React.ReactNode {
+interface InlineLinkContext {
+  enableContextualLinks?: boolean;
+  excludeArticleId?: string;
+  excludeRoute?: string;
+  usedTargets?: Set<string>;
+  isLight: boolean;
+  onOpenArticleDirect?: (articleId: string) => void;
+  onBeforeNavigate?: () => void;
+}
+
+function renderFormattedInline(
+  line: string,
+  isLight: boolean,
+  linkCtx?: InlineLinkContext
+): React.ReactNode {
   // Format bold **...**, italic *"..."*, and bracketed citations [[...]] or [1, 2]
   const parts = line.split(/(\*\*[^*]+\*\*|\*"[^"]+"\*\|\[\[[^\]]+\]\]|\[\d+(?:,\s*\d+)*\])/g);
   return parts.map((part, idx) => {
@@ -408,6 +429,22 @@ function renderFormattedInline(line: string, isLight: boolean): React.ReactNode 
         </span>
       );
     }
+    if (linkCtx?.enableContextualLinks && part.length > 24) {
+      return (
+        <ContextualLinkedText
+          key={idx}
+          text={part}
+          excludeArticleId={linkCtx.excludeArticleId}
+          excludeRoute={linkCtx.excludeRoute}
+          usedTargets={linkCtx.usedTargets}
+          maxLinksInParagraph={1}
+          maxTotalLinks={7}
+          isLight={isLight}
+          onOpenArticleDirect={linkCtx.onOpenArticleDirect}
+          onBeforeNavigate={linkCtx.onBeforeNavigate}
+        />
+      );
+    }
     return <React.Fragment key={idx}>{part}</React.Fragment>;
   });
 }
@@ -416,7 +453,23 @@ export const FormattedContinuousManuscript: React.FC<FormattedContinuousManuscri
   text,
   fontSize,
   isLight,
+  enableContextualLinks = true,
+  excludeArticleId,
+  excludeRoute,
+  usedTargets,
+  onOpenArticleDirect,
+  onBeforeNavigate,
 }) => {
+  const localUsedTargets = usedTargets || new Set<string>();
+  const linkCtx: InlineLinkContext = {
+    enableContextualLinks,
+    excludeArticleId,
+    excludeRoute,
+    usedTargets: localUsedTargets,
+    isLight,
+    onOpenArticleDirect,
+    onBeforeNavigate,
+  };
   const lines = text.split('\n');
   const elements: React.ReactNode[] = [];
   let i = 0;
@@ -602,7 +655,7 @@ export const FormattedContinuousManuscript: React.FC<FormattedContinuousManuscri
             {trimmed.match(/^(\d+\.)/) ? trimmed.match(/^(\d+\.)/)![1] : '•'}
           </span>
           <div className="flex-1">
-            {renderFormattedInline(trimmed.replace(/^(\*|-|•|\d+\.)\s+/, ''), isLight)}
+            {renderFormattedInline(trimmed.replace(/^(\*|-|•|\d+\.)\s+/, ''), isLight, linkCtx)}
           </div>
         </div>
       );
@@ -617,7 +670,7 @@ export const FormattedContinuousManuscript: React.FC<FormattedContinuousManuscri
         className="my-3.5 leading-loose"
         style={{ fontSize: `${fontSize}px`, lineHeight: 1.95 }}
       >
-        {renderFormattedInline(trimmed, isLight)}
+        {renderFormattedInline(trimmed, isLight, linkCtx)}
       </p>
     );
     i++;

@@ -42,6 +42,7 @@ import {
   getNationalityEntryByCountry,
   DetectedNationalityProfile,
 } from '../utils/locationNationalityDetector';
+import { ContextualLinksStrip } from './ContextualLinksStrip';
 
 interface Props {
   onStart: (profile: UserProfile) => void;
@@ -1738,6 +1739,17 @@ export const ProfileStep: React.FC<Props> = ({
               )}
             </div>
           </form>
+
+          <div className="pt-4">
+            <ContextualLinksStrip
+              testId="compatibility"
+              sourcePage="/compatibility"
+              sourceType="test"
+              count={3}
+              titleAr="مراجع ومقالات لفهم خوارزمية التوافق الشخصي والعاطفي"
+              titleEn="Guides Explaining Our Compatibility Psychometrics"
+            />
+          </div>
         </div>
       )}
     </div>

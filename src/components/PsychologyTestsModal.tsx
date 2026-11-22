@@ -53,7 +53,8 @@ import {
   getPsychologySuiteRecommendations,
   ResolvedTestCard,
 } from '../data/recommendationsMapping';
-import { NextStepRecommendations } from './NextStepRecommendations';
+import { TestResultRecommendationsSuite } from './TestResultRecommendationsSuite';
+import { TestPreResultRecommendationCard } from './TestPreResultRecommendationCard';
 
 const LazyTieredAssessmentModule = lazy(() =>
   import('./TieredAssessmentModule').then((m) => ({
@@ -89,7 +90,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
   onOpenDashboard,
 }) => {
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { language, toggleLanguage } = useLanguage();
   const { theme } = useAppTheme();
   const isAr = language === 'ar';
   const isLight = theme === 'light';
@@ -100,6 +101,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
   const [runnerViewMode, setRunnerViewMode] = useState<'single' | 'page5' | 'all'>('single');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [activeReport, setActiveReport] = useState<PsychometricReport | null>(null);
+  const [pendingPreResultReport, setPendingPreResultReport] = useState<PsychometricReport | null>(null);
   const [isSavedToProfile, setIsSavedToProfile] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [clusterViewMode, setClusterViewMode] = useState<'clusters' | 'global5' | 'all'>('clusters');
@@ -147,6 +149,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
     soundManager.playTab();
     setSelectedTest(testId);
     setActiveReport(null);
+    setPendingPreResultReport(null);
     setIsSavedToProfile(false);
     setClusterViewMode('clusters');
     setUnansweredWarning([]);
@@ -176,6 +179,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
     if (e) e.stopPropagation();
     soundManager.playTap();
     setSelectedTest(rep.testId);
+    setPendingPreResultReport(null);
     setActiveReport(rep);
     setIsSavedToProfile(true);
     setTimeout(scrollToTop, 40);
@@ -222,7 +226,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
 
     const report = calculatePsychometricReport(selectedTest, finalAnswers, userName);
     soundManager.playRoundPass();
-    setActiveReport(report);
+    setPendingPreResultReport(report);
 
     // Auto-save locally and Firestore
     saveUserPsychologyReport(user, report);
@@ -279,64 +283,119 @@ export const PsychologyTestsModal: React.FC<Props> = ({
 
     if (rep.cattellGlobalFactors && rep.cattellGlobalFactors.length > 0) {
       extraSections.push({
-        title: 'العوامل العالمية الخمسة الكبرى لمقياس كاتل (16PF Global Factors)',
-        badge: 'تحليل عاملي من الدرجة الثانية',
-        content: 'ملخص الأبعاد الكبرى المستخلصة من السمات الـ 16 الأولية لريموند كاتل:',
+        title: isAr
+          ? 'العوامل العالمية الخمسة الكبرى لمقياس كاتل (16PF Global Factors)'
+          : 'Cattell 16PF Five Global Factors',
+        badge: isAr ? 'تحليل عاملي من الدرجة الثانية' : 'Second-Order Factor Analysis',
+        content: isAr
+          ? 'ملخص الأبعاد الكبرى المستخلصة من السمات الـ 16 الأولية لريموند كاتل:'
+          : 'Summary of higher-order dimensions extracted from Cattell’s 16 primary traits:',
         items: rep.cattellGlobalFactors.map(
-          (gf) => `${gf.labelAr} — النسبة: ${gf.score}% (Sten ${gf.sten}/10): ${gf.plainExplanationAr}`
+          (gf) => `${gf.labelAr} — ${gf.score}% (Sten ${gf.sten}/10): ${gf.plainExplanationAr}`
         ),
       });
     }
 
-    if (rep.userStrengthsAr?.length) {
+    const activeStrengths = isAr ? rep.userStrengthsAr : rep.userStrengthsEn || rep.userStrengthsAr;
+    if (activeStrengths?.length) {
       extraSections.push({
-        title: 'نقاط القوة والسمات السلوكية المرصودة من إجاباتك',
-        badge: 'تحليل سلوكي',
-        content: 'أبرز السمات الإيجابية المرصودة إحصائياً بناءً على إجاباتك الفعلية:',
-        items: rep.userStrengthsAr,
+        title: isAr
+          ? 'نقاط القوة والسمات السلوكية المرصودة من إجاباتك'
+          : 'Observed Patterns & Key Strengths',
+        badge: isAr ? 'تحليل سلوكي' : 'Behavioral Profile',
+        content: isAr
+          ? 'أبرز السمات الإيجابية المرصودة إحصائياً بناءً على إجاباتك الفعلية:'
+          : 'Key psychometric highlights derived directly from your recorded responses:',
+        items: activeStrengths,
       });
     }
 
     if (rep.idealPartnerProfile) {
       extraSections.push({
-        title: 'مواصفات الشريك الأكثر توافقاً وانسجاماً معك سيكومترياً',
-        badge: rep.idealPartnerProfile.recommendedArchetypeAr,
-        content: `${rep.idealPartnerProfile.emotionalNeedsAr} — ${rep.idealPartnerProfile.communicationStyleAr}`,
-        items: [
-          rep.idealPartnerProfile.lifestyleHarmonyAr,
-          ...(rep.idealPartnerProfile.complementaryTraits || []),
-        ],
+        title:
+          rep.testId === 'existential_fatigue'
+            ? isAr
+              ? 'بروتوكول التدخل والدعم العلائقي المستهدف'
+              : 'Targeted Recovery & Relational Support Protocol'
+            : isAr
+            ? 'مواصفات الشريك الأكثر توافقاً وانسجاماً معك سيكومترياً'
+            : 'Psychometrically Compatible Partner Profile',
+        badge: isAr
+          ? rep.idealPartnerProfile.recommendedArchetypeAr
+          : rep.idealPartnerProfile.recommendedArchetypeEn,
+        content: isAr
+          ? `${rep.idealPartnerProfile.emotionalNeedsAr} — ${rep.idealPartnerProfile.communicationStyleAr}`
+          : `${rep.idealPartnerProfile.emotionalNeedsEn || rep.idealPartnerProfile.emotionalNeedsAr} — ${rep.idealPartnerProfile.communicationStyleEn || rep.idealPartnerProfile.communicationStyleAr}`,
+        items: isAr
+          ? [
+              rep.idealPartnerProfile.lifestyleHarmonyAr,
+              ...(rep.idealPartnerProfile.complementaryTraits || []),
+            ]
+          : [
+              rep.idealPartnerProfile.lifestyleHarmonyEn || rep.idealPartnerProfile.lifestyleHarmonyAr,
+              ...(rep.idealPartnerProfile.complementaryTraitsEn || rep.idealPartnerProfile.complementaryTraits || []),
+            ],
       });
     }
 
     const { exportPsychometricReportAsPDF } = await import('../utils/pdfReportGenerator');
     exportPsychometricReportAsPDF({
-      reportTitle: rep.testTitleAr,
+      lang: language,
+      reportTitle: isAr ? rep.testTitleAr : rep.testTitleEn || currentCatalog?.titleEn || rep.testTitleAr,
       subTitle: currentCatalog?.titleEn || 'Psychometric Personality Assessment',
-      scientificBasis: currentCatalog?.scientificReference || 'مختبر القياس السيكومتري المعتمد',
+      scientificBasis: currentCatalog?.scientificReference || 'Validated Psychometric Lab',
       userName,
-      completedAt: rep.completionDate || new Date().toLocaleDateString('ar-JO'),
-      overallScoreLabel: 'مؤشر الاتزان والنضج السيكومتري (المئين المعياري)',
-      overallScoreValue: `${rep.totalScore}% (المئين ${rep.overallPercentile}%)`,
-      cognitiveFingerprintTitle: rep.primaryArchetypeAr,
-      executiveSummary: `${rep.summaryAr || ''} — ${rep.validityMessageAr}`,
+      completedAt: isAr
+        ? rep.completionDate || new Date().toLocaleDateString('ar-JO')
+        : rep.completionDateEn || rep.completionDate || new Date().toLocaleDateString('en-US'),
+      overallScoreLabel:
+        rep.testId === 'existential_fatigue'
+          ? isAr
+            ? 'متوسط عبء الاستنزاف الكلي (المقال الخامس)'
+            : 'Overall Fatigue Depletion Load (Article 5)'
+          : isAr
+          ? 'مؤشر الاتزان والنضج السيكومتري (المئين المعياري)'
+          : 'Psychometric Balance Index (Percentile)',
+      overallScoreValue: isAr
+        ? `${rep.totalScore}% (المئين ${rep.overallPercentile}%)`
+        : `${rep.totalScore}% (${rep.overallPercentile}th Percentile)`,
+      cognitiveFingerprintTitle: isAr ? rep.primaryArchetypeAr : rep.primaryArchetypeEn,
+      executiveSummary: isAr
+        ? `${rep.summaryAr || ''} — ${rep.validityMessageAr}`
+        : `${rep.summaryEn || rep.summaryAr || ''} — ${rep.validityMessageEn || rep.validityMessageAr}`,
       metrics: rep.dimensionScores.map((d) => ({
-        label: d.factorCode ? `[${d.factorCode}] ${d.labelAr}` : d.labelAr,
+        label: d.factorCode
+          ? `[${d.factorCode}] ${isAr ? d.labelAr : d.labelEn || d.labelAr}`
+          : isAr
+          ? d.labelAr
+          : d.labelEn || d.labelAr,
         scorePercent: d.score,
-        levelLabel: d.stenScore ? `${d.levelAr} (Sten ${d.stenScore}/10)` : d.levelAr,
-        rawText: d.plainExplanationAr ? `${d.plainExplanationAr} — ${d.analysisAr}` : d.analysisAr,
+        levelLabel: d.stenScore
+          ? `${isAr ? d.levelAr : d.levelEn || d.levelAr} (Sten ${d.stenScore}/10)`
+          : isAr
+          ? d.levelAr
+          : d.levelEn || d.levelAr,
+        rawText: isAr
+          ? d.plainExplanationAr
+            ? `${d.plainExplanationAr} — ${d.analysisAr}`
+            : d.analysisAr
+          : d.plainExplanationEn || d.analysisEn || d.analysisAr,
         color: d.color || '#8b5cf6',
       })),
       sections: extraSections,
-      careersOrRecommendations: rep.userAspirationsAr || [],
+      careersOrRecommendations: isAr
+        ? rep.userAspirationsAr || []
+        : rep.userAspirationsEn || rep.userAspirationsAr || [],
       questionAudit: rep.questionAudit?.map((qa) => ({
         questionNumber: qa.questionNumber,
-        questionText: qa.promptAr,
-        userAnswer: qa.selectedOptionAr,
-        correctAnswerOrTrait: `${qa.traitMeasuredAr} (${qa.scientificTraitEn})`,
+        questionText: isAr ? qa.promptAr : qa.promptEn || qa.promptAr,
+        userAnswer: isAr ? qa.selectedOptionAr : qa.selectedOptionEn || qa.selectedOptionAr,
+        correctAnswerOrTrait: `${isAr ? qa.traitMeasuredAr : qa.traitMeasuredEn || qa.scientificTraitEn} (${qa.scientificTraitEn})`,
         isCorrectOrHigh: qa.scoreWeight >= 3,
         pointsEarned: `${qa.scoreWeight}/${qa.maxWeight}`,
-        explanationAr: `يقيس هذا البند بُعد (${qa.traitMeasuredAr}) وحصلت إجابتك على وزن ${qa.scoreWeight} من ${qa.maxWeight}.`,
+        explanationAr: isAr
+          ? `يقيس هذا البند بُعد (${qa.traitMeasuredAr}) وحصلت إجابتك على وزن ${qa.scoreWeight} من ${qa.maxWeight}.`
+          : `Assesses (${qa.traitMeasuredEn || qa.scientificTraitEn}); recorded weight ${qa.scoreWeight}/${qa.maxWeight}.`,
       })),
     });
   };
@@ -352,13 +411,16 @@ export const PsychologyTestsModal: React.FC<Props> = ({
   // Social Sharing Functions
   const currentUrl = typeof window !== 'undefined' ? window.location.origin : 'https://miratalqulub.com';
   const shareText = activeReport
-    ? `🔮 قمت بإجراء تحليل الشخصية العلمي المعتمد على منصة «مِرآة القلوب»:\n\n✨ المقياس: ${activeReport.testTitleAr}\n👑 النمط السيكومتري: ${activeReport.primaryArchetypeAr}\n📈 نسبة النضج والتوافق: ${activeReport.totalScore}% (المئين ${activeReport.overallPercentile}%)\n\nاكتشف نمطك الحقيقي وشريكك المناسب:\n${currentUrl}`
+    ? isAr
+      ? `🔮 قمت بإجراء التحليل النفسي المعتمد على منصة «مِرآة القلوب»:\n\n✨ المقياس: ${activeReport.testTitleAr}\n👑 النمط السيكومتري: ${activeReport.primaryArchetypeAr}\n📈 المؤشر: ${activeReport.totalScore}% (المئين ${activeReport.overallPercentile}%)\n\nاكتشف نتيجتك وتقريرك:\n${currentUrl}`
+      : `🔮 I completed a psychometric assessment on Mirror of Hearts:\n\n✨ Assessment: ${activeReport.testTitleEn || activeReport.testTitleAr}\n👑 Profile: ${activeReport.primaryArchetypeEn}\n📈 Score: ${activeReport.totalScore}% (${activeReport.overallPercentile}th percentile)\n\nExplore the assessments:\n${currentUrl}`
     : '';
 
   const handleCopyLink = () => {
     soundManager.playTap();
+    const label = isAr ? activeReport?.primaryArchetypeAr : activeReport?.primaryArchetypeEn;
     navigator.clipboard.writeText(
-      `${currentUrl}/?psychologyReport=${encodeURIComponent(activeReport?.primaryArchetypeAr || '')}`
+      `${currentUrl}/?psychologyReport=${encodeURIComponent(label || '')}`
     );
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 3000);
@@ -371,7 +433,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
 
   const handleShareTwitter = () => {
     soundManager.playTap();
-    const tweet = `🔮 قمت بإجراء تحليل الشخصية المعتمد على منصة «مِرآة القلوب» وخرجت بنمط (${activeReport?.primaryArchetypeAr}) بنسبة اتزان ${activeReport?.totalScore}%! 🧠✨\n\nاكتشف نمطك ومواصفات شريكك:\n${currentUrl}`;
+    const tweet = isAr
+      ? `🔮 قمت بإجراء التحليل النفسي المعتمد على منصة «مِرآة القلوب» وخرجت بنمط (${activeReport?.primaryArchetypeAr}) بنسبة ${activeReport?.totalScore}%! 🧠✨\n\nاكتشف تحليلك الآن:\n${currentUrl}`
+      : `🔮 Completed the psychometric assessment on Mirror of Hearts: ${activeReport?.primaryArchetypeEn} (${activeReport?.totalScore}%). 🧠✨\n\nTake the assessment:\n${currentUrl}`;
     openExternalShareLink(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}`);
   };
 
@@ -454,7 +518,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
         </svg>
 
         <span className="absolute bottom-2 right-3 text-[10px] text-purple-300 font-mono bg-black/60 px-2 py-0.5 rounded-md border border-purple-500/20">
-          لوحة رورشاخ الإسقاطية #{plateIndex + 1} 🎨
+          {isAr
+            ? `لوحة رورشاخ الإسقاطية #${plateIndex + 1} 🎨`
+            : `Rorschach Inkblot Plate #${plateIndex + 1} 🎨`}
         </span>
       </div>
     );
@@ -489,57 +555,89 @@ export const PsychologyTestsModal: React.FC<Props> = ({
       {
         id: 'social_warmth',
         titleAr: 'أسلوب التواصل والتفاعل الإنساني',
+        titleEn: 'Interpersonal Warmth & Communication Style',
         icon: '💬',
         score: cluster1Avg,
-        factors: 'العوامل المقاسة: الدفء (A)، الحيوية (F)، الجرأة (H)، الكياسة (N)',
-        summary:
-          cluster1Avg >= 68
+        factors: isAr
+          ? 'العوامل المقاسة: الدفء (A)، الحيوية (F)، الجرأة (H)، الكياسة (N)'
+          : 'Measured Factors: Warmth (A), Liveliness (F), Social Boldness (H), Privateness (N)',
+        summary: isAr
+          ? cluster1Avg >= 68
             ? 'حرارة مشاعر عالية وقدرة ممتازة على كسر الجليد وبث المودة مع صيانة الخصوصية الراقية.'
             : cluster1Avg >= 45
             ? 'توازن رصين بين الود الاجتماعي والحفاظ على الخصوصية والحدود المريحة.'
-            : 'تفضيل للهدوء والخصوصية العالية والعلاقات المنتقاة بعيداً عن المجاملات الواسعة.',
+            : 'تفضيل للهدوء والخصوصية العالية والعلاقات المنتقاة بعيداً عن المجاملات الواسعة.'
+          : cluster1Avg >= 68
+          ? 'High emotional warmth and strong ability to break the ice and foster affection while maintaining dignified privacy.'
+          : cluster1Avg >= 45
+          ? 'Composed balance between social friendliness and comfortable personal boundaries.'
+          : 'Preference for calm, high privacy, and selective close bonds away from broad small talk.',
         color: '#f43f5e',
       },
       {
         id: 'emotional_resilience',
         titleAr: 'الصلابة العاطفية وإدارة الضغوط',
+        titleEn: 'Emotional Resilience & Stress Regulation',
         icon: '🛡️',
         score: cluster2Avg,
-        factors: 'العوامل المقاسة: الاستقرار (C)، اليقظة (L)، الاطمئنان (O)، السكينة (Q4)',
-        summary:
-          cluster2Avg >= 68
+        factors: isAr
+          ? 'العوامل المقاسة: الاستقرار (C)، اليقظة (L)، الاطمئنان (O)، السكينة (Q4)'
+          : 'Measured Factors: Stability (C), Vigilance (L), Apprehension (O), Tension (Q4)',
+        summary: isAr
+          ? cluster2Avg >= 68
             ? 'قوة تحمل عالية أمام تقلبات الحياة، قدرة على امتصاص التوتر، ونباهة تحمي الأسرة.'
             : cluster2Avg >= 45
             ? 'اتزان انفعالي معتدل يتعامل بواقعية مع الضغوط ويستعيد سكينته تدريجياً.'
-            : 'حساسية وجدانية مرهفة تتأثر بالتوتر وتحتاج لبيئة زوجية مطمئنة وهادئة.',
+            : 'حساسية وجدانية مرهفة تتأثر بالتوتر وتحتاج لبيئة زوجية مطمئنة وهادئة.'
+          : cluster2Avg >= 68
+          ? 'Strong endurance amid life fluctuations, steady tension absorption, and protective awareness.'
+          : cluster2Avg >= 45
+          ? 'Moderate emotional steadiness handling stressors realistically and recovering calm gradually.'
+          : 'Delicate emotional sensitivity attuned to tension, thriving in calm, reassuring environments.',
         color: '#10b981',
       },
       {
         id: 'cognitive_creativity',
         titleAr: 'التفكير التحليلي، الخيال، والانفتاح',
+        titleEn: 'Analytical Thinking, Imagination & Openness',
         icon: '💡',
         score: cluster3Avg,
-        factors: 'العوامل المقاسة: التفكير المنطقي (B)، الحساسية (I)، الخيال (M)، التجديد (Q1)',
-        summary:
-          cluster3Avg >= 68
+        factors: isAr
+          ? 'العوامل المقاسة: التفكير المنطقي (B)، الحساسية (I)، الخيال (M)، التجديد (Q1)'
+          : 'Measured Factors: Reasoning (B), Sensitivity (I), Abstractedness (M), Openness to Change (Q1)',
+        summary: isAr
+          ? cluster3Avg >= 68
             ? 'قدرة عالية على التحليل المنطقي، خيال خصب، وشغف بالتطوير والتجديد المستمر.'
             : cluster3Avg >= 45
             ? 'جمع متوازن بين المنطق العملي، الذوق الرفيع، والانفتاح المدروس.'
-            : 'واقعية عملية مباشرة تركز على الحاضر الملموس والطرق المجربة الواضحة.',
+            : 'واقعية عملية مباشرة تركز على الحاضر الملموس والطرق المجربة الواضحة.'
+          : cluster3Avg >= 68
+          ? 'High analytical reasoning capacity, rich imagination, and enthusiasm for ongoing growth and innovation.'
+          : cluster3Avg >= 45
+          ? 'Balanced synthesis of practical logic, aesthetic sensitivity, and measured openness.'
+          : 'Grounded practicality focused on tangible reality and proven, straightforward methods.',
         color: '#38bdf8',
       },
       {
         id: 'leadership_lifestyle',
         titleAr: 'الانضباط، القيادة، وأسلوب الحياة',
+        titleEn: 'Discipline, Leadership & Lifestyle Structure',
         icon: '⚖️',
         score: cluster4Avg,
-        factors: 'العوامل المقاسة: القيادة (E)، الضمير (G)، الاستقلالية (Q2)، الدقة (Q3)',
-        summary:
-          cluster4Avg >= 68
+        factors: isAr
+          ? 'العوامل المقاسة: القيادة (E)، الضمير (G)، الاستقلالية (Q2)، الدقة (Q3)'
+          : 'Measured Factors: Dominance (E), Rule-Consciousness (G), Self-Reliance (Q2), Perfectionism (Q3)',
+        summary: isAr
+          ? cluster4Avg >= 68
             ? 'التزام أخلاقي صارم بالواجبات، دقة تنظيمية، وقدرة عالية على القيادة والاعتماد على الذات.'
             : cluster4Avg >= 45
             ? 'إدارة متزنة للمسؤوليات تجمع بين الالتزام والمرونة والتعاون الزوجي.'
-            : 'ميل للعفوية والمرونة والمسالمة وتفضيل العمل التشاركي غير المقيد.',
+            : 'ميل للعفوية والمرونة والمسالمة وتفضيل العمل التشاركي غير المقيد.'
+          : cluster4Avg >= 68
+          ? 'Strong ethical commitment, structured organization, decisive leadership, and self-reliance.'
+          : cluster4Avg >= 45
+          ? 'Balanced stewardship combining accountability, flexibility, and cooperative harmony.'
+          : 'Preference for spontaneity, easygoing flexibility, and collaborative openness.',
         color: '#a855f7',
       },
     ];
@@ -556,40 +654,64 @@ export const PsychologyTestsModal: React.FC<Props> = ({
       return {
         key: 'sanguine',
         titleAr: 'المزاج الدموي (Sanguine) ☀️',
+        titleEn: 'Sanguine Temperament ☀️',
         tagAr: 'اجتماعي، قيادي، متفائل ومرن',
-        desc: 'طاقة حيوية متدفقة، قدرة فطرية على نشر الإيجابية والتكيف السريع، وروح قيادية عفوية ومحبوبة.',
-        partnerTip: 'يتوافق بشكل استثنائي مع الشريك البلغمي (Phlegmatic) الذي يمنحه السكينة والعمق والثبات.',
-        quadrant: 'انبساط مرتفع + استقرار عصبي عالي',
+        tagEn: 'Sociable, Optimistic, Expressive & Adaptable',
+        desc: isAr
+          ? 'طاقة حيوية متدفقة، قدرة فطرية على نشر الإيجابية والتكيف السريع، وروح قيادية عفوية ومحبوبة.'
+          : 'Vibrant outward energy, natural positivity, rapid social adaptability, and warm, spontaneous leadership.',
+        partnerTip: isAr
+          ? 'يتوافق بشكل استثنائي مع الشريك البلغمي (Phlegmatic) الذي يمنحه السكينة والعمق والثبات.'
+          : 'Pairs exceptionally well with a Phlegmatic partner who brings grounding calm, depth, and steadiness.',
+        quadrant: isAr ? 'انبساط مرتفع + استقرار عصبي عالي' : 'High Extraversion + High Emotional Stability',
         color: '#38bdf8',
       };
     } else if (isExtra && !isStab) {
       return {
         key: 'choleric',
         titleAr: 'المزاج الصفراوي (Choleric) 🔥',
+        titleEn: 'Choleric Temperament 🔥',
         tagAr: 'شغوف، حاسم، مبادر وطموح',
-        desc: 'طاقة متوثبة، إرادة حديدية، ورغبة قوية في تحقيق الأهداف والتأثير، مع سرعة استثارة تحتاج لبيئة هادئة.',
-        partnerTip: 'يحتاج لشريك صبور متزن يتفهم طاقته ويحتويه برفق دون صدام مباشر.',
-        quadrant: 'انبساط مرتفع + حساسية انفعالية',
+        tagEn: 'Passionate, Decisive, Proactive & Driven',
+        desc: isAr
+          ? 'طاقة متوثبة، إرادة حديدية، ورغبة قوية في تحقيق الأهداف والتأثير، مع سرعة استثارة تحتاج لبيئة هادئة.'
+          : 'High drive, strong willpower, and decisive focus on goals and impact, coupled with emotional intensity.',
+        partnerTip: isAr
+          ? 'يحتاج لشريك صبور متزن يتفهم طاقته ويحتويه برفق دون صدام مباشر.'
+          : 'Thrives alongside a patient, composed partner who understands their drive without escalating friction.',
+        quadrant: isAr ? 'انبساط مرتفع + حساسية انفعالية' : 'High Extraversion + Emotional Reactivity',
         color: '#f97316',
       };
     } else if (!isExtra && isStab) {
       return {
         key: 'phlegmatic',
         titleAr: 'المزاج البلغمي (Phlegmatic) 🌊',
+        titleEn: 'Phlegmatic Temperament 🌊',
         tagAr: 'هادئ، حكيم، مسالم وسند موثوق',
-        desc: 'أعصاب فولاذية، صبر عميق، سلام داخلي، وتجنب للمعارك الجانبية، مما يجعله ملاذاً آمناً لكل من حوله.',
-        partnerTip: 'يتكامل بامتياز مع الشريك الدموي الحيوي (Sanguine) الذي يضفي طاقة وألواناً على هدوء حياته.',
-        quadrant: 'انطواء هادئ + استقرار عصبي عالي',
+        tagEn: 'Calm, Wise, Peace-Seeking & Dependable',
+        desc: isAr
+          ? 'أعصاب فولاذية، صبر عميق، سلام داخلي، وتجنب للمعارك الجانبية، مما يجعله ملاذاً آمناً لكل من حوله.'
+          : 'Steady nerves, deep patience, inner tranquility, and calm diplomacy—a reliable anchor for loved ones.',
+        partnerTip: isAr
+          ? 'يتكامل بامتياز مع الشريك الدموي الحيوي (Sanguine) الذي يضفي طاقة وألواناً على هدوء حياته.'
+          : 'Complements a lively Sanguine partner who adds spontaneous energy and warmth to their serene pace.',
+        quadrant: isAr ? 'انطواء هادئ + استقرار عصبي عالي' : 'Calm Introversion + High Emotional Stability',
         color: '#10b981',
       };
     } else {
       return {
         key: 'melancholic',
         titleAr: 'المزاج السوداوي (Melancholic) 🌙',
+        titleEn: 'Melancholic Temperament 🌙',
         tagAr: 'متأمل، مرهف الحس، مخلص ومفكر عميق',
-        desc: 'حس وجداني مرهف، دقة ملاحظة للأمور الخفية، إخلاص نادر ومشاعر صادقة تبحث عن الأمان والتقدير.',
-        partnerTip: 'يحتاج لشريك إيجابي آمن يمنحه الدفء النفسي الدائم ويصون رهافة مشاعره.',
-        quadrant: 'انطواء متأمل + حساسية انفعالية',
+        tagEn: 'Reflective, Deeply Empathetic, Loyal & Analytical',
+        desc: isAr
+          ? 'حس وجداني مرهف، دقة ملاحظة للأمور الخفية، إخلاص نادر ومشاعر صادقة تبحث عن الأمان والتقدير.'
+          : 'Fine-tuned emotional sensitivity, keen eye for nuance, rare loyalty, and deep longing for safety and appreciation.',
+        partnerTip: isAr
+          ? 'يحتاج لشريك إيجابي آمن يمنحه الدفء النفسي الدائم ويصون رهافة مشاعره.'
+          : 'Needs a warm, emotionally secure partner who offers consistent reassurance and honors their depth.',
+        quadrant: isAr ? 'انطواء متأمل + حساسية انفعالية' : 'Reflective Introversion + Emotional Sensitivity',
         color: '#a855f7',
       };
     }
@@ -602,6 +724,8 @@ export const PsychologyTestsModal: React.FC<Props> = ({
 
   const renderSingleQuestionCard = (q: TestQuestion, qIdx: number, autoAdvance: boolean) => {
     const isMissing = unansweredWarning.includes(qIdx);
+    const questionText = isAr ? q.promptAr : q.promptEn || q.promptAr;
+    const subPromptText = isAr ? q.subPromptAr : q.subPromptEn || q.subPromptAr;
     return (
       <div
         key={q.id}
@@ -613,35 +737,47 @@ export const PsychologyTestsModal: React.FC<Props> = ({
       >
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-            سؤال {qIdx + 1} من {currentQuestions.length}
+            {isAr
+              ? `سؤال ${qIdx + 1} من ${currentQuestions.length}`
+              : `Question ${qIdx + 1} of ${currentQuestions.length}`}
           </span>
           {answers[q.id] ? (
             <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> تمت الإجابة
+              <CheckCircle2 className="w-3.5 h-3.5" /> {isAr ? 'تمت الإجابة' : 'Answered'}
             </span>
           ) : (
-            <span className="text-[11px] text-amber-300 font-medium">بانتظار إجابتك</span>
+            <span className="text-[11px] text-amber-300 font-medium">
+              {isAr ? 'بانتظار إجابتك' : 'Awaiting Answer'}
+            </span>
           )}
         </div>
 
         {selectedTest === 'rorschach' && renderInkblotGraphic(qIdx)}
 
         <h3 className="font-extrabold text-sm sm:text-base text-white leading-relaxed font-['Alexandria'] mb-2">
-          {q.promptAr}
+          {questionText}
         </h3>
-        {q.subPromptAr && (
-          <p className="text-xs text-purple-300 mb-3 font-medium">💡 {q.subPromptAr}</p>
+        {subPromptText && (
+          <p className="text-xs text-purple-300 mb-3 font-medium">💡 {subPromptText}</p>
         )}
 
         <div className="space-y-2 mt-3">
           {q.options.map((opt) => {
             const isSelected = answers[q.id] === opt.id;
+            const optionText = isAr ? opt.textAr : opt.textEn || opt.textAr;
+            const traitDisplay = isAr
+              ? `${opt.traitLabel} • ${opt.scientificTrait}`
+              : opt.traitLabelEn
+              ? `${opt.traitLabelEn} • ${opt.scientificTrait}`
+              : opt.scientificTrait;
             return (
               <button
                 key={opt.id}
                 type="button"
                 onClick={() => handleSelectOption(q.id, opt.id, autoAdvance)}
-                className={`w-full p-3.5 rounded-2xl border text-right transition flex items-center justify-between cursor-pointer ${
+                className={`w-full p-3.5 rounded-2xl border transition flex items-center justify-between cursor-pointer ${
+                  isAr ? 'text-right' : 'text-left'
+                } ${
                   isSelected
                     ? 'bg-gradient-to-r from-purple-600/35 to-rose-600/35 border-purple-400 text-white shadow-md'
                     : 'bg-black/30 hover:bg-white/10 border-white/10 text-gray-200'
@@ -649,16 +785,16 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               >
                 <div className="space-y-1">
                   <span className="text-xs sm:text-sm font-semibold block leading-relaxed">
-                    {opt.textAr}
+                    {optionText}
                   </span>
                   <span className="text-[10px] text-purple-300/80 font-mono block">
-                    [{opt.traitLabel} • {opt.scientificTrait}]
+                    [{traitDisplay}]
                   </span>
                 </div>
                 {isSelected ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mr-2" />
+                  <CheckCircle2 className={`w-5 h-5 text-emerald-400 shrink-0 ${isAr ? 'mr-2' : 'ml-2'}`} />
                 ) : (
-                  <div className="w-4 h-4 rounded-full border border-white/30 shrink-0 mr-2" />
+                  <div className={`w-4 h-4 rounded-full border border-white/30 shrink-0 ${isAr ? 'mr-2' : 'ml-2'}`} />
                 )}
               </button>
             );
@@ -686,14 +822,14 @@ export const PsychologyTestsModal: React.FC<Props> = ({
         }`}
       >
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2 pb-3.5 mb-4 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-500 via-pink-500 to-rose-500 p-0.5 shadow-lg shadow-purple-500/25 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-[#120d24] rounded-[14px] flex items-center justify-center">
                 <Brain className="w-6 h-6 text-purple-400" />
               </div>
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-extrabold text-base sm:text-xl text-white font-['Alexandria']">
                   {isAr
@@ -706,23 +842,36 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     : 'Exploratory Self-Discovery + PDF Export 🔬'}
                 </span>
               </div>
-              <p className="text-xs text-gray-300">
+              <p className="text-xs text-gray-300 truncate">
                 {isAr
-                  ? '8 مقاييس عالمية استكشافية (193 سؤالاً محكماً) مع تقارير Sten وPDF حقيقية قابلة للتحميل الفوري'
-                  : '8 Validated Exploratory Scales (193 Items) with Sten Scores & Instant PDF Reports'}
+                  ? `${ASSESSMENTS_CATALOG.length} مقاييس عالمية استكشافية مع تقارير Sten وPDF حقيقية قابلة للتحميل الفوري`
+                  : `${ASSESSMENTS_CATALOG.length} Validated Exploratory Scales with Sten Scores & Instant PDF Reports`}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              soundManager.playTap();
-              onClose();
-            }}
-            className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playTap();
+                toggleLanguage();
+              }}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-extrabold text-white transition cursor-pointer"
+              aria-label={isAr ? 'Switch to English' : 'التبديل إلى العربية'}
+            >
+              {isAr ? 'English 🇬🇧' : 'العربية 🇸🇦'}
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playTap();
+                onClose();
+              }}
+              className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* ================= VIEW 1: ASSESSMENT CATALOG ================= */}
@@ -744,7 +893,11 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2 font-bold text-white text-xs sm:text-sm">
                   <Brain className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span>الأساس المنهجي والعمق العلمي للمقاييس السيكومترية المعتمدة</span>
+                  <span>
+                    {isAr
+                      ? 'الأساس المنهجي والعمق العلمي للمقاييس السيكومترية المعتمدة'
+                      : 'Methodological Foundation & Psychometric Rigor'}
+                  </span>
                 </div>
                 {onOpenDashboard && (
                   <button
@@ -755,13 +908,17 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     }}
                     className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>فتح لوحة ملفي الشخصي السيكومتري</span>
-                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>
+                      {isAr ? 'فتح لوحة ملفي الشخصي السيكومتري' : 'Open My Psychometric Dashboard'}
+                    </span>
+                    {isAr ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                   </button>
                 )}
               </div>
               <p className="leading-relaxed text-slate-300">
-                تعتمد هذه المقاييس على نظريات علماء النفس العالميين الرائدين: ريموند كاتل (16PF)، كوستا ومكري (Big Five NEO-PI-R)، هانز آيزنك (EPQ-R)، هاثاواي وماكينلي (MMPI-2)، هيرمان رورشاخ وإكسنر، هنري موراي (TAT)، جون بولبي (ECR-R)، ودانيال جولمان (EQ). جميع النتائج تُحسب رياضياً من إجاباتك الفعلية مع خاصية تحميل التقرير بصيغة PDF حقيقية.
+                {isAr
+                  ? 'تعتمد هذه المقاييس على نظريات علماء النفس العالميين الرائدين: ريموند كاتل (16PF)، كوستا ومكري (Big Five NEO-PI-R)، هانز آيزنك (EPQ-R)، هاثاواي وماكينلي (MMPI-2)، هيرمان رورشاخ وإكسنر، هنري موراي (TAT)، جون بولبي (ECR-R)، ودانيال جولمان (EQ). جميع النتائج تُحسب رياضياً من إجاباتك الفعلية مع خاصية تحميل التقرير بصيغة PDF حقيقية.'
+                  : 'All scales draw from validated frameworks by Cattell (16PF), Costa & McCrae (NEO-PI-R), Eysenck (EPQ-R), Hathaway & McKinley, Rorschach/Exner, Murray (TAT), Bowlby (ECR-R), Frankl, Hobfoll, and Goleman—scored mathematically from your actual responses with instant PDF export.'}
               </p>
             </div>
 
@@ -769,7 +926,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
             <Suspense
               fallback={
                 <div className="p-6 text-center text-xs font-bold text-slate-300">
-                  جارٍ تحميل مستويات التحليل العلمي المتعددة...
+                  {isAr ? 'جارٍ تحميل مستويات التحليل العلمي المتعددة...' : 'Loading multi-tier assessments...'}
                 </div>
               }
             >
@@ -782,11 +939,13 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <span className="font-extrabold text-xs text-white">
-                    مقاييس التحليل العاملي والمزاج البيولوجي (مبسطة لغير المختصين):
+                    {isAr
+                      ? 'مقاييس التحليل العاملي والمزاج البيولوجي (مبسطة لغير المختصين):'
+                      : 'Factor-Analytic & Biological Temperament Scales:'}
                   </span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                  درجات معيارية Sten 1-10 ✨
+                  {isAr ? 'درجات معيارية Sten 1-10 ✨' : 'Standard Sten 1–10 Scores ✨'}
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -799,14 +958,22 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm">📊</span>
                       <span className="font-bold text-xs text-white group-hover:text-purple-300 transition">
-                        مقياس كاتل لـ 16 سمة (16PF) - تقرير مبسط لغير المختصين
+                        {isAr
+                          ? 'مقياس كاتل لـ 16 سمة (16PF) - تقرير مبسط لغير المختصين'
+                          : 'Cattell 16PF Personality Profile'}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-300">
-                      32 سؤالاً تقيس 16 سمة أولية + 5 عوامل عالمية كبرى و4 مجموعات سلوكية مبسطة.
+                      {isAr
+                        ? '32 سؤالاً تقيس 16 سمة أولية + 5 عوامل عالمية كبرى و4 مجموعات سلوكية مبسطة.'
+                        : '32 situational items measuring 16 primary traits, 5 global factors, and 4 lifestyle clusters.'}
                     </p>
                   </div>
-                  <ArrowLeft className="w-4 h-4 text-purple-400 group-hover:-translate-x-1 transition-transform shrink-0 mr-2" />
+                  {isAr ? (
+                    <ArrowLeft className="w-4 h-4 text-purple-400 group-hover:-translate-x-1 transition-transform shrink-0 mr-2" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4 text-purple-400 group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
+                  )}
                 </div>
 
                 {/* EPQ Spotlight */}
@@ -818,14 +985,22 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm">🧬</span>
                       <span className="font-bold text-xs text-white group-hover:text-sky-300 transition">
-                        نموذج آيزنك للأمزجة البيولوجية (EPQ-R)
+                        {isAr
+                          ? 'نموذج آيزنك للأمزجة البيولوجية (EPQ-R)'
+                          : 'Eysenck Biological Temperament Model (EPQ-R)'}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-300">
-                      24 سؤالاً لتحديد مزاجك العصبي الفطري (دموي، صفراوي، بلغمي، سوداوي) والشريك المكمل.
+                      {isAr
+                        ? '24 سؤالاً لتحديد مزاجك العصبي الفطري (دموي، صفراوي، بلغمي، سوداوي) والشريك المكمل.'
+                        : '24 items identifying your core biological temperament quadrant and complementary fit.'}
                     </p>
                   </div>
-                  <ArrowLeft className="w-4 h-4 text-sky-400 group-hover:-translate-x-1 transition-transform shrink-0 mr-2" />
+                  {isAr ? (
+                    <ArrowLeft className="w-4 h-4 text-sky-400 group-hover:-translate-x-1 transition-transform shrink-0 mr-2" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4 text-sky-400 group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
+                  )}
                 </div>
               </div>
             </div>
@@ -843,7 +1018,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                جميع المقاييس (8)
+                {isAr
+                  ? `جميع المقاييس (${ASSESSMENTS_CATALOG.length})`
+                  : `All Scales (${ASSESSMENTS_CATALOG.length})`}
               </button>
               <button
                 onClick={() => {
@@ -871,7 +1048,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                🎨 الاختبارات الإسقاطية
+                {isAr ? '🎨 الاختبارات الإسقاطية' : '🎨 Projective Tests'}
               </button>
               <button
                 onClick={() => {
@@ -884,7 +1061,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                🤝 علوم الاجتماع والارتباط
+                {isAr ? '🤝 علوم الاجتماع والارتباط' : '🤝 Attachment & Sociology'}
               </button>
               <button
                 onClick={() => {
@@ -897,7 +1074,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                🌟 الفكر والتنمية البشرية (16PF & EQ)
+                {isAr ? '🌟 الفكر والتنمية البشرية (16PF & EQ)' : '🌟 Cognitive & EQ (16PF & EQ)'}
               </button>
             </div>
 
@@ -914,28 +1091,32 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                          {item.badge}
+                          {isAr ? item.badge : item.badgeEn || item.badge}
                         </span>
                         <div className="flex items-center gap-1.5">
                           {savedRep && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
-                              مكتمل ✓ {savedRep.totalScore}%
+                              {isAr ? `مكتمل ✓ ${savedRep.totalScore}%` : `Completed ✓ ${savedRep.totalScore}%`}
                             </span>
                           )}
                           <span className="text-[10px] text-gray-400 font-mono">
-                            ⏱️ {item.estimatedMinutes} د • {item.questionCount} سؤالاً
+                            {isAr
+                              ? `⏱️ ${item.estimatedMinutes} د • ${item.questionCount} سؤالاً`
+                              : `⏱️ ${item.estimatedMinutes}m • ${item.questionCount} items`}
                           </span>
                         </div>
                       </div>
 
                       <h4 className="font-bold text-sm text-white group-hover:text-purple-300 transition mb-1">
-                        {item.titleAr}
+                        {isAr ? item.titleAr : item.titleEn}
                       </h4>
                       <p className="text-xs text-gray-300 leading-relaxed line-clamp-2">
-                        {item.shortDesc}
+                        {isAr ? item.shortDesc : item.shortDescEn || item.shortDesc}
                       </p>
                       <div className="mt-2 text-[10px] text-gray-400 flex items-center gap-1">
-                        <span className="text-purple-400 shrink-0">المرجع العلمي:</span>
+                        <span className="text-purple-400 shrink-0">
+                          {isAr ? 'المرجع العلمي:' : 'Reference:'}
+                        </span>
                         <span className="truncate">{item.scientificReference}</span>
                       </div>
                     </div>
@@ -950,7 +1131,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                               className="px-2.5 py-1 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
                             >
                               <Eye className="w-3 h-3" />
-                              <span>عرض التقرير</span>
+                              <span>{isAr ? 'عرض التقرير' : 'View Report'}</span>
                             </button>
                             <button
                               type="button"
@@ -958,20 +1139,26 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                               className="px-2.5 py-1 rounded-xl bg-amber-500/25 hover:bg-amber-500/40 border border-amber-400/40 text-amber-200 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
                             >
                               <FileDown className="w-3 h-3" />
-                              <span>تحميل PDF</span>
+                              <span>{isAr ? 'تحميل PDF' : 'Download PDF'}</span>
                             </button>
                           </div>
                           <span className="text-[11px] text-purple-300 font-bold flex items-center gap-1">
-                            <span>إعادة الاختبار</span>
-                            <ArrowLeft className="w-3 h-3" />
+                            <span>{isAr ? 'إعادة الاختبار' : 'Retake'}</span>
+                            {isAr ? <ArrowLeft className="w-3 h-3" /> : <ArrowRight className="w-3 h-3" />}
                           </span>
                         </div>
                       ) : (
                         <>
                           <span className="text-xs text-purple-300 font-semibold">
-                            ابدأ الاختبار الآن ({item.questionCount} سؤالاً)
+                            {isAr
+                              ? `ابدأ الاختبار الآن (${item.questionCount} سؤالاً)`
+                              : `Start Assessment (${item.questionCount} items)`}
                           </span>
-                          <ArrowLeft className="w-3.5 h-3.5 text-purple-300 group-hover:-translate-x-1 transition-transform" />
+                          {isAr ? (
+                            <ArrowLeft className="w-3.5 h-3.5 text-purple-300 group-hover:-translate-x-1 transition-transform" />
+                          ) : (
+                            <ArrowRight className="w-3.5 h-3.5 text-purple-300 group-hover:translate-x-1 transition-transform" />
+                          )}
                         </>
                       )}
                     </div>
@@ -986,7 +1173,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
         )}
 
         {/* ================= VIEW 2: QUESTION RUNNER ================= */}
-        {selectedTest && !activeReport && currentQ && (
+        {selectedTest && !activeReport && !pendingPreResultReport && currentQ && (
           <div
             ref={scrollContainerRef}
             className="flex-1 overflow-y-auto pr-1 flex flex-col justify-between custom-scrollbar"
@@ -1009,8 +1196,8 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   }}
                   className="flex items-center gap-1 text-gray-300 hover:text-white transition cursor-pointer bg-white/5 px-3 py-1.5 rounded-xl border border-white/10"
                 >
-                  <ArrowRight className="w-3.5 h-3.5" />
-                  <span>العودة لقائمة المقاييس</span>
+                  {isAr ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+                  <span>{isAr ? 'العودة لقائمة المقاييس' : 'Back to Scales'}</span>
                 </button>
 
                 {/* View Mode Switcher */}
@@ -1024,7 +1211,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
-                    سؤال تلو الآخر
+                    {isAr ? 'سؤال تلو الآخر' : 'One by One'}
                   </button>
                   <button
                     type="button"
@@ -1035,7 +1222,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
-                    5 أسئلة بالصفحة
+                    {isAr ? '5 أسئلة بالصفحة' : '5 Per Page'}
                   </button>
                   <button
                     type="button"
@@ -1046,7 +1233,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
-                    جميع الأسئلة ({currentQuestions.length})
+                    {isAr
+                      ? `جميع الأسئلة (${currentQuestions.length})`
+                      : `All Items (${currentQuestions.length})`}
                   </button>
                 </div>
 
@@ -1054,16 +1243,18 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   {answeredCount > 0 && (
                     <button
                       onClick={handleResetCurrentTest}
-                      aria-label="إعادة الاختبار من السؤال الأول"
-                      title="إعادة الاختبار من السؤال الأول"
+                      aria-label={isAr ? 'إعادة الاختبار من السؤال الأول' : 'Restart from Question 1'}
+                      title={isAr ? 'إعادة الاختبار من السؤال الأول' : 'Restart from Question 1'}
                       className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/20 text-gray-300 hover:text-rose-300 border border-white/10 text-[11px] transition cursor-pointer"
                     >
                       <RotateCcw className="w-3 h-3" />
-                      <span>إعادة</span>
+                      <span>{isAr ? 'إعادة' : 'Reset'}</span>
                     </button>
                   )}
                   <span className="text-gray-300 font-mono text-[11px]">
-                    {answeredCount}/{currentQuestions.length} مكتمل ({progressPercent}%)
+                    {isAr
+                      ? `${answeredCount}/${currentQuestions.length} مكتمل (${progressPercent}%)`
+                      : `${answeredCount}/${currentQuestions.length} done (${progressPercent}%)`}
                   </span>
                   <div className="w-20 sm:w-28 h-2 bg-white/10 rounded-full overflow-hidden">
                     <div
@@ -1077,9 +1268,15 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               {/* Interactive Question Map Bar */}
               <div className="mb-3 p-2.5 rounded-2xl bg-black/40 border border-white/10">
                 <div className="flex items-center justify-between text-[11px] text-gray-400 mb-1.5">
-                  <span>خريطة الأسئلة التفاعلية (انقر للانتقال المباشر):</span>
+                  <span>
+                    {isAr
+                      ? 'خريطة الأسئلة التفاعلية (انقر للانتقال المباشر):'
+                      : 'Interactive Question Map (click to jump):'}
+                  </span>
                   <span className="text-emerald-400 font-mono">
-                    تمت الإجابة على {answeredCount} من {currentQuestions.length}
+                    {isAr
+                      ? `تمت الإجابة على ${answeredCount} من ${currentQuestions.length}`
+                      : `Answered ${answeredCount} of ${currentQuestions.length}`}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -1121,8 +1318,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                     <span>
-                      يُرجى الإجابة على جميع الأسئلة لضمان الدقة العلمية (تبقى {unansweredWarning.length}{' '}
-                      سؤالاً غير مجاب، أولها سؤال رقم {unansweredWarning[0] + 1}).
+                      {isAr
+                        ? `يُرجى الإجابة على جميع الأسئلة لضمان الدقة العلمية (تبقى ${unansweredWarning.length} سؤالاً غير مجاب، أولها سؤال رقم ${unansweredWarning[0] + 1}).`
+                        : `Please answer all items for psychometric accuracy (${unansweredWarning.length} unanswered; first is #${unansweredWarning[0] + 1}).`}
                     </span>
                   </div>
                   <button
@@ -1133,22 +1331,40 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     }}
                     className="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold text-[11px] shrink-0 cursor-pointer"
                   >
-                    انتقل للسؤال {unansweredWarning[0] + 1}
+                    {isAr ? `انتقل للسؤال ${unansweredWarning[0] + 1}` : `Go to #${unansweredWarning[0] + 1}`}
                   </button>
                 </div>
               )}
 
-              {/* Specialized helper cues for 16PF and EPQ for non-specialists */}
+              {/* Specialized helper cues */}
+              {selectedTest === 'existential_fatigue' && (
+                <div className="mb-3 px-3.5 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-cyan-200">
+                    <Compass className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <span className="font-semibold">
+                      {isAr
+                        ? 'اختبار التعب الوجودي (المقال الخامس) — الجسدي، العقلي، والوجودي'
+                        : 'Existential Fatigue Assessment (Article 5) — Physical, Mental & Existential'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-cyan-300 font-medium hidden sm:inline">
+                    {isAr ? '18 بنداً تشخيصياً' : '18 Diagnostic Items'}
+                  </span>
+                </div>
+              )}
+
               {selectedTest === 'sixteen_pf' && (
                 <div className="mb-3 px-3.5 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-purple-200">
                     <Sliders className="w-4 h-4 text-purple-400 shrink-0" />
                     <span className="font-semibold">
-                      مقياس كاتل لـ 16 سمة (16PF) — 32 بنداً عاملياً بدرجات معيارية Sten 1-10
+                      {isAr
+                        ? 'مقياس كاتل لـ 16 سمة (16PF) — 32 بنداً عاملياً بدرجات معيارية Sten 1-10'
+                        : 'Cattell 16PF Assessment — 32 Factor Items with Sten 1–10 Scores'}
                     </span>
                   </div>
                   <span className="text-[11px] text-purple-300 font-medium hidden sm:inline">
-                    تقرير مبسط لغير المختصين + تحليل العوامل الـ 16
+                    {isAr ? 'تقرير مبسط لغير المختصين + تحليل العوامل الـ 16' : '16 Primary Factors + 5 Global Factors'}
                   </span>
                 </div>
               )}
@@ -1157,10 +1373,12 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                 <div className="mb-3 px-3.5 py-2 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-sky-200">
                     <Zap className="w-4 h-4 text-sky-400 shrink-0" />
-                    <span className="font-semibold">نموذج آيزنك للأمزجة البيولوجية (EPQ-R)</span>
+                    <span className="font-semibold">
+                      {isAr ? 'نموذج آيزنك للأمزجة البيولوجية (EPQ-R)' : 'Eysenck Biological Temperament Model (EPQ-R)'}
+                    </span>
                   </div>
                   <span className="text-[11px] text-sky-300 font-medium hidden sm:inline">
-                    استبيان عصبي فطري مبسط (24 سؤالاً)
+                    {isAr ? 'استبيان عصبي فطري مبسط (24 سؤالاً)' : '24-Item Temperament Questionnaire'}
                   </span>
                 </div>
               )}
@@ -1184,10 +1402,10 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                       }}
                       className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 disabled:opacity-40 text-white text-xs font-bold cursor-pointer"
                     >
-                      الصفحة السابقة
+                      {isAr ? 'الصفحة السابقة' : 'Previous Page'}
                     </button>
                     <span className="text-xs text-gray-300 font-mono">
-                      صفحة {page5Index + 1} من {totalPages5}
+                      {isAr ? `صفحة ${page5Index + 1} من ${totalPages5}` : `Page ${page5Index + 1} of ${totalPages5}`}
                     </span>
                     {page5Index < totalPages5 - 1 ? (
                       <button
@@ -1199,7 +1417,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         }}
                         className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold cursor-pointer"
                       >
-                        الصفحة التالية
+                        {isAr ? 'الصفحة التالية' : 'Next Page'}
                       </button>
                     ) : (
                       <button
@@ -1207,7 +1425,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         onClick={() => finalizeAssessment(answers)}
                         className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-extrabold cursor-pointer shadow-lg"
                       >
-                        إصدار التقرير السيكومتري الدقيق ✓
+                        {isAr ? 'إصدار التقرير السيكومتري الدقيق ✓' : 'Generate Psychometric Report ✓'}
                       </button>
                     )}
                   </div>
@@ -1236,7 +1454,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                       }}
                       className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 disabled:opacity-40 text-gray-200 font-bold cursor-pointer"
                     >
-                      السؤال السابق
+                      {isAr ? 'السؤال السابق' : 'Previous Question'}
                     </button>
                     {currentQuestionIndex < currentQuestions.length - 1 && (
                       <button
@@ -1250,7 +1468,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         }}
                         className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-gray-200 font-bold cursor-pointer"
                       >
-                        السؤال التالي
+                        {isAr ? 'السؤال التالي' : 'Next Question'}
                       </button>
                     )}
                   </>
@@ -1264,10 +1482,36 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>
-                  اعتماد الإجابات وإصدار النتيجة ({answeredCount}/{currentQuestions.length})
+                  {isAr
+                    ? `اعتماد الإجابات وإصدار النتيجة (${answeredCount}/${currentQuestions.length})`
+                    : `Submit & View Report (${answeredCount}/${currentQuestions.length})`}
                 </span>
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ================= VIEW 2B: PRE-RESULT SIMILAR TEST GATE ================= */}
+        {pendingPreResultReport && !activeReport && (
+          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+            <TestPreResultRecommendationCard
+              testId={pendingPreResultReport.testId}
+              sourcePage="/personality-tests"
+              forceDark
+              onRevealResult={() => {
+                setActiveReport(pendingPreResultReport);
+                setPendingPreResultReport(null);
+                setTimeout(scrollToTop, 40);
+              }}
+              onLaunchTest={(testCard: ResolvedTestCard) => {
+                if (testCard.launchKind === 'psych_modal' && testCard.launchParam) {
+                  handleSelectTest(testCard.launchParam as AssessmentType);
+                  return true;
+                }
+                onClose();
+                return false;
+              }}
+            />
           </div>
         )}
 
@@ -1282,16 +1526,21 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold mb-2">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>
-                  اكتمل التقييم السيكومتري بنجاح • درجة الاتزان: {activeReport.totalScore}% (المئين{' '}
-                  {activeReport.overallPercentile}%)
+                  {activeReport.testId === 'existential_fatigue'
+                    ? isAr
+                      ? `اكتمل التقييم التشخيصي • متوسط عبء الاستنزاف الكلي: ${activeReport.totalScore}%`
+                      : `Diagnostic Assessment Complete • Overall Fatigue Depletion Load: ${activeReport.totalScore}%`
+                    : isAr
+                    ? `اكتمل التقييم السيكومتري بنجاح • درجة الاتزان: ${activeReport.totalScore}% (المئين ${activeReport.overallPercentile}%)`
+                    : `Psychometric Assessment Complete • Score: ${activeReport.totalScore}% (${activeReport.overallPercentile}th Percentile)`}
                 </span>
               </div>
 
               <h3 className="font-black text-lg sm:text-xl text-white font-['Alexandria'] mb-1">
-                {activeReport.primaryArchetypeAr}
+                {isAr ? activeReport.primaryArchetypeAr : activeReport.primaryArchetypeEn}
               </h3>
               <p className="text-xs text-gray-300 max-w-xl mx-auto">
-                {activeReport.validityMessageAr}
+                {isAr ? activeReport.validityMessageAr : activeReport.validityMessageEn || activeReport.validityMessageAr}
               </p>
 
               {/* Action Bar: Save to Profile, Download PDF & Discover Matches */}
@@ -1301,7 +1550,11 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-lg"
                 >
                   <FileDown className="w-4 h-4" />
-                  <span>تحميل التقرير الكامل PDF + معاينة فورية 📄</span>
+                  <span>
+                    {isAr
+                      ? 'تحميل التقرير الكامل PDF + معاينة فورية 📄'
+                      : 'Download Full PDF Report + Preview 📄'}
+                  </span>
                 </button>
 
                 <button
@@ -1315,12 +1568,12 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   {isSavedToProfile ? (
                     <>
                       <BookmarkCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>محفوظ في ملفك الشخصي ✓</span>
+                      <span>{isAr ? 'محفوظ في ملفك الشخصي ✓' : 'Saved to Profile ✓'}</span>
                     </>
                   ) : (
                     <>
                       <Bookmark className="w-3.5 h-3.5" />
-                      <span>إضافة النتيجة لملفي الشخصي</span>
+                      <span>{isAr ? 'إضافة النتيجة لملفي الشخصي' : 'Save to Profile'}</span>
                     </>
                   )}
                 </button>
@@ -1334,8 +1587,12 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     }}
                     className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md"
                   >
-                    <span>اكتشف من يشبهك أو يتوافق معك للتواصل 🤝</span>
-                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>
+                      {isAr
+                        ? 'اكتشف من يشبهك أو يتوافق معك للتواصل 🤝'
+                        : 'Discover Compatible Matches 🤝'}
+                    </span>
+                    {isAr ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                   </button>
                 )}
               </div>
@@ -1346,14 +1603,20 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-white">
                   <BookOpen className="w-4 h-4 text-purple-400" />
-                  <span>الملخص التنفيذي للتحليل السيكومتري:</span>
+                  <span>
+                    {isAr
+                      ? 'الملخص التنفيذي للتحليل السيكومتري:'
+                      : 'Executive Psychometric Summary:'}
+                  </span>
                 </div>
                 <span className="text-[11px] font-mono text-purple-300">
-                  عدد الأسئلة المحللة: {activeReport.answeredCount || activeReport.dimensionScores.length}
+                  {isAr
+                    ? `عدد الأسئلة المحللة: ${activeReport.answeredCount || activeReport.dimensionScores.length}`
+                    : `Analyzed Items: ${activeReport.answeredCount || activeReport.dimensionScores.length}`}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">
-                {activeReport.summaryAr}
+                {isAr ? activeReport.summaryAr : activeReport.summaryEn || activeReport.summaryAr}
               </p>
             </div>
 
@@ -1368,22 +1631,26 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         <Zap className="w-5 h-5 text-amber-400" />
                         <div>
                           <h4 className="font-black text-sm sm:text-base text-white">
-                            نمط المزاج العصبي الفطري (الأمزجة الأربعة)
+                            {isAr
+                              ? 'نمط المزاج العصبي الفطري (الأمزجة الأربعة)'
+                              : 'Innate Neurobiological Temperament (Four Temperaments)'}
                           </h4>
                           <span className="text-[11px] text-gray-300">
-                            وفق نموذج هانز آيزنك العصبي البيولوجي (EPQ-R)
+                            {isAr
+                              ? 'وفق نموذج هانز آيزنك العصبي البيولوجي (EPQ-R)'
+                              : "Based on Hans Eysenck's Psychobiological Model (EPQ-R)"}
                           </span>
                         </div>
                       </div>
                       <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30">
-                        {epqTemp.titleAr}
+                        {isAr ? epqTemp.titleAr : epqTemp.titleEn}
                       </span>
                     </div>
 
                     <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
                       <div className="flex items-center gap-2 text-xs font-bold text-sky-300">
-                        <span>👑 الصفة البارزة:</span>
-                        <span className="text-white">{epqTemp.tagAr}</span>
+                        <span>{isAr ? '👑 الصفة البارزة:' : '👑 Key Signature:'}</span>
+                        <span className="text-white">{isAr ? epqTemp.tagAr : epqTemp.tagEn}</span>
                       </div>
                       <p className="text-xs text-gray-200 leading-relaxed">{epqTemp.desc}</p>
                     </div>
@@ -1391,7 +1658,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     {/* 4 Quadrants Visual Interactive Grid */}
                     <div>
                       <h5 className="font-bold text-xs text-gray-300 mb-2">
-                        موضعك في شبكة الأمزجة الأربعة (الانبساط مقابل الاستقرار العصبي):
+                        {isAr
+                          ? 'موضعك في شبكة الأمزجة الأربعة (الانبساط مقابل الاستقرار العصبي):'
+                          : 'Your Position in the 4-Temperament Grid (Extraversion vs. Stability):'}
                       </h5>
                       <div className="grid grid-cols-2 gap-2 text-center text-xs">
                         <div
@@ -1402,15 +1671,17 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           }`}
                         >
                           <div className="font-black text-sm text-orange-300 mb-0.5">
-                            الصفراوي 🔥
+                            {isAr ? 'الصفراوي 🔥' : 'Choleric 🔥'}
                           </div>
-                          <div className="text-[10px] text-gray-300">طاقة حاسمة، قيادي، ومبادر</div>
+                          <div className="text-[10px] text-gray-300">
+                            {isAr ? 'طاقة حاسمة، قيادي، ومبادر' : 'Decisive energy, driven, proactive'}
+                          </div>
                           <div className="text-[9px] text-gray-400 mt-1 font-mono">
-                            انبساط + حساسية انفعالية
+                            {isAr ? 'انبساط + حساسية انفعالية' : 'Extraversion + Reactivity'}
                           </div>
                           {epqTemp.key === 'choleric' && (
                             <span className="inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-orange-400 text-black">
-                              مزاجك الفعلي ✓
+                              {isAr ? 'مزاجك الفعلي ✓' : 'Your Profile ✓'}
                             </span>
                           )}
                         </div>
@@ -1422,16 +1693,18 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                               : 'bg-black/30 border-white/10 text-gray-400 opacity-60'
                           }`}
                         >
-                          <div className="font-black text-sm text-sky-300 mb-0.5">الدموي ☀️</div>
+                          <div className="font-black text-sm text-sky-300 mb-0.5">
+                            {isAr ? 'الدموي ☀️' : 'Sanguine ☀️'}
+                          </div>
                           <div className="text-[10px] text-gray-300">
-                            متفائل، مرح، واجتماعي مرن
+                            {isAr ? 'متفائل، مرح، واجتماعي مرن' : 'Optimistic, lively & adaptable'}
                           </div>
                           <div className="text-[9px] text-gray-400 mt-1 font-mono">
-                            انبساط + استقرار عصبي
+                            {isAr ? 'انبساط + استقرار عصبي' : 'Extraversion + Stability'}
                           </div>
                           {epqTemp.key === 'sanguine' && (
                             <span className="inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-sky-400 text-black">
-                              مزاجك الفعلي ✓
+                              {isAr ? 'مزاجك الفعلي ✓' : 'Your Profile ✓'}
                             </span>
                           )}
                         </div>
@@ -1444,17 +1717,17 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           }`}
                         >
                           <div className="font-black text-sm text-purple-300 mb-0.5">
-                            السوداوي 🌙
+                            {isAr ? 'السوداوي 🌙' : 'Melancholic 🌙'}
                           </div>
                           <div className="text-[10px] text-gray-300">
-                            عميق، متأمل، ومرهف الحس
+                            {isAr ? 'عميق، متأمل، ومرهف الحس' : 'Deep, reflective & sensitive'}
                           </div>
                           <div className="text-[9px] text-gray-400 mt-1 font-mono">
-                            انطواء + حساسية انفعالية
+                            {isAr ? 'انطواء + حساسية انفعالية' : 'Introversion + Reactivity'}
                           </div>
                           {epqTemp.key === 'melancholic' && (
                             <span className="inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-400 text-black">
-                              مزاجك الفعلي ✓
+                              {isAr ? 'مزاجك الفعلي ✓' : 'Your Profile ✓'}
                             </span>
                           )}
                         </div>
@@ -1467,15 +1740,17 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           }`}
                         >
                           <div className="font-black text-sm text-emerald-300 mb-0.5">
-                            البلغمي 🌊
+                            {isAr ? 'البلغمي 🌊' : 'Phlegmatic 🌊'}
                           </div>
-                          <div className="text-[10px] text-gray-300">هادئ، حكيم، وصبور جداً</div>
+                          <div className="text-[10px] text-gray-300">
+                            {isAr ? 'هادئ، حكيم، وصبور جداً' : 'Calm, wise & steady'}
+                          </div>
                           <div className="text-[9px] text-gray-400 mt-1 font-mono">
-                            انطواء + استقرار عصبي
+                            {isAr ? 'انطواء + استقرار عصبي' : 'Introversion + Stability'}
                           </div>
                           {epqTemp.key === 'phlegmatic' && (
                             <span className="inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-400 text-black">
-                              مزاجك الفعلي ✓
+                              {isAr ? 'مزاجك الفعلي ✓' : 'Your Profile ✓'}
                             </span>
                           )}
                         </div>
@@ -1486,7 +1761,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                       <Heart className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
                       <div>
                         <span className="font-bold block mb-0.5 text-white">
-                          التوافق الحيوي مع الشريك:
+                          {isAr ? 'التوافق الحيوي مع الشريك:' : 'Bio-Temperamental Partner Fit:'}
                         </span>
                         <p className="leading-relaxed">{epqTemp.partnerTip}</p>
                       </div>
@@ -1503,10 +1778,14 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     <Sliders className="w-4 h-4 text-purple-400" />
                     <div>
                       <h4 className="font-bold text-xs sm:text-sm text-white">
-                        مقياس كاتل لـ 16 سمة (16PF) - تقرير مبسط لغير المختصين:
+                        {isAr
+                          ? 'مقياس كاتل لـ 16 سمة (16PF) - تقرير مبسط لغير المختصين:'
+                          : 'Cattell 16PF Personality Report — Accessible Summary:'}
                       </h4>
                       <p className="text-[11px] text-gray-300">
-                        مبني على التحليل العاملي لريموند كاتل (16PF Fifth Edition) بالدرجات المعيارية Sten (1-10)
+                        {isAr
+                          ? 'مبني على التحليل العاملي لريموند كاتل (16PF Fifth Edition) بالدرجات المعيارية Sten (1-10)'
+                          : 'Based on Raymond Cattell’s Factor Analysis (16PF 5th Ed.) with Sten (1–10) norms'}
                       </p>
                     </div>
                   </div>
@@ -1521,7 +1800,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           : 'text-gray-400 hover:text-white'
                       }`}
                     >
-                      المجموعات الـ 4 المبسطة 🧩
+                      {isAr ? 'المجموعات الـ 4 المبسطة 🧩' : '4 Macro-Clusters 🧩'}
                     </button>
                     <button
                       onClick={() => setClusterViewMode('global5')}
@@ -1531,7 +1810,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           : 'text-gray-400 hover:text-white'
                       }`}
                     >
-                      العوامل الـ 5 الكبرى 🌍
+                      {isAr ? 'العوامل الـ 5 الكبرى 🌍' : '5 Global Factors 🌍'}
                     </button>
                     <button
                       onClick={() => setClusterViewMode('all')}
@@ -1541,7 +1820,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           : 'text-gray-400 hover:text-white'
                       }`}
                     >
-                      السمات الـ 16 بالتفصيل 📊
+                      {isAr ? 'السمات الـ 16 بالتفصيل 📊' : 'All 16 Factors 📊'}
                     </button>
                   </div>
                 </div>
@@ -1558,7 +1837,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           <div className="flex items-center gap-2">
                             <span className="text-base">{cluster.icon}</span>
                             <span className="font-bold text-xs sm:text-sm text-white">
-                              {cluster.titleAr}
+                              {isAr ? cluster.titleAr : cluster.titleEn}
                             </span>
                           </div>
                           <span
@@ -1609,8 +1888,8 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         </div>
 
                         <div className="flex items-center justify-between text-[10px] text-gray-400">
-                          <span>القطب المنخفض: {gf.lowPoleAr}</span>
-                          <span>القطب المرتفع: {gf.highPoleAr}</span>
+                          <span>{isAr ? 'القطب المنخفض:' : 'Low Pole:'} {gf.lowPoleAr}</span>
+                          <span>{isAr ? 'القطب المرتفع:' : 'High Pole:'} {gf.highPoleAr}</span>
                         </div>
 
                         <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden">
@@ -1621,7 +1900,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         </div>
 
                         <p className="text-xs text-emerald-200 font-medium leading-relaxed">
-                          💡 التفسير المبسط: {gf.plainExplanationAr}
+                          💡 {isAr ? 'التفسير المبسط:' : 'Plain Insight:'} {gf.plainExplanationAr}
                         </p>
                       </div>
                     ))}
@@ -1637,7 +1916,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         className="p-3.5 rounded-2xl bg-black/40 border border-white/10 space-y-2"
                       >
                         <div className="flex items-center justify-between gap-1 text-xs">
-                          <span className="font-bold text-white">{dim.labelAr}</span>
+                          <span className="font-bold text-white">
+                            {isAr ? dim.labelAr : dim.labelEn || dim.labelAr}
+                          </span>
                           <div className="flex items-center gap-1.5 shrink-0 font-mono">
                             {dim.stenScore && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-amber-300">
@@ -1650,12 +1931,13 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           </div>
                         </div>
 
-                        {dim.lowPoleAr && dim.highPoleAr && (
-                          <div className="flex items-center justify-between text-[10px] text-gray-400">
-                            <span>{dim.lowPoleAr}</span>
-                            <span>{dim.highPoleAr}</span>
-                          </div>
-                        )}
+                        {(isAr ? dim.lowPoleAr : dim.lowPoleEn || dim.lowPoleAr) &&
+                          (isAr ? dim.highPoleAr : dim.highPoleEn || dim.highPoleAr) && (
+                            <div className="flex items-center justify-between text-[10px] text-gray-400">
+                              <span>{isAr ? dim.lowPoleAr : dim.lowPoleEn || dim.lowPoleAr}</span>
+                              <span>{isAr ? dim.highPoleAr : dim.highPoleEn || dim.highPoleAr}</span>
+                            </div>
+                          )}
 
                         <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden">
                           <div
@@ -1667,14 +1949,19 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                           />
                         </div>
 
-                        {dim.plainExplanationAr && (
+                        {(isAr ? dim.plainExplanationAr : dim.plainExplanationEn || dim.plainExplanationAr) && (
                           <p className="text-xs text-emerald-300 font-semibold leading-relaxed">
-                            ✨ باللغة اليومية المبسطة: {dim.plainExplanationAr}
+                            ✨ {isAr ? 'باللغة اليومية المبسطة:' : 'Plain Explanation:'}{' '}
+                            {isAr ? dim.plainExplanationAr : dim.plainExplanationEn || dim.plainExplanationAr}
                           </p>
                         )}
 
-                        <p className="text-[11px] text-gray-300 leading-relaxed">{dim.analysisAr}</p>
-                        <p className="text-[10px] text-amber-300/90">💍 {dim.adviceAr}</p>
+                        <p className="text-[11px] text-gray-300 leading-relaxed">
+                          {isAr ? dim.analysisAr : dim.analysisEn || dim.analysisAr}
+                        </p>
+                        <p className="text-[10px] text-amber-300/90">
+                          💍 {isAr ? dim.adviceAr : dim.adviceEn || dim.adviceAr}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -1686,7 +1973,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
             {activeReport.testId !== 'sixteen_pf' && (
               <div className="space-y-2">
                 <h4 className="font-bold text-xs text-gray-300">
-                  نتائج الأبعاد السيكومترية المقاسة بدقة إحصائية من إجاباتك:
+                  {isAr
+                    ? 'نتائج الأبعاد السيكومترية المقاسة بدقة إحصائية من إجاباتك:'
+                    : 'Psychometric Dimension Breakdown Measured From Your Responses:'}
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -1696,7 +1985,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                       className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1.5"
                     >
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-white">{dim.labelAr}</span>
+                        <span className="font-bold text-white">
+                          {isAr ? dim.labelAr : dim.labelEn || dim.labelAr}
+                        </span>
                         <div className="flex items-center gap-1.5 font-mono">
                           {dim.stenScore && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-amber-300">
@@ -1717,12 +2008,15 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                         />
                       </div>
 
-                      {dim.plainExplanationAr && (
+                      {(isAr ? dim.plainExplanationAr : dim.plainExplanationEn || dim.plainExplanationAr) && (
                         <p className="text-xs text-emerald-300 font-semibold">
-                          ✨ المعنى السلوكي المبسط: {dim.plainExplanationAr}
+                          ✨ {isAr ? 'المعنى السلوكي المبسط:' : 'Key Insight:'}{' '}
+                          {isAr ? dim.plainExplanationAr : dim.plainExplanationEn || dim.plainExplanationAr}
                         </p>
                       )}
-                      <p className="text-[11px] text-gray-300 leading-relaxed">{dim.analysisAr}</p>
+                      <p className="text-[11px] text-gray-300 leading-relaxed">
+                        {isAr ? dim.analysisAr : dim.analysisEn || dim.analysisAr}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -1737,10 +2031,17 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
                       <Target className="w-4 h-4 text-emerald-400" />
-                      <span>نقاط القوة المرصودة من إجاباتك الفعلية:</span>
+                      <span>
+                        {isAr
+                          ? 'نقاط القوة المرصودة من إجاباتك الفعلية:'
+                          : 'Observed Patterns & Key Takeaways:'}
+                      </span>
                     </div>
                     <ul className="space-y-1.5 text-xs text-gray-200">
-                      {activeReport.userStrengthsAr.map((s: string, idx: number) => (
+                      {(isAr
+                        ? activeReport.userStrengthsAr
+                        : activeReport.userStrengthsEn || activeReport.userStrengthsAr
+                      ).map((s: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-1.5">
                           <span className="text-emerald-400 mt-0.5">•</span>
                           <span>{s}</span>
@@ -1754,10 +2055,21 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
                       <Compass className="w-4 h-4 text-amber-400" />
-                      <span>التوصيات والتطلعات المناسبة لنمطك:</span>
+                      <span>
+                        {activeReport.testId === 'existential_fatigue'
+                          ? isAr
+                            ? 'خطة الاستعادة العملية (وفق المقال الخامس):'
+                            : 'Targeted Recovery Protocol (Article 5):'
+                          : isAr
+                          ? 'التوصيات والتطلعات المناسبة لنمطك:'
+                          : 'Tailored Recommendations & Growth Steps:'}
+                      </span>
                     </div>
                     <ul className="space-y-1.5 text-xs text-gray-200">
-                      {activeReport.userAspirationsAr.map((a: string, idx: number) => (
+                      {(isAr
+                        ? activeReport.userAspirationsAr
+                        : activeReport.userAspirationsEn || activeReport.userAspirationsAr
+                      ).map((a: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-1.5">
                           <span className="text-amber-400 mt-0.5">•</span>
                           <span>{a}</span>
@@ -1769,42 +2081,79 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Ideal Partner Profile Section */}
+            {/* Ideal Partner Profile / Targeted Recovery Section */}
             {activeReport.idealPartnerProfile && (
               <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-rose-950/40 via-purple-950/40 to-slate-900 border border-rose-500/30 space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-white/10">
                   <Heart className="w-5 h-5 text-rose-400" />
                   <h4 className="font-extrabold text-sm sm:text-base text-white">
-                    مواصفات الشريك الأكثر توافقاً وانسجاماً معك (وفق التكامل السيكومتري):
+                    {activeReport.testId === 'existential_fatigue'
+                      ? isAr
+                        ? 'بروتوكول التدخل والدعم العلائقي المستهدف (وفق المقال الخامس):'
+                        : 'Targeted Intervention & Relational Support Protocol (Article 5):'
+                      : isAr
+                      ? 'مواصفات الشريك الأكثر توافقاً وانسجاماً معك (وفق التكامل السيكومتري):'
+                      : 'Psychometrically Compatible Partner Profile:'}
                   </h4>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                   <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                    <span className="font-bold text-rose-300 block">✨ الشريك الأنسب:</span>
+                    <span className="font-bold text-rose-300 block">
+                      {activeReport.testId === 'existential_fatigue'
+                        ? isAr
+                          ? '✨ مسار الاستعادة الأساسي:'
+                          : '✨ Primary Restoration Path:'
+                        : isAr
+                        ? '✨ الشريك الأنسب:'
+                        : '✨ Ideal Partner Fit:'}
+                    </span>
                     <p className="text-gray-200 leading-relaxed font-semibold">
-                      {activeReport.idealPartnerProfile.recommendedArchetypeAr}
+                      {isAr
+                        ? activeReport.idealPartnerProfile.recommendedArchetypeAr
+                        : activeReport.idealPartnerProfile.recommendedArchetypeEn}
                     </p>
                     <p className="text-[11px] text-gray-400 leading-relaxed">
-                      {activeReport.idealPartnerProfile.lifestyleHarmonyAr}
+                      {isAr
+                        ? activeReport.idealPartnerProfile.lifestyleHarmonyAr
+                        : activeReport.idealPartnerProfile.lifestyleHarmonyEn ||
+                          activeReport.idealPartnerProfile.lifestyleHarmonyAr}
                     </p>
                   </div>
 
                   <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
                     <span className="font-bold text-purple-300 block">
-                      🤝 أسباب التوافق والاحتواء:
+                      {activeReport.testId === 'existential_fatigue'
+                        ? isAr
+                          ? '🤝 البيئة النفسية المساندة:'
+                          : '🤝 Supportive Environment:'
+                        : isAr
+                        ? '🤝 أسباب التوافق والاحتواء:'
+                        : '🤝 Emotional Safety & Fit:'}
                     </span>
                     <p className="text-gray-200 leading-relaxed">
-                      {activeReport.idealPartnerProfile.emotionalNeedsAr}
+                      {isAr
+                        ? activeReport.idealPartnerProfile.emotionalNeedsAr
+                        : activeReport.idealPartnerProfile.emotionalNeedsEn ||
+                          activeReport.idealPartnerProfile.emotionalNeedsAr}
                     </p>
                   </div>
 
                   <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
                     <span className="font-bold text-sky-300 block">
-                      💡 نصيحة التواصل والانسجام:
+                      {activeReport.testId === 'existential_fatigue'
+                        ? isAr
+                          ? '💡 حدود الحماية اليومية:'
+                          : '💡 Protective Daily Boundaries:'
+                        : isAr
+                        ? '💡 نصيحة التواصل والانسجام:'
+                        : '💡 Communication & Harmony Tip:'}
                     </span>
                     <p className="text-gray-200 leading-relaxed">
-                      {activeReport.idealPartnerProfile.communicationStyleAr}
+                      {isAr
+                        ? activeReport.idealPartnerProfile.communicationStyleAr
+                        : activeReport.idealPartnerProfile.communicationStyleEn ||
+                          activeReport.idealPartnerProfile.communicationStyleAr}
                     </p>
                   </div>
                 </div>
@@ -1818,7 +2167,9 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   <div className="flex items-center gap-2 text-xs font-bold text-white">
                     <ListChecks className="w-4 h-4 text-emerald-400" />
                     <span>
-                      سجل التدقيق العلمي لإجاباتك ({activeReport.questionAudit.length} سؤالاً):
+                      {isAr
+                        ? `سجل التدقيق العلمي لإجاباتك (${activeReport.questionAudit.length} سؤالاً):`
+                        : `Psychometric Response Audit (${activeReport.questionAudit.length} items):`}
                     </span>
                   </div>
                   <button
@@ -1826,7 +2177,13 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                     onClick={() => setShowAuditTable((prev) => !prev)}
                     className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-purple-200 font-bold cursor-pointer"
                   >
-                    {showAuditTable ? 'إخفاء جدول التدقيق ▲' : 'عرض جميع إجاباتي وأوزانها ▼'}
+                    {showAuditTable
+                      ? isAr
+                        ? 'إخفاء جدول التدقيق ▲'
+                        : 'Hide Audit Table ▲'
+                      : isAr
+                      ? 'عرض جميع إجاباتي وأوزانها ▼'
+                      : 'Show All Responses & Weights ▼'}
                   </button>
                 </div>
 
@@ -1839,15 +2196,22 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-bold text-purple-300 font-mono">
-                            سؤال #{qa.questionNumber}
+                            {isAr ? `سؤال #${qa.questionNumber}` : `Item #${qa.questionNumber}`}
                           </span>
                           <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
-                            الوزن السيكومتري: {qa.scoreWeight}/{qa.maxWeight} • {qa.traitMeasuredAr}
+                            {isAr
+                              ? `الوزن السيكومتري: ${qa.scoreWeight}/${qa.maxWeight} • ${qa.traitMeasuredAr}`
+                              : `Weight: ${qa.scoreWeight}/${qa.maxWeight} • ${qa.traitMeasuredEn || qa.scientificTraitEn}`}
                           </span>
                         </div>
-                        <p className="text-white font-semibold">{qa.promptAr}</p>
+                        <p className="text-white font-semibold">
+                          {isAr ? qa.promptAr : qa.promptEn || qa.promptAr}
+                        </p>
                         <p className="text-gray-300">
-                          <strong className="text-emerald-400">إجابتك:</strong> {qa.selectedOptionAr}
+                          <strong className="text-emerald-400">
+                            {isAr ? 'إجابتك:' : 'Your Answer:'}
+                          </strong>{' '}
+                          {isAr ? qa.selectedOptionAr : qa.selectedOptionEn || qa.selectedOptionAr}
                         </p>
                       </div>
                     ))}
@@ -1861,9 +2225,15 @@ export const PsychologyTestsModal: React.FC<Props> = ({
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-xs text-white flex items-center gap-1.5">
                   <Share2 className="w-3.5 h-3.5 text-rose-400" />
-                  <span>نشر ومشاركة نتائجك في مواقع السوشيل ميديا:</span>
+                  <span>
+                    {isAr
+                      ? 'نشر ومشاركة نتائجك في مواقع السوشيل ميديا:'
+                      : 'Share Your Psychometric Result:'}
+                  </span>
                 </h4>
-                <span className="text-[10px] text-gray-400">شارك تحليلك الملهم</span>
+                <span className="text-[10px] text-gray-400">
+                  {isAr ? 'شارك تحليلك الملهم' : 'Share Your Insight'}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
@@ -1872,14 +2242,14 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   className="py-2 px-2.5 rounded-xl bg-emerald-600/25 hover:bg-emerald-600/35 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>واتساب</span>
+                  <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
                 </button>
 
                 <button
                   onClick={handleShareTwitter}
                   className="py-2 px-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/30 text-sky-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>𝕏 تويتر</span>
+                  <span>{isAr ? '𝕏 تويتر' : '𝕏 Post'}</span>
                 </button>
 
                 <button
@@ -1887,14 +2257,14 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   className="py-2 px-2.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 text-blue-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5 text-blue-400" />
-                  <span>تليجرام</span>
+                  <span>{isAr ? 'تليجرام' : 'Telegram'}</span>
                 </button>
 
                 <button
                   onClick={handleShareFacebook}
                   className="py-2 px-2.5 rounded-xl bg-indigo-600/25 hover:bg-indigo-600/35 border border-indigo-500/30 text-indigo-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>فيسبوك</span>
+                  <span>{isAr ? 'فيسبوك' : 'Facebook'}</span>
                 </button>
 
                 <button
@@ -1902,7 +2272,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   className="py-2 px-2.5 rounded-xl bg-blue-700/25 hover:bg-blue-700/35 border border-blue-600/30 text-blue-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Linkedin className="w-3.5 h-3.5 text-blue-400" />
-                  <span>لينكد إن</span>
+                  <span>{isAr ? 'لينكد إن' : 'LinkedIn'}</span>
                 </button>
 
                 <button
@@ -1916,12 +2286,12 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   {copiedLink ? (
                     <>
                       <Check className="w-3.5 h-3.5" />
-                      <span>تم النسخ!</span>
+                      <span>{isAr ? 'تم النسخ!' : 'Copied!'}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5 text-purple-400" />
-                      <span>نسخ الرابط</span>
+                      <span>{isAr ? 'نسخ الرابط' : 'Copy Link'}</span>
                     </>
                   )}
                 </button>
@@ -1938,7 +2308,7 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                 }}
                 className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-xs font-bold transition cursor-pointer"
               >
-                خوض اختبار نفسي آخر 🔄
+                {isAr ? 'خوض اختبار نفسي آخر 🔄' : 'Take Another Assessment 🔄'}
               </button>
 
               {onOpenDashboard && (
@@ -1952,15 +2322,22 @@ export const PsychologyTestsModal: React.FC<Props> = ({
                   }}
                   className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-rose-600 hover:opacity-95 text-white text-xs font-extrabold shadow-md transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>عرض لوحة ملفي الشخصي الكاملة (Dashboard)</span>
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>
+                    {isAr
+                      ? 'عرض لوحة ملفي الشخصي الكاملة (Dashboard)'
+                      : 'Open Full Psychometric Dashboard'}
+                  </span>
+                  {isAr ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                 </motion.button>
               )}
             </div>
 
-            {/* Deterministic Next-Step Recommendations */}
-            <NextStepRecommendations
-              bundle={getPsychologySuiteRecommendations(activeReport)}
+            {/* Full Recommendation Engine Suite (Next Step + Contextual Links + Try Another + Suggested Mix) */}
+            <TestResultRecommendationsSuite
+              testId={activeReport.testId}
+              sourcePage="/personality-tests"
+              resultHintText={isAr ? activeReport.primaryArchetypeAr : activeReport.primaryArchetypeEn}
+              legacyBundle={getPsychologySuiteRecommendations(activeReport)}
               forceDark
               onBeforeNavigate={() => onClose()}
               onLaunchTest={(testCard: ResolvedTestCard) => {

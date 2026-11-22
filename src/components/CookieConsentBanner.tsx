@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Cookie, ShieldCheck, Check, Settings2 } from 'lucide-react';
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
+import { resetRecommendationAnalytics } from '../utils/recommendationAnalytics';
 
 interface Props {
   onOpenPrivacyPolicy: () => void;
@@ -62,6 +63,7 @@ export const CookieConsentBanner: React.FC<Props> = ({
       localStorage.setItem('cookie_consent_ads', 'false');
       localStorage.setItem('cookie_consent_timestamp', new Date().toISOString());
     } catch {}
+    resetRecommendationAnalytics();
     dismissBanner();
   };
 
@@ -73,6 +75,9 @@ export const CookieConsentBanner: React.FC<Props> = ({
       localStorage.setItem('cookie_consent_ads', allowPersonalizedAds ? 'true' : 'false');
       localStorage.setItem('cookie_consent_timestamp', new Date().toISOString());
     } catch {}
+    if (!allowAnalytics) {
+      resetRecommendationAnalytics();
+    }
     dismissBanner();
   };
 

@@ -24,6 +24,8 @@ export type RecommendationTestTargetId =
   | 'compatibility'
   | 'mbti_16types'
   | 'big_five_ocean'
+  | 'existential_fatigue'
+  | 'psych_existential_fatigue'
   | 'psych_big_five'
   | 'psych_mmpi'
   | 'psych_epq'
@@ -129,7 +131,7 @@ function resolveTestDescriptor(targetId: RecommendationTestTargetId): Omit<Resol
     };
   }
 
-  if (targetId === 'mbti_16types' || targetId === 'big_five_ocean') {
+  if (targetId === 'mbti_16types' || targetId === 'big_five_ocean' || targetId === 'existential_fatigue') {
     const pTest =
       PERSONALITY_TESTS_CATALOG.find((t) => t.id === targetId) || PERSONALITY_TESTS_CATALOG[0];
     return {
@@ -142,7 +144,7 @@ function resolveTestDescriptor(targetId: RecommendationTestTargetId): Omit<Resol
       route: '/personality-tests',
       launchKind: 'personality_inline',
       launchParam: pTest.id,
-      icon: '🧬',
+      icon: targetId === 'existential_fatigue' ? '🧭' : '🧬',
     };
   }
 
@@ -630,10 +632,115 @@ export function getBigFiveRecommendations(
   }
 }
 
+export function getExistentialFatigueRecommendations(
+  scores: { PHYSICAL: number; MENTAL: number; EXISTENTIAL: number },
+  sourceId: 'existential_fatigue' | 'psych_existential_fatigue' = 'existential_fatigue'
+): NextStepRecommendationBundle {
+  const { PHYSICAL, MENTAL, EXISTENTIAL } = scores;
+  const maxVal = Math.max(PHYSICAL, MENTAL, EXISTENTIAL);
+
+  if (EXISTENTIAL >= MENTAL && EXISTENTIAL >= PHYSICAL && EXISTENTIAL >= 55) {
+    return buildBundle(
+      'personality',
+      sourceId,
+      {
+        ruleKey: 'fatigue_existential_dominant',
+        articleId: 'why-do-you-feel-tired-despite-rest',
+        articleReasonAr: `تصدّر «التعب الوجودي» نتيجتك (${EXISTENTIAL}%)؛ يشرح المقال الخامس جذور التنافر المعرفي والقناع الزائف وخطة استعادة المعنى في 6 خطوات.`,
+        articleReasonEn: `Existential fatigue led your assessment (${EXISTENTIAL}%); Article 5 explains value misalignment, false-self exhaustion, and a 6-step restoration plan.`,
+        testId: 'big_five_ocean',
+        testReasonAr: 'لاكتشاف سماتك الجوهرية وقيمك الأصيلة عبر مقياس العوامل الخمسة الكبرى لمواءمة مسارك.',
+        testReasonEn: 'Discover your core OCEAN traits to realign your daily routine with authentic values.',
+        novelMode: 'novel',
+        novelId: 'screen-shadows-secret-clinic-records',
+        novelGenre: 'clinical_stories',
+        novelReasonAr: 'قصص نفسية عيادية تستكشف قناع الأداء الخارجي والبحث عن السكينة والمعنى الحقيقي.',
+        novelReasonEn: 'Clinical stories exploring authentic identity beyond external social masks.',
+      },
+      [sourceId, 'existential_fatigue', 'psych_existential_fatigue']
+    );
+  }
+
+  if (MENTAL >= PHYSICAL && MENTAL >= EXISTENTIAL && MENTAL >= 55) {
+    return buildBundle(
+      'personality',
+      sourceId,
+      {
+        ruleKey: 'fatigue_mental_dominant',
+        articleId: 'how-to-recover-psychological-equilibrium-after-hard-times',
+        articleReasonAr: `مع ارتفاع «التعب العقلي» (${MENTAL}%) وضبابية الدماغ، يضع المقال خريطة عملية لتهدئة الجهاز العصبي وإيقاف الاجترار.`,
+        articleReasonEn: `With elevated mental fatigue (${MENTAL}%), this guide covers calming nervous-system hypervigilance and breaking rumination loops.`,
+        testId: 'intel_emotional_intelligence_eq',
+        testReasonAr: 'لصقل مهارات التنظيم الانفعالي والمرونة الذهنية تحت الضغوط اليومية المتلاحقة.',
+        testReasonEn: 'Train emotional regulation and cognitive decompression skills.',
+        novelMode: 'novel',
+        novelId: 'digital-companion-illusion-ai-records',
+        novelGenre: 'clinical_stories',
+        novelReasonAr: 'قصص معاصرة عن الاستنزاف الرقمي والضجيج العقلي والحاجة للصمت والاتصال الحقيقي.',
+        novelReasonEn: 'Contemporary stories examining digital overload and mental restoration.',
+      },
+      [sourceId, 'existential_fatigue', 'psych_existential_fatigue']
+    );
+  }
+
+  if (PHYSICAL >= 55) {
+    return buildBundle(
+      'personality',
+      sourceId,
+      {
+        ruleKey: 'fatigue_physical_dominant',
+        articleId: 'why-do-you-feel-tired-despite-rest',
+        articleReasonAr: `بسبب ارتفاع «التعب الجسدي» (${PHYSICAL}%) رغم ساعات النوم، يوضح المقال الفحوصات الحيوية الأساسية (فيتامين D/B12/الحديد/TSH) وجودة النوم.`,
+        articleReasonEn: `Elevated physical fatigue (${PHYSICAL}%) calls for checking silent biomedical drivers (sleep quality, D/B12/iron/thyroid) covered in Article 5.`,
+        testId: 'psych_epq',
+        testReasonAr: 'لفهم مستوى الاستثارة الفطرية للجهاز العصبي واحتياجاتك البيولوجية للراحة والهدوء.',
+        testReasonEn: 'Understand your baseline neurobiological arousal and recovery needs via EPQ-R.',
+        novelMode: 'genre',
+        novelGenre: 'clinical_stories',
+        novelReasonAr: 'قصص إنسانية دافئة حول الإنصات لرسائل الجسد واستعادة العافية المتدرجة.',
+        novelReasonEn: 'Warm clinical stories about listening to somatic signals and pacing recovery.',
+      },
+      [sourceId, 'existential_fatigue', 'psych_existential_fatigue']
+    );
+  }
+
+  return buildBundle(
+    'personality',
+    sourceId,
+    {
+      ruleKey: maxVal <= 45 ? 'fatigue_balanced_vitality' : 'fatigue_mixed_moderate',
+      articleId: 'when-do-you-need-psychological-counseling',
+      articleReasonAr: 'قراءة مساعدة لتمييز الضيق العابر عن المنطقة الرمادية ومتى يُفيد التوجيه المختص في استدامة توازنك.',
+      articleReasonEn: 'A clarifying guide on preventive self-care vs. professional consultation thresholds.',
+      testId: 'tiered_assessment',
+      testReasonAr: 'لاستكشاف أعمق للوعي الذاتي والنضج الانفعالي وإدارة الضغوط عبر المختبر المتدرج.',
+      testReasonEn: 'Explore deeper self-awareness and resilience markers inside the Tiered Lab.',
+      novelMode: 'novel',
+      novelId: 'fi_baytina_yasmin',
+      novelGenre: 'romance',
+      novelReasonAr: 'رواية هادئة تبعث الطمأنينة وتحتفي بالتوازن النفسي والوفاء الأسري.',
+      novelReasonEn: 'A calm, grounding story celebrating emotional balance and warmth.',
+    },
+    [sourceId, 'existential_fatigue', 'psych_existential_fatigue']
+  );
+}
+
 export function getPsychologySuiteRecommendations(
   report: PsychometricReport
 ): NextStepRecommendationBundle {
   const testId = report.testId;
+
+  if (testId === 'existential_fatigue') {
+    const getS = (k: string) => report.dimensionScores.find((d) => d.key === k)?.score ?? 50;
+    return getExistentialFatigueRecommendations(
+      {
+        PHYSICAL: getS('fatigue_physical'),
+        MENTAL: getS('fatigue_mental'),
+        EXISTENTIAL: getS('fatigue_existential'),
+      },
+      'psych_existential_fatigue'
+    );
+  }
 
   // Big Five inside PsychologyTestsModal
   if (testId === 'big_five') {

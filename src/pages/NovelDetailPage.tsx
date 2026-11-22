@@ -39,6 +39,9 @@ import {
   FormattedContinuousManuscript,
   ContinuousViewMode,
 } from '../components/ReaderToolbar';
+import { NextStepRecommendations } from '../components/NextStepRecommendations';
+import { SuggestedContentMixSection } from '../components/SuggestedContentMixSection';
+import { getNovelLearningJourney } from '../utils/recommendationEngine';
 
 interface Props {
   novelId: string;
@@ -873,6 +876,25 @@ export const NovelDetailPage: React.FC<Props> = ({
               <NovelCommentsSection novelId={novel.id} novelTitle={displayTitle} />
             </div>
           )}
+
+          {/* Connected User Journey & Mixed Recommendations */}
+          <div className="space-y-6 pt-8">
+            <NextStepRecommendations
+              journey={getNovelLearningJourney(novel)}
+              sourcePage={`/novels/${encodeURIComponent(novel.id)}`}
+              sourceType="story"
+            />
+
+            <SuggestedContentMixSection
+              sourcePage={`/novels/${encodeURIComponent(novel.id)}`}
+              sourceType="story"
+              excludeIds={[novel.id]}
+              excludeRoutes={[`/novels/${encodeURIComponent(novel.id)}`]}
+              keywordsText={`${novel.titleAr} ${novel.genre}`}
+              count={6}
+              variant="you_may_also_like"
+            />
+          </div>
         </div>
       </div>
     </div>

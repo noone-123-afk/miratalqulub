@@ -46,6 +46,8 @@ import {
   ContinuousViewMode,
 } from './ReaderToolbar';
 import { ArticleBottomSocialShare } from './FullScreenResearchStudyModal';
+import { ContextualLinkedText } from './ContextualLinkedText';
+import { ArticleRecommendationsSection } from './ArticleRecommendationsSection';
 
 interface Props {
   isOpen: boolean;
@@ -1158,34 +1160,47 @@ export const ArticlesSectionModal: React.FC<Props> = ({
 
                     {/* Main Content Paragraphs */}
                     <div className="space-y-4">
-                      {activeNarrative.contentParagraphs.map((para, i) => (
-                        <div
-                          key={i}
-                          className={`p-5 rounded-2xl border space-y-2.5 ${
-                            isLight
-                              ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-                              : 'bg-white/[0.02] border-white/10 text-gray-200'
-                          }`}
-                        >
-                          <h3
-                            className={`font-extrabold font-['Alexandria'] flex items-center gap-2 ${
-                              isLight ? 'text-slate-900' : 'text-white'
+                      {(() => {
+                        const modalUsedTargets = new Set<string>();
+                        const modalRoute = `/articles/${encodeURIComponent(activeNarrative.id)}`;
+                        return activeNarrative.contentParagraphs.map((para, i) => (
+                          <div
+                            key={i}
+                            className={`p-5 rounded-2xl border space-y-2.5 ${
+                              isLight
+                                ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
+                                : 'bg-white/[0.02] border-white/10 text-gray-200'
                             }`}
-                            style={{ fontSize: `${readerFontSize + 2}px` }}
                           >
-                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
-                            <span>{language === 'ar' ? para.heading : para.headingEn}</span>
-                          </h3>
-                          <p
-                            className={`leading-loose whitespace-pre-line ${
-                              isLight ? 'text-slate-700' : 'text-gray-300'
-                            }`}
-                            style={{ fontSize: `${readerFontSize}px` }}
-                          >
-                            {language === 'ar' ? para.text : para.textEn}
-                          </p>
-                        </div>
-                      ))}
+                            <h3
+                              className={`font-extrabold font-['Alexandria'] flex items-center gap-2 ${
+                                isLight ? 'text-slate-900' : 'text-white'
+                              }`}
+                              style={{ fontSize: `${readerFontSize + 2}px` }}
+                            >
+                              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+                              <span>{language === 'ar' ? para.heading : para.headingEn}</span>
+                            </h3>
+                            <p
+                              className={`leading-loose whitespace-pre-line ${
+                                isLight ? 'text-slate-700' : 'text-gray-300'
+                              }`}
+                              style={{ fontSize: `${readerFontSize}px` }}
+                            >
+                              <ContextualLinkedText
+                                text={language === 'ar' ? para.text : para.textEn}
+                                excludeArticleId={activeNarrative.id}
+                                excludeRoute={modalRoute}
+                                usedTargets={modalUsedTargets}
+                                maxLinksInParagraph={2}
+                                maxTotalLinks={7}
+                                isLight={isLight}
+                                onBeforeNavigate={onClose}
+                              />
+                            </p>
+                          </div>
+                        ));
+                      })()}
                     </div>
 
                     {/* Optional Diagnostic Table */}
@@ -1401,6 +1416,9 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                       text={getFullContinuousNarrativeText(activeNarrative, language)}
                       fontSize={readerFontSize}
                       isLight={isLight}
+                      excludeArticleId={activeNarrative.id}
+                      excludeRoute={`/articles/${encodeURIComponent(activeNarrative.id)}`}
+                      onBeforeNavigate={onClose}
                     />
                   </div>
                 </div>
@@ -1412,6 +1430,13 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                   url={`https://miratalqulub.com/articles/${encodeURIComponent(activeNarrative.id)}`}
                   isLight={isLight}
                   language={language}
+                />
+
+                {/* Smart Recommendations & Learning Journey */}
+                <ArticleRecommendationsSection
+                  source={activeNarrative}
+                  sourcePage={`/articles/${encodeURIComponent(activeNarrative.id)}`}
+                  onBeforeNavigate={onClose}
                 />
               </motion.div>
             ) : activeAcademic ? (
@@ -1869,6 +1894,9 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                       text={getFullContinuousAcademicText(activeAcademic, language)}
                       fontSize={readerFontSize}
                       isLight={isLight}
+                      excludeArticleId={activeAcademic.id}
+                      excludeRoute={`/articles/${encodeURIComponent(activeAcademic.id)}`}
+                      onBeforeNavigate={onClose}
                     />
                   </div>
                 </div>
@@ -1880,6 +1908,13 @@ export const ArticlesSectionModal: React.FC<Props> = ({
                   url={`https://miratalqulub.com/articles/${encodeURIComponent(activeAcademic.id)}`}
                   isLight={isLight}
                   language={language}
+                />
+
+                {/* Smart Recommendations & Learning Journey */}
+                <ArticleRecommendationsSection
+                  source={activeAcademic}
+                  sourcePage={`/articles/${encodeURIComponent(activeAcademic.id)}`}
+                  onBeforeNavigate={onClose}
                 />
               </motion.div>
             ) : null}

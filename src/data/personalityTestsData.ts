@@ -6,6 +6,7 @@ export type PersonalityTestId =
   | 'mbti_16'
   | 'big_five_ocean'
   | 'big_five'
+  | 'existential_fatigue'
   | 'cattell_16pf'
   | 'attachment_ecrr';
 
@@ -518,6 +519,156 @@ export const BIG_FIVE_QUESTIONS: PersonalityQuestion[] = [
   },
 ];
 
+export const EXISTENTIAL_FATIGUE_LIKERT_QUESTIONS: PersonalityQuestion[] = [
+  // Physical Fatigue (PHYSICAL) - Items 1-6
+  {
+    id: 101,
+    dimension: 'PHYSICAL',
+    textAr: 'أستيقظ صباحاً بعد نوم 7 إلى 9 ساعات وأشعر بثقل في جسدي وكأنني لم أنم قط.',
+    textEn: 'I wake up after 7 to 9 hours of sleep feeling physically heavy, as if I barely rested.',
+    positivePole: 'PHYSICAL',
+    weight: 1,
+  },
+  {
+    id: 102,
+    dimension: 'PHYSICAL',
+    textAr: 'أشعر بإجهاد عضلي سريع وتعب بدني ملحوظ عند أداء مجهود يومي بسيط أو صعود الدرج.',
+    textEn: 'I experience rapid muscular heaviness and physical exhaustion from minor daily exertion.',
+    positivePole: 'PHYSICAL',
+    weight: 1,
+  },
+  {
+    id: 103,
+    dimension: 'PHYSICAL',
+    textAr: 'ألاحظ أعراضاً جسدية متكررة كالنعاس النهاري، تقطع النوم، أو مؤشرات نقص فيتامينات (D/B12/الحديد).',
+    textEn: 'I notice recurring somatic signals such as daytime drowsiness, fragmented sleep, or vitamin/iron drain.',
+    positivePole: 'PHYSICAL',
+    weight: 1,
+  },
+  {
+    id: 104,
+    dimension: 'PHYSICAL',
+    textAr: 'يعتمد نشاطي اليومي على الكافيين والسكريات ثم ينهار جسدي بهبوط حاد في الطاقة لاحقاً.',
+    textEn: 'My daily stamina depends on caffeine or sugar spikes followed by sharp somatic energy crashes.',
+    positivePole: 'PHYSICAL',
+    weight: 1,
+  },
+  {
+    id: 105,
+    dimension: 'PHYSICAL',
+    textAr: 'غلب على روتيني الجلوس الطويل والخمول البدني، وإذا بذلت جهداً يتضاعف تعبي الجسدي لساعات.',
+    textEn: 'Prolonged sitting dominates my day, and physical exertion leaves my body drained for hours afterward.',
+    positivePole: 'PHYSICAL',
+    weight: 1,
+  },
+  {
+    id: 106,
+    dimension: 'PHYSICAL',
+    textAr: 'حتى في الأيام الهادئة التي يخلو فيها بالي من الضغوط النفسية، يظل جسدي متعباً وثقيلاً.',
+    textEn: 'Even on calm, worry-free days, my body continues to feel heavy and physically depleted.',
+    positivePole: 'PHYSICAL',
+    weight: 1,
+  },
+  // Mental Fatigue (MENTAL) - Items 7-12
+  {
+    id: 107,
+    dimension: 'MENTAL',
+    textAr: 'أعاني «ضبابية دماغ» واضحة وبطئاً في التركيز واستيعاب النصوص أو المهام الفكرية.',
+    textEn: 'I experience distinct brain fog and sluggish concentration during reading or cognitive tasks.',
+    positivePole: 'MENTAL',
+    weight: 1,
+  },
+  {
+    id: 108,
+    dimension: 'MENTAL',
+    textAr: 'عقلي لا يتوقف عن الاجترار وإعادة المواقف والأحاديث والقلق المستمر حتى عند محاولة النوم.',
+    textEn: 'My mind loops endlessly through past scenarios and future worries even when trying to rest.',
+    positivePole: 'MENTAL',
+    weight: 1,
+  },
+  {
+    id: 109,
+    dimension: 'MENTAL',
+    textAr: 'أشعر بحالة تأهب ويقظة عصبية مزمنة في الخلفية تستهلك طاقتي دون وجود خطر فعلي.',
+    textEn: 'My nervous system feels stuck in a chronic background fight-or-flight state without immediate danger.',
+    positivePole: 'MENTAL',
+    weight: 1,
+  },
+  {
+    id: 110,
+    dimension: 'MENTAL',
+    textAr: 'أصاب بإعياء وشلل ذهني أمام اتخاذ قرارات يومية بسيطة وكأن بطارية تفكيري فرغت.',
+    textEn: 'Small everyday choices trigger acute decision fatigue as if my mental battery is completely empty.',
+    positivePole: 'MENTAL',
+    weight: 1,
+  },
+  {
+    id: 111,
+    dimension: 'MENTAL',
+    textAr: 'التنقل المستمر بين الشاشات والإشعارات والأخبار يترك دماغي منهكاً ومشتتاً ليلاً.',
+    textEn: 'Constant switching across screens, notifications, and news leaves my mind overstimulated and exhausted.',
+    positivePole: 'MENTAL',
+    weight: 1,
+  },
+  {
+    id: 112,
+    dimension: 'MENTAL',
+    textAr: 'حتى في إجازاتي يمتلئ عقلي بالتخطيط والتحليل والواجبات دون لحظات صمت وتأمل حقيقي.',
+    textEn: 'Even during weekends, my mind keeps planning and analyzing without genuine cognitive stillness.',
+    positivePole: 'MENTAL',
+    weight: 1,
+  },
+  // Existential Fatigue (EXISTENTIAL) - Items 13-18
+  {
+    id: 113,
+    dimension: 'EXISTENTIAL',
+    textAr: 'يتكرر في داخلي شعور بالفراغ وسؤال صامت: «لماذا كل هذا؟ وما المعنى الحقيقي لما أفعله؟».',
+    textEn: 'A quiet emptiness often resurfaces within me asking, “Why all this? What is the point of what I do?”',
+    positivePole: 'EXISTENTIAL',
+    weight: 1,
+  },
+  {
+    id: 114,
+    dimension: 'EXISTENTIAL',
+    textAr: 'أشعر بتنافر معرفي لأن مسار عملي أو التزاماتي اليومية يتعارض مع قيمي الجوهرية الحقيقية.',
+    textEn: 'I feel inner cognitive dissonance because my daily routines conflict with my deepest core values.',
+    positivePole: 'EXISTENTIAL',
+    weight: 1,
+  },
+  {
+    id: 115,
+    dimension: 'EXISTENTIAL',
+    textAr: 'أستهلك قدراً هائلاً من طاقتي في «ارتداء قناع الشخصية الزائفة» لإرضاء توقعات المجتمع والآخرين.',
+    textEn: 'I burn immense energy wearing a false-self social mask just to satisfy external expectations.',
+    positivePole: 'EXISTENTIAL',
+    weight: 1,
+  },
+  {
+    id: 116,
+    dimension: 'EXISTENTIAL',
+    textAr: 'حتى بعد الإجازات الطويلة أو تحقيق النجاحات، يظل بداخلي فتور وخواء وجداني غريب.',
+    textEn: 'Even after long vacations or external achievements, a strange inner hollowness persists.',
+    positivePole: 'EXISTENTIAL',
+    weight: 1,
+  },
+  {
+    id: 117,
+    dimension: 'EXISTENTIAL',
+    textAr: 'أشعر أحياناً بالاغتراب عن ذاتي الحقيقية وكأنني أعيش حياة مرسومة لإرضاء غيري.',
+    textEn: 'I feel alienated from my authentic self, as though living on an autopilot script written by others.',
+    positivePole: 'EXISTENTIAL',
+    weight: 1,
+  },
+  {
+    id: 118,
+    dimension: 'EXISTENTIAL',
+    textAr: 'انقطعت عن الأنشطة الروحية أو الإبداعية أو لحظات الطبيعة التي تغذي روحي وتشعل شغفي.',
+    textEn: 'I have drifted away from spiritual depth, creativity, or nature moments that nourish my soul.',
+    positivePole: 'EXISTENTIAL',
+    weight: 1,
+  },
+];
+
 export const PERSONALITY_TESTS_CATALOG: PersonalityTestMeta[] = [
   {
     id: 'mbti_16types',
@@ -657,5 +808,58 @@ export const PERSONALITY_TESTS_CATALOG: PersonalityTestMeta[] = [
       },
     ],
     questions: BIG_FIVE_QUESTIONS,
+  },
+  {
+    id: 'existential_fatigue',
+    titleAr: 'اختبار التعب الوجودي (تقييم التعب الجسدي، العقلي، والوجودي)',
+    titleEn: 'Existential Fatigue Assessment (Physical, Mental & Existential)',
+    subtitleAr: 'أداة تقييمية مستندة لمعايير المقال الخامس لكشف أين ينزف رصيد طاقتك رغم الحصول على الراحة',
+    subtitleEn: 'Diagnostic self-assessment based on Article 5 distinguishing Physical, Mental, and Existential fatigue',
+    scientificOriginAr: 'المقال الخامس (سلسلة الصحة النفسية) • فيكتور فرانكل (1959)، هوبفول (1989)، ومكيوين (2006)',
+    scientificOriginEn: 'Mental Health Series Article 5 • Viktor Frankl (1959), Hobfoll (1989) & McEwen (2006)',
+    badgeAr: 'تقييم الطاقة والمعنى 🧭',
+    badgeEn: 'Energy & Meaning Check 🧭',
+    badgeColor: '#06b6d4',
+    estimatedMinutes: 6,
+    questionCount: 18,
+    iconName: 'Sparkles',
+    shortDescriptionAr: 'يميز بدقة بين التعب الجسدي العضوي، التعب العقلي وضبابية الدماغ، والتعب الوجودي الناتج عن أزمة المعنى وتعارض القيم، مع خطة استعادة عملية من 6 خطوات.',
+    shortDescriptionEn: 'Separates Physical somatic fatigue, Mental brain fog/rumination, and Existential value-misalignment exhaustion with a targeted Article 5 recovery plan.',
+    dimensions: [
+      {
+        key: 'PHYSICAL',
+        nameAr: 'التعب الجسدي والحيوي (Physical Fatigue)',
+        nameEn: 'Physical & Somatic Fatigue',
+        descriptionAr: 'الثقل العضلي، النوم غير المنعش رغم الساعات الطويلة، والمؤشرات الحيوية أو العضوية الصامتة.',
+        descriptionEn: 'Muscular heaviness, unrefreshing sleep hours, and silent biomedical or lifestyle drains.',
+        lowPoleAr: 'حيوية بدنية مستقرة',
+        highPoleAr: 'استنزاف جسدي مرتفع',
+        lowPoleEn: 'Restorative Stamina',
+        highPoleEn: 'High Physical Depletion',
+      },
+      {
+        key: 'MENTAL',
+        nameAr: 'التعب العقلي والمعرفي (Mental Fatigue)',
+        nameEn: 'Mental & Cognitive Fatigue',
+        descriptionAr: 'ضبابية الدماغ، إعياء القرارات، حلقات الاجترار والقلق المستمر، والتخمة الرقمية.',
+        descriptionEn: 'Brain fog, decision fatigue, chronic rumination/hypervigilance, and digital overstimulation.',
+        lowPoleAr: 'صفاء ذهني وانتباه هادئ',
+        highPoleAr: 'حمل عقلي واجترار مرتفع',
+        lowPoleEn: 'Cognitive Clarity',
+        highPoleEn: 'High Mental Overload',
+      },
+      {
+        key: 'EXISTENTIAL',
+        nameAr: 'التعب الوجودي والروحي (Existential Fatigue)',
+        nameEn: 'Existential & Value-Misalignment Fatigue',
+        descriptionAr: 'أزمة المعنى («لماذا كل هذا؟»)، التنافر المعرفي لتعارض القيم، وارتداء قناع الشخصية الزائفة.',
+        descriptionEn: 'Existential vacuum, cognitive dissonance from value conflicts, and false-self masking.',
+        lowPoleAr: 'معنى أصيل وانسجام قيمي',
+        highPoleAr: 'استنزاف وجودي عميق',
+        lowPoleEn: 'Authentic Purpose',
+        highPoleEn: 'High Existential Depletion',
+      },
+    ],
+    questions: EXISTENTIAL_FATIGUE_LIKERT_QUESTIONS,
   },
 ];

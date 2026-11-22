@@ -40,14 +40,18 @@ import { PsychologyTestsModal } from '../components/PsychologyTestsModal';
 import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
 import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
 import { LazyImage } from '../components/LazyImage';
-import { NextStepRecommendations } from '../components/NextStepRecommendations';
+import { TestResultRecommendationsSuite } from '../components/TestResultRecommendationsSuite';
+import { TestPreResultRecommendationCard } from '../components/TestPreResultRecommendationCard';
+import { ContextualLinksStrip } from '../components/ContextualLinksStrip';
 import {
   getMBTIRecommendations,
   getBigFiveRecommendations,
+  getExistentialFatigueRecommendations,
   ResolvedTestCard,
 } from '../data/recommendationsMapping';
 import { AssessmentType } from '../data/psychologySuiteData';
 import { IntelligenceBatteryType } from '../data/intelligenceTestData';
+import { ExistentialFatigueQuiz } from '../components/ExistentialFatigueQuiz';
 
 const LazyIntelligenceTestModal = lazy(() =>
   import('../components/IntelligenceTestModal').then((m) => ({
@@ -78,6 +82,7 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({}); // questionId -> value (1 to 5)
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isPreResultGate, setIsPreResultGate] = useState(false);
   const [isSavingCloud, setIsSavingCloud] = useState(false);
   const [cloudSaved, setCloudSaved] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
@@ -150,6 +155,12 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
     scores: { O: number; C: number; E: number; A: number; ES: number };
   } | null>(null);
 
+  const [existentialFatigueResult, setExistentialFatigueResult] = useState<{
+    scores: { PHYSICAL: number; MENTAL: number; EXISTENTIAL: number };
+    dominantType: 'existential' | 'mental' | 'physical' | 'mixed' | 'balanced';
+    highAxes: ('existential' | 'mental' | 'physical')[];
+  } | null>(null);
+
   const likertOptions = isAr
     ? [
         { value: 1, label: 'أعارض بشدة', color: 'hover:border-rose-500 hover:text-rose-400' },
@@ -172,9 +183,11 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
     setCurrentQuestionIndex(0);
     setAnswers({});
     setIsCompleted(false);
+    setIsPreResultGate(false);
     setCloudSaved(false);
     setMbtiResult(null);
     setBigFiveResult(null);
+    setExistentialFatigueResult(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -197,6 +210,7 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
     finalAnswers: Record<number, number>
   ) => {
     setIsCompleted(true);
+    setIsPreResultGate(true);
     setIsSavingCloud(true);
 
     if (test.id === 'mbti_16types' || test.id === 'mbti_16') {
@@ -315,6 +329,85 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
             `الاتزان الانفعالي: ${scores.ES}%`,
           ],
           snapshot: { scores, timestamp: new Date().toISOString() },
+        });
+        setCloudSaved(true);
+      } catch (e) {
+        console.warn('Cloud save fallback', e);
+      } finally {
+        setIsSavingCloud(false);
+      }
+    } else if (test.id === 'existential_fatigue') {
+      const sums: Record<'PHYSICAL' | 'MENTAL' | 'EXISTENTIAL', { score: number; count: number }> = {
+        PHYSICAL: { score: 0, count: 0 },
+        MENTAL: { score: 0, count: 0 },
+        EXISTENTIAL: { score: 0, count: 0 },
+      };
+
+      test.questions.forEach((q) => {
+        const raw = finalAnswers[q.id] || 3;
+        const dimKey = q.dimension as 'PHYSICAL' | 'MENTAL' | 'EXISTENTIAL';
+        if (sums[dimKey]) {
+          sums[dimKey].score += raw;
+          sums[dimKey].count += 1;
+        }
+      });
+
+      const calcPct = (dim: 'PHYSICAL' | 'MENTAL' | 'EXISTENTIAL') => {
+        const item = sums[dim];
+        if (!item || item.count === 0) return 50;
+        const min = item.count * 1;
+        const max = item.count * 5;
+        return Math.round(((item.score - min) / (max - min)) * 100);
+      };
+
+      const scores = {
+        PHYSICAL: calcPct('PHYSICAL'),
+        MENTAL: calcPct('MENTAL'),
+        EXISTENTIAL: calcPct('EXISTENTIAL'),
+      };
+
+      const highAxes: ('existential' | 'mental' | 'physical')[] = [];
+      if (scores.EXISTENTIAL >= 60) highAxes.push('existential');
+      if (scores.MENTAL >= 60) highAxes.push('mental');
+      if (scores.PHYSICAL >= 60) highAxes.push('physical');
+
+      let dominantType: 'existential' | 'mental' | 'physical' | 'mixed' | 'balanced' = 'balanced';
+      if (highAxes.length >= 2) {
+        dominantType = 'mixed';
+      } else if (Math.max(scores.PHYSICAL, scores.MENTAL, scores.EXISTENTIAL) <= 45) {
+        dominantType = 'balanced';
+      } else if (scores.EXISTENTIAL >= scores.MENTAL && scores.EXISTENTIAL >= scores.PHYSICAL) {
+        dominantType = 'existential';
+      } else if (scores.MENTAL >= scores.PHYSICAL) {
+        dominantType = 'mental';
+      } else {
+        dominantType = 'physical';
+      }
+
+      setExistentialFatigueResult({ scores, dominantType, highAxes });
+
+      const labelMapAr: Record<typeof dominantType, string> = {
+        existential: 'التعب الوجودي السائد',
+        mental: 'التعب العقلي السائد',
+        physical: 'التعب الجسدي السائد',
+        mixed: 'تعب مختلط متعدد المصادر',
+        balanced: 'طاقة متوازنة نسبياً',
+      };
+
+      try {
+        await saveUnifiedTestRecord(user || null, {
+          testType: 'psychology',
+          testTitleAr: 'اختبار التعب الوجودي (جسدي • عقلي • وجودي)',
+          testCategoryAr: 'مقاييس الصحة النفسية والمعنى',
+          scoreOrArchetype: labelMapAr[dominantType],
+          percentage: Math.round((scores.PHYSICAL + scores.MENTAL + scores.EXISTENTIAL) / 3),
+          badgeColor: '#06b6d4',
+          keyInsights: [
+            `التعب الجسدي: ${scores.PHYSICAL}%`,
+            `التعب العقلي: ${scores.MENTAL}%`,
+            `التعب الوجودي: ${scores.EXISTENTIAL}%`,
+          ],
+          snapshot: { scores, dominantType, timestamp: new Date().toISOString() },
         });
         setCloudSaved(true);
       } catch (e) {
@@ -636,20 +729,20 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
                       ? [
                           'اختبار الشخصية الشامل (MBTI)',
                           'مقياس العوامل الخمسة الكبرى (Big Five / OCEAN)',
+                          'اختبار التعب الوجودي (تقييم جسدي، عقلي، ووجودي)',
                           'نقاط القوة والتميز الفطرية',
                           'نقاط التحسين والتطوير',
                           'التقارير التفصيلية المعتمدة',
                           'التوصيات الشخصية للحياة والعلاقات',
-                          'مؤشرات النمو والتقدم',
                         ]
                       : [
                           'Comprehensive Personality Inventory (MBTI)',
                           'Big Five (OCEAN) Framework',
+                          'Existential Fatigue Assessment (Physical, Mental & Existential)',
                           'Innate Strengths & Unique Talents',
                           'Growth & Development Horizons',
                           'Validated Psychometric Dossiers',
                           'Personalized Relational Advice',
-                          'Progress & Awareness Metrics',
                         ]
                     ).map((item, idx) => (
                       <li
@@ -673,12 +766,24 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
             {/* Visitor Trust & Scoring Transparency Banner (كيف يتم حساب نتائج الاختبارات؟) */}
             <TestScoringTrustBanner onNavigatePage={onNavigatePage} />
 
+            {/* Contextual Internal Links on Personality Tests Hub (2–5 SEO & Educational links) */}
+            <ContextualLinksStrip
+              testId="mbti_16types"
+              sourcePage="/personality-tests"
+              sourceType="test"
+              count={4}
+              titleAr="مراجع ودراسات علمية لفهم اختبارات الشخصية"
+              titleEn="Psychometric Guides & Explanatory Studies"
+            />
+
             {/* Multi-Tier Psychometric Assessment System (Quick / Advanced / Professional) */}
             <div id="tiered-assessment-section">
               <Suspense
                 fallback={
                   <div className="p-6 text-center text-xs font-bold opacity-75">
-                    جارٍ تجهيز مستويات التحليل السيكومتري المتعددة...
+                    {isAr
+                      ? 'جارٍ تجهيز مستويات التحليل السيكومتري المتعددة...'
+                      : 'Preparing tiered psychometric assessment modules...'}
                   </div>
                 }
               >
@@ -686,8 +791,8 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
               </Suspense>
             </div>
 
-            {/* Primary Personality Assessment Cards Grid (MBTI & Big Five) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Primary Personality & Psychological Assessment Cards Grid (MBTI, Big Five & Existential Fatigue) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {PERSONALITY_TESTS_CATALOG.map((test) => (
                 <div
                   key={test.id}
@@ -787,6 +892,15 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
                 </div>
               ))}
             </div>
+
+            {/* 5-Axis Existential Fatigue Diagnostic Quiz (Article 5 · Axis 7) */}
+            <ExistentialFatigueQuiz
+              onNavigateToArticle={
+                onNavigatePage
+                  ? () => onNavigatePage('/articles/why-do-you-feel-tired-despite-rest')
+                  : undefined
+              }
+            />
 
             {/* Intelligence & Extended Psychometric Batteries Showcase */}
             <div
@@ -1105,8 +1219,21 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
           </div>
         )}
 
+        {/* VIEW 2B: Pre-Result Highlighted Recommendation Gate */}
+        {isCompleted && isPreResultGate && (
+          <TestPreResultRecommendationCard
+            testId={activeTest?.id || 'mbti_16types'}
+            sourcePage="/personality-tests"
+            onRevealResult={() => {
+              setIsPreResultGate(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onLaunchTest={(testCard) => applyPendingTestLaunch(testCard)}
+          />
+        )}
+
         {/* VIEW 3: Results & Scientific Disclaimer View */}
-        {isCompleted && (
+        {isCompleted && !isPreResultGate && (
           <div className="space-y-8">
             <TestScoringTrustBanner onNavigatePage={onNavigatePage} />
 
@@ -1465,6 +1592,299 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
               </div>
             )}
 
+            {/* EXISTENTIAL FATIGUE RESULT PRESENTATION */}
+            {existentialFatigueResult && (() => {
+              const { scores, dominantType } = existentialFatigueResult;
+              const diagnosisMeta: Record<
+                typeof dominantType,
+                {
+                  titleAr: string;
+                  titleEn: string;
+                  summaryAr: string;
+                  summaryEn: string;
+                  planAr: string[];
+                  planEn: string[];
+                  badgeBg: string;
+                }
+              > = {
+                existential: {
+                  titleAr: 'التعب الوجودي السائد (أزمة المعنى وتعارض القيم)',
+                  titleEn: 'Predominant Existential Fatigue (Meaning & Value Dissonance)',
+                  summaryAr:
+                    'تعبك الحالي نابع بالدرجة الأولى من «خواء المعنى» أو التنافر المعرفي الناتج عن العيش عكس قيمك الجوهرية أو ارتداء «قناع الشخصية الزائفة». لذلك لا يزيله النوم وحده؛ لأن السرير يريح الجسد ولا يملأ الروح.',
+                  summaryEn:
+                    'Your exhaustion stems chiefly from an existential vacuum, value misalignment (cognitive dissonance), or false-self masking—which extra sleep hours alone cannot resolve.',
+                  planAr: [
+                    'اكتب 5 قيم جوهرية تهمك فعلاً (الإبداع، الأسرة، الحرية، العطاء) وقيّم مدى تطابق أسبوعك معها.',
+                    'خفّض ارتداء القناع الاجتماعي وإرضاء توقعات «ماذا سيقول الناس؟» في موقف واحد هذا الأسبوع.',
+                    'أعد وصل يومك بلحظات سكينة روحية، طبيعة، أو عمل إبداعي ذي أثر ومعنى شخصي.',
+                    'إن استمر الفراغ الوجودي أو الانفصال عن الذات فوق 3 أشهر، يُنصح باستشارة علاج بالمعنى أو ACT.',
+                  ],
+                  planEn: [
+                    'List your top 5 core values and audit how closely your weekly routine aligns with them.',
+                    'Lower social masking by saying one honest no to external pressure this week.',
+                    'Reconnect with spiritual stillness, nature, or purposeful creative service.',
+                    'If emptiness persists beyond 3 months, consider ACT or Existential therapy.',
+                  ],
+                  badgeBg: 'from-rose-500/20 to-amber-500/15 border-rose-500/40',
+                },
+                mental: {
+                  titleAr: 'التعب العقلي السائد (ضبابية الدماغ والاجترار المعرفي)',
+                  titleEn: 'Predominant Mental Fatigue (Brain Fog & Chronic Rumination)',
+                  summaryAr:
+                    'يتركز استنزافك في الحمل المعرفي المستمر، ضبابية الدماغ، إعياء القرارات، واليقظة المفرطة (Fight-or-Flight) أو التخمة الرقمية. دماغك لا يرتاح حتى عند التمدد؛ وهو بحاجة لراحة عقلية حقيقية لا ساعات نوم فقط.',
+                  summaryEn:
+                    'Your fatigue is driven by cognitive overload, brain fog, decision fatigue, chronic hypervigilance, and screen stimulation. You need conscious mental rest, not merely sleep.',
+                  planAr: [
+                    'طبّق إيقاف الشاشات والإشعارات قبل النوم بـ 60 دقيقة لمنح الدماغ صمتاً عصبياً حقيقياً.',
+                    'خصص 15 دقيقة يومياً لـ«وقت القلق المجدول» لكتابة المخاوف وإغلاق ملفها بدل اجترارها ليلاً.',
+                    'أدخل 15 دقيقة من اليقظة الذهنية أو المشي في الطبيعة بدون سماعات لتصفية ضباب الدماغ.',
+                    'قلل الكافيين بعد الظهيرة وبسّط القرارات اليومية الصغيرة لحفظ الطاقة التنفيذية.',
+                  ],
+                  planEn: [
+                    'Enforce a strict 60-minute screen and notification cutoff before bedtime.',
+                    'Use a scheduled 15-minute daily worry window to halt nighttime rumination.',
+                    'Practice 15 minutes of device-free nature walking or mindfulness daily.',
+                    'Trim afternoon caffeine and simplify minor daily decisions to protect mental stamina.',
+                  ],
+                  badgeBg: 'from-purple-500/20 to-indigo-500/15 border-purple-500/40',
+                },
+                physical: {
+                  titleAr: 'التعب الجسدي السائد (اضطراب جودة النوم والاستنزاف العضوي)',
+                  titleEn: 'Predominant Physical Fatigue (Sleep Quality & Somatic Drain)',
+                  summaryAr:
+                    'تظهر إجاباتك أن الاستنزاف الأعلى يتركز في الجسد والطاقة العضلية ونوعية النوم رغم عدد ساعاته؛ وهو ما يستدعي — بحسب المقال الخامس — فحص الأسباب العضوية الصامتة قبل أي تأويل نفسي فقط.',
+                  summaryEn:
+                    'Your fatigue load centers on somatic heaviness and unrefreshing sleep. Per Article 5, ruling out silent biomedical deficits comes first.',
+                  planAr: [
+                    'اطلب فحصاً مخبرياً أساسياً: صورة دم (CBC)، مخزون الحديد (Ferritin)، فيتامين D، فيتامين B12، والغدة الدرقية (TSH).',
+                    'راقب جودة نومك (الشخير أو التقطع الليلي) وثبّت مواعيد النوم والاستيقاظ.',
+                    'استبدل المنبهات والسكريات بوجبات متوازنة البروتين وشرب 8 أكواب ماء يومياً.',
+                    'ابدأ بمشي نهاري خفيف متدرج (10–15 دقيقة) لكسر دائرة الخمول الجسدي دون إرهاق.',
+                  ],
+                  planEn: [
+                    'Request baseline labs: CBC, Ferritin, Vitamin D, Vitamin B12, Magnesium, and Thyroid (TSH).',
+                    'Evaluate sleep quality for snoring or fragmentation and stabilize sleep/wake hours.',
+                    'Swap sugar/caffeine reliance for protein-rich meals and adequate daily hydration.',
+                    'Add gentle, gradual 10–15 minute daytime walks to break sedentary deconditioning.',
+                  ],
+                  badgeBg: 'from-cyan-500/20 to-sky-500/15 border-cyan-500/40',
+                },
+                mixed: {
+                  titleAr: 'تعب مختلط متعدد المصادر (تداخل جسدي وعقلي ووجودي)',
+                  titleEn: 'Mixed Multi-Source Fatigue (Combined Physical, Mental & Existential)',
+                  summaryAr:
+                    'ارتفع مؤشر الاستنزاف لديك في أكثر من محور (جسدي وعقلي و/أو وجودي)، وهي الحالة الشائعة في التعب المزمن حيث يغذي كل مستوى الآخر. يتطلب التعافي اتباع الترتيب المتدرج ذي الخطوات الست من المقال الخامس.',
+                  summaryEn:
+                    'Multiple fatigue dimensions are elevated simultaneously—a reinforcing loop best resolved by following the sequential 6-step protocol in Article 5.',
+                  planAr: [
+                    'المرحلة 1 (الطبي): أجرِ تحاليل الفيتامينات والحديد والغدة الدرقية لاستبعاد أي سبب جسدي صامت.',
+                    'المرحلة 2 (الذهني والرقمي): اقطع الشاشات قبل النوم بساعة وأدخل 15 دقيقة صمت وتنفس نهاري.',
+                    'المرحلة 3 (الوجودي والقيمي): حدد علاقة أو التزاماً يتركك منهكاً وضع له حداً لطيفاً، وأعد إحياء قيمة شخصية مهملة.',
+                    'المرحلة 4 (الاستشارة): إذا استمر التعب أكثر من 3 أشهر رغم التحاليل والتعديل، استعن بأخصائي نفسي (CBT / ACT).',
+                  ],
+                  planEn: [
+                    'Stage 1 (Biomedical): Complete foundational vitamin, iron, and thyroid labs.',
+                    'Stage 2 (Mental Hygiene): Adopt a 1-hour pre-sleep screen cutoff and 15-minute daily stillness.',
+                    'Stage 3 (Values & Boundaries): Set one clear boundary around a draining demand and reclaim one personal value.',
+                    'Stage 4 (Clinical Support): Consult a licensed clinician if multi-source fatigue lasts over 3 months.',
+                  ],
+                  badgeBg: 'from-amber-500/20 to-rose-500/15 border-amber-500/40',
+                },
+                balanced: {
+                  titleAr: 'مستوى طاقة متوازن نسبياً واسترداد حيوي سليم',
+                  titleEn: 'Balanced Energy & Healthy Restorative Capacity',
+                  summaryAr:
+                    'مؤشرات التعب الجسدي والعقلي والوجودي لديك منخفضة إلى معتدلة، مما يدل على أن نومك وعاداتك الذهنية وارتباطك بالمعنى تدعم استعادة طاقتك بصورة جيدة.',
+                  summaryEn:
+                    'Your Physical, Mental, and Existential fatigue indices are in a low-to-moderate range, indicating resilient rest and meaningful daily balance.',
+                  planAr: [
+                    'واصل حماية جودة نومك وحدودك الرقمية قبل النوم بساعة.',
+                    'حافظ على فواصل طبيعة وحركة بدنية أسبوعية للوقاية من الاحتراق الصامت.',
+                    'راجع توازن قيمك كل فصل سنوي لضمان بقاء شغفك حياً ومتسقاً مع خطواتك.',
+                  ],
+                  planEn: [
+                    'Keep protecting sleep consistency and pre-sleep digital rest.',
+                    'Maintain weekly physical movement and outdoor mental breaks.',
+                    'Review core values quarterly to stay aligned with what brings true vitality.',
+                  ],
+                  badgeBg: 'from-emerald-500/20 to-teal-500/15 border-emerald-500/40',
+                },
+              };
+
+              const meta = diagnosisMeta[dominantType];
+
+              return (
+                <div
+                  className={`border rounded-3xl p-6 sm:p-10 space-y-8 shadow-2xl ${
+                    isLight ? 'bg-white border-slate-200' : 'bg-slate-900/90 border-slate-800'
+                  }`}
+                >
+                  <div
+                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-6 ${
+                      isLight ? 'border-slate-200' : 'border-slate-800'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div
+                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border bg-gradient-to-r ${meta.badgeBg} ${
+                          isLight ? 'text-slate-900' : 'text-cyan-200'
+                        }`}
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>
+                          {isAr
+                            ? 'التشخيص التفريقي وفق معايير المقال الخامس'
+                            : 'Article 5 Differential Fatigue Diagnosis'}
+                        </span>
+                      </div>
+                      <h2
+                        className={`text-2xl sm:text-3xl font-black tracking-tight ${
+                          isLight ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {isAr ? meta.titleAr : meta.titleEn}
+                      </h2>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full border shrink-0 ${
+                        isLight
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span>{isAr ? 'تم الحفظ سحابياً في ملفك' : 'Saved to Cloud Dossier'}</span>
+                    </div>
+                  </div>
+
+                  <p
+                    className={`text-sm sm:text-base leading-relaxed ${
+                      isLight ? 'text-slate-700' : 'text-slate-300'
+                    }`}
+                  >
+                    {isAr ? meta.summaryAr : meta.summaryEn}
+                  </p>
+
+                  {/* 3 Axes Breakdown Bars */}
+                  <div className="space-y-4">
+                    {[
+                      {
+                        key: 'PHYSICAL',
+                        titleAr: '1. التعب الجسدي والحيوي (Physical Fatigue)',
+                        titleEn: '1. Physical & Somatic Fatigue',
+                        descAr:
+                          'يقيس النوم غير المنعش رغم طول ساعاته، الثقل العضلي، ومؤشرات نقص الفيتامينات/الغدة الدرقية والخمول.',
+                        descEn:
+                          'Measures unrefreshing sleep, muscular heaviness, metabolic crashes, and somatic depletion.',
+                        score: scores.PHYSICAL,
+                        barClass: 'bg-cyan-500',
+                        textClass: 'text-cyan-500',
+                      },
+                      {
+                        key: 'MENTAL',
+                        titleAr: '2. التعب العقلي والمعرفي (Mental Fatigue)',
+                        titleEn: '2. Mental & Cognitive Fatigue',
+                        descAr:
+                          'يقيس ضبابية الدماغ، إعياء القرارات، حلقات الاجترار، فرط اليقظة العصبية، والتخمة الرقمية.',
+                        descEn:
+                          'Measures brain fog, decision fatigue, chronic rumination, hypervigilance, and screen fatigue.',
+                        score: scores.MENTAL,
+                        barClass: 'bg-purple-500',
+                        textClass: 'text-purple-500',
+                      },
+                      {
+                        key: 'EXISTENTIAL',
+                        titleAr: '3. التعب الوجودي والروحي (Existential Fatigue)',
+                        titleEn: '3. Existential & Meaning Fatigue',
+                        descAr:
+                          'يقيس خواء المعنى («لماذا كل هذا؟»)، التنافر المعرفي لتعارض القيم، واستنزاف قناع الشخصية الزائفة.',
+                        descEn:
+                          'Measures existential vacuum, value-life cognitive dissonance, and false-self masking.',
+                        score: scores.EXISTENTIAL,
+                        barClass: 'bg-rose-500',
+                        textClass: 'text-rose-500',
+                      },
+                    ].map((axis) => (
+                      <div
+                        key={axis.key}
+                        className={`p-5 rounded-2xl border space-y-2 ${
+                          isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center text-sm font-bold">
+                          <span className={axis.textClass}>
+                            {isAr ? axis.titleAr : axis.titleEn}
+                          </span>
+                          <span className={`font-mono ${axis.textClass}`}>{axis.score}%</span>
+                        </div>
+                        <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                          {isAr ? axis.descAr : axis.descEn}
+                        </p>
+                        <div
+                          className={`w-full h-2.5 rounded-full overflow-hidden ${
+                            isLight ? 'bg-slate-200' : 'bg-slate-900'
+                          }`}
+                        >
+                          <div
+                            className={`${axis.barClass} h-full rounded-full transition-all duration-500`}
+                            style={{ width: `${axis.score}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tailored Action Plan from Article 5 */}
+                  <div
+                    className={`p-5 rounded-2xl border space-y-3 ${
+                      isLight
+                        ? 'bg-cyan-50/70 border-cyan-200 text-slate-800'
+                        : 'bg-cyan-950/25 border-cyan-500/30 text-slate-200'
+                    }`}
+                  >
+                    <h4 className="font-bold text-sm text-cyan-500 flex items-center gap-2">
+                      <Layers className="w-4 h-4" />
+                      <span>
+                        {isAr
+                          ? 'بروتوكول الاستعادة الموصى به لنتيجتك (وفق المقال الخامس):'
+                          : 'Targeted Recovery Protocol for Your Result (Article 5):'}
+                      </span>
+                    </h4>
+                    <ul className="space-y-2 text-xs sm:text-sm">
+                      {(isAr ? meta.planAr : meta.planEn).map((step, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-cyan-500 font-black mt-0.5">•</span>
+                          <span className="leading-relaxed">{step}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {onNavigatePage && (
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundManager.playTap();
+                            onNavigatePage('/articles/why-do-you-feel-tired-despite-rest');
+                          }}
+                          className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition cursor-pointer inline-flex items-center gap-2"
+                        >
+                          <span>
+                            {isAr
+                              ? 'اقرأ المقال الخامس كاملاً: لماذا تشعر بالتعب رغم حصولك على الراحة؟'
+                              : 'Read Full Article 5: Why Do You Feel Tired Even After Rest?'}
+                          </span>
+                          {isRTL ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* MANDATORY SCIENTIFIC DISCLAIMER AT END OF TEST */}
             <div
               className={`rounded-3xl border p-6 sm:p-8 space-y-3 shadow-xl ${
@@ -1527,15 +1947,40 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
               </button>
             </div>
 
-            {/* Deterministic Next-Step Recommendations (MBTI or Big Five) */}
-            {(mbtiResult || bigFiveResult) && (
-              <NextStepRecommendations
-                bundle={
+            {/* Smart Recommendation Engine Suite (Next Step + Contextual Links + Try Another + Suggested Mix) */}
+            {(mbtiResult || bigFiveResult || existentialFatigueResult) && (
+              <TestResultRecommendationsSuite
+                testId={
+                  activeTest?.id ||
+                  (mbtiResult
+                    ? 'mbti_16types'
+                    : existentialFatigueResult
+                    ? 'existential_fatigue'
+                    : 'big_five_ocean')
+                }
+                sourcePage="/personality-tests"
+                resultHintText={
+                  mbtiResult
+                    ? `${mbtiResult.typeCode} ${
+                        isAr ? mbtiResult.archetype.titleAr : mbtiResult.archetype.titleEn
+                      }`
+                    : existentialFatigueResult
+                    ? isAr
+                      ? `اختبار التعب الوجودي: ${existentialFatigueResult.dominantType}`
+                      : `Existential Fatigue: ${existentialFatigueResult.dominantType}`
+                    : 'Big Five OCEAN'
+                }
+                legacyBundle={
                   mbtiResult
                     ? getMBTIRecommendations({
                         typeCode: mbtiResult.typeCode,
                         percentages: mbtiResult.percentages,
                       })
+                    : existentialFatigueResult
+                    ? getExistentialFatigueRecommendations(
+                        existentialFatigueResult.scores,
+                        'existential_fatigue'
+                      )
                     : getBigFiveRecommendations(bigFiveResult!.scores, 'big_five_ocean')
                 }
                 onLaunchTest={(testCard) => applyPendingTestLaunch(testCard)}

@@ -16,6 +16,8 @@ import { useAppTheme } from '../utils/theme';
 import { PageSEO } from '../components/PageSEO';
 import { soundManager } from '../utils/sound';
 import { IntelligenceBatteryType } from '../data/intelligenceTestData';
+import { ContextualLinksStrip } from '../components/ContextualLinksStrip';
+import { SuggestedContentMixSection } from '../components/SuggestedContentMixSection';
 
 interface IQTestsPageProps {
   onBackToHome: () => void;
@@ -323,6 +325,26 @@ export const IQTestsPage: React.FC<IQTestsPageProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Contextual Internal Links (2–5 SEO & Educational links) */}
+      <ContextualLinksStrip
+        testId="intel_multiple_intelligences"
+        sourcePage="/iq-tests"
+        sourceType="test"
+        count={4}
+        titleAr="مراجع ودراسات لفهم اختبارات الذكاء والقدرات"
+        titleEn="Scientific Explanations & Cognitive Studies"
+      />
+
+      {/* Curated Content Mix ("محتوى مقترح لك") */}
+      <SuggestedContentMixSection
+        sourcePage="/iq-tests"
+        sourceType="test"
+        clusters={['cognitive_intelligence', 'emotional_intelligence', 'personality']}
+        excludeRoutes={['/iq-tests']}
+        count={6}
+        variant="you_may_also_like"
+      />
     </div>
   );
 };

@@ -15,6 +15,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { PageSEO } from '../components/PageSEO';
 import { soundManager } from '../utils/sound';
+import { ContextualLinksStrip } from '../components/ContextualLinksStrip';
+import { SuggestedContentMixSection } from '../components/SuggestedContentMixSection';
 
 interface InteractiveToolsPageProps {
   onBackToHome: () => void;
@@ -284,6 +286,23 @@ export const InteractiveToolsPage: React.FC<InteractiveToolsPageProps> = ({
           );
         })}
       </section>
+
+      <ContextualLinksStrip
+        testId="compatibility"
+        sourcePage="/tools"
+        sourceType="educational"
+        count={4}
+        titleAr="مراجع علمية ومقالات تشرح آلية عمل الأدوات والاختبارات"
+        titleEn="Scientific Guides Explaining How Our Tools Work"
+      />
+
+      <SuggestedContentMixSection
+        sourcePage="/tools"
+        sourceType="educational"
+        excludeRoutes={['/tools']}
+        count={6}
+        variant="you_may_also_like"
+      />
     </div>
   );
 };

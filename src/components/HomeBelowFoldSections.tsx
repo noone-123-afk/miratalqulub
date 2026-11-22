@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import {
   Heart,
   Brain,
@@ -23,6 +23,8 @@ import {
   HOME_HIGHLIGHTED_ARTICLES,
   HOME_NOVEL_CATEGORIES,
 } from '../data/homeHighlightsData';
+
+const LazySuggestedContentMixSection = lazy(() => import('./SuggestedContentMixSection'));
 
 export interface HomeBelowFoldSectionsProps {
   isAr: boolean;
@@ -778,6 +780,24 @@ export const HomeBelowFoldSections: React.FC<HomeBelowFoldSectionsProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Dynamic Smart Content Discovery ("محتوى مقترح لك" + "الأكثر تفاعلاً وشعبية") */}
+      <Suspense fallback={null}>
+        <section className="space-y-8" aria-label={isAr ? 'اكتشاف المحتوى الذكي' : 'Smart Content Discovery'}>
+          <LazySuggestedContentMixSection
+            sourcePage="/"
+            sourceType="home"
+            count={6}
+            variant="you_may_also_like"
+          />
+          <LazySuggestedContentMixSection
+            sourcePage="/"
+            sourceType="home"
+            count={6}
+            variant="popular_content"
+          />
+        </section>
+      </Suspense>
     </>
   );
 };

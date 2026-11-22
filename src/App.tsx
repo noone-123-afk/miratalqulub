@@ -15,6 +15,7 @@ import { useAppTheme } from './utils/theme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { SitePage, parseAppRoute, navigateCleanUrl } from './utils/navigation';
+import { recordSessionPageView } from './utils/recommendationAnalytics';
 
 const Footer = lazy(() =>
   import('./components/Footer').then((m) => ({ default: m.Footer }))
@@ -251,6 +252,7 @@ function AppContent() {
       }
 
       setCurrentPage(parsed.page);
+      recordSessionPageView(parsed.cleanPath || window.location.pathname);
     };
 
     handleRouteChange();
