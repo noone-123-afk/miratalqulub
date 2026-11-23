@@ -91,6 +91,30 @@ app.get('/logo.png', (_req: Request, res: Response) => {
   res.status(404).end();
 });
 
+app.get('/og-image.jpg', (_req: Request, res: Response) => {
+  const distPath = path.resolve('dist', 'og-image.jpg');
+  const publicPath = path.resolve('public', 'og-image.jpg');
+  const filePath = fs.existsSync(distPath) ? distPath : publicPath;
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(filePath);
+  }
+  res.status(404).end();
+});
+
+app.get('/og-image.png', (_req: Request, res: Response) => {
+  const distPath = path.resolve('dist', 'og-image.png');
+  const publicPath = path.resolve('public', 'og-image.png');
+  const filePath = fs.existsSync(distPath) ? distPath : publicPath;
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(filePath);
+  }
+  res.status(404).end();
+});
+
 // Agentic Browsing Endpoints: /llms.txt and /ard.json & /.well-known/ard.json
 app.get(['/llms.txt', '/llms-full.txt'], (_req: Request, res: Response) => {
   const llmsPath = path.resolve('public', 'llms.txt');
@@ -2382,9 +2406,28 @@ wss.on('connection', (ws: WebSocket) => {
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
     app.use('/src/assets', express.static(path.resolve('src/assets')));
-    app.use(express.static(path.resolve('dist')));
-    app.get('*', (_req: Request, res: Response) => {
-      res.sendFile(path.resolve('dist', 'index.html'));
+    app.use(express.static(path.resolve('dist'), { extensions: ['html'] }));
+    app.get('*', (req: Request, res: Response) => {
+      const cleanPath = (req.path || '/').replace(/\/+$/, '') || '/';
+      if (cleanPath !== '/') {
+        const candidateHtml = path.resolve('dist', `${cleanPath.replace(/^\/+/, '')}.html`);
+        if (candidateHtml.startsWith(path.resolve('dist') + path.sep) && fs.existsSync(candidateHtml)) {
+          return res.sendFile(candidateHtml);
+        }
+      }
+
+      const indexPath = path.resolve('dist', 'index.html');
+      if (cleanPath !== '/' && fs.existsSync(indexPath)) {
+        const canonicalUrl = `https://miratalqulub.com${cleanPath}`;
+        let html = fs.readFileSync(indexPath, 'utf-8');
+        html = html
+          .replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${canonicalUrl}" />`)
+          .replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${canonicalUrl}" />`);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+      }
+
+      return res.sendFile(indexPath);
     });
   } else {
     const vite = await createViteServer({

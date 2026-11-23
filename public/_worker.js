@@ -167,6 +167,18 @@ export default {
       !path.startsWith('/api/') &&
       !/\.[a-z0-9]{1,8}$/i.test(path)
     ) {
+      const cleanPath = path.replace(/\/+$/, '') || '/index';
+      const prerenderedUrl = new URL(`${cleanPath}.html`, url.origin);
+      const prerenderedRes = await env.ASSETS.fetch(new Request(prerenderedUrl.toString(), request));
+      if (prerenderedRes.status === 200) {
+        const headers = new Headers(prerenderedRes.headers);
+        headers.set('Content-Type', 'text/html; charset=utf-8');
+        return new Response(prerenderedRes.body, {
+          status: 200,
+          headers,
+        });
+      }
+
       const indexUrl = new URL('/index.html', url.origin);
       const indexRes = await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
       const headers = new Headers(indexRes.headers);

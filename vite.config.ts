@@ -125,6 +125,8 @@ export default defineConfig(({ command }) => {
         includeAssets: [
           'icon.svg',
           'logo.avif',
+          'og-image.jpg',
+          'og-image.png',
           'apple-touch-icon.png',
           'pwa-192x192.avif',
           'pwa-512x512.avif',

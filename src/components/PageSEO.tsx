@@ -7,8 +7,11 @@ export interface PageSEOProps {
   canonicalPath: string;
   language: SupportedLanguage;
   pageType?: 'website' | 'article' | 'about' | 'contact' | 'terms' | 'privacy';
+  ogImageUrl?: string;
   structuredData?: Record<string, any>;
 }
+
+const DEFAULT_OG_IMAGE = 'https://miratalqulub.com/og-image.jpg';
 
 export const PageSEO: React.FC<PageSEOProps> = ({
   title,
@@ -16,6 +19,7 @@ export const PageSEO: React.FC<PageSEOProps> = ({
   canonicalPath,
   language,
   pageType = 'website',
+  ogImageUrl = DEFAULT_OG_IMAGE,
   structuredData,
 }) => {
   useEffect(() => {
@@ -52,12 +56,22 @@ export const PageSEO: React.FC<PageSEOProps> = ({
       meta.setAttribute('content', content);
     };
 
+    const resolvedImageUrl = ogImageUrl.startsWith('http')
+      ? ogImageUrl
+      : `https://miratalqulub.com${ogImageUrl.startsWith('/') ? ogImageUrl : `/${ogImageUrl}`}`;
+
     setOgMeta('og:title', title);
     setOgMeta('og:description', description);
     setOgMeta('og:url', fullCanonicalUrl);
     setOgMeta('og:type', pageType === 'article' ? 'article' : 'website');
     setOgMeta('og:locale', language === 'ar' ? 'ar_AR' : 'en_US');
     setOgMeta('og:site_name', language === 'ar' ? 'مِـرآة القـلوب' : 'Mirror of Hearts');
+    setOgMeta('og:image', resolvedImageUrl);
+    setOgMeta('og:image:secure_url', resolvedImageUrl);
+    setOgMeta('og:image:type', 'image/jpeg');
+    setOgMeta('og:image:width', '1200');
+    setOgMeta('og:image:height', '630');
+    setOgMeta('og:image:alt', title);
 
     // 5. Update Twitter Cards
     const setTwitterMeta = (name: string, content: string) => {
@@ -73,6 +87,8 @@ export const PageSEO: React.FC<PageSEOProps> = ({
     setTwitterMeta('twitter:card', 'summary_large_image');
     setTwitterMeta('twitter:title', title);
     setTwitterMeta('twitter:description', description);
+    setTwitterMeta('twitter:image', resolvedImageUrl);
+    setTwitterMeta('twitter:image:alt', title);
 
     // 6. Dynamic JSON-LD Structured Data
     const scriptId = 'page-dynamic-structured-data';
@@ -96,7 +112,7 @@ export const PageSEO: React.FC<PageSEOProps> = ({
         existingScript.remove();
       }
     };
-  }, [title, description, canonicalPath, language, pageType, structuredData]);
+  }, [title, description, canonicalPath, language, pageType, ogImageUrl, structuredData]);
 
   return null;
 };

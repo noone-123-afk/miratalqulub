@@ -1024,11 +1024,11 @@ export const DomainHostingModal: React.FC<Props> = ({ isOpen, onClose, onOpenAdS
                       </span>
                       <span className="font-mono text-gray-300">@</span>
                       <span className="font-mono text-amber-200/90 truncate max-w-[200px] sm:max-w-xs">
-                        google-site-verification=miratalqulub-gcp-verify
+                        google-site-verification=&lt;YOUR_SEARCH_CONSOLE_TOKEN&gt;
                       </span>
                     </div>
                     <button
-                      onClick={() => copyToClipboard('google-site-verification=miratalqulub-gcp-verify', 'txt')}
+                      onClick={() => copyToClipboard('google-site-verification=<YOUR_SEARCH_CONSOLE_TOKEN>', 'txt')}
                       className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition cursor-pointer flex items-center gap-1 text-[11px]"
                     >
                       {copiedKey === 'txt' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
