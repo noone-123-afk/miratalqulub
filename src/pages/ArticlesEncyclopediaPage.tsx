@@ -74,6 +74,7 @@ import { navigateCleanUrl } from '../utils/navigation';
 import { ContextualLinkedText } from '../components/ContextualLinkedText';
 import { ArticleRecommendationsSection } from '../components/ArticleRecommendationsSection';
 import { ExistentialFatigueQuiz } from '../components/ExistentialFatigueQuiz';
+import { CognitiveDistortionChallenge } from '../components/CognitiveDistortionChallenge';
 
 export { ResearchArticleModal };
 export type { ResearchArticleModalProps };
@@ -2073,6 +2074,21 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                 )}
               </div>
             )}
+
+            {/* Interactive CBT Thought Record & Cognitive Distortion Challenge Section */}
+            <div className="pt-2">
+              <CognitiveDistortionChallenge
+                onOpenDistortionsArticle={() => {
+                  const target = ARTICLES_CATALOG.find(
+                    (a) => a.id === 'most-common-cognitive-distortions'
+                  );
+                  if (target) {
+                    setActiveTrack('narrative');
+                    openNarrativeArticle(target);
+                  }
+                }}
+              />
+            </div>
           </motion.div>
         ) : activeNarrative ? (
           /* Full-Page Narrative Article Reader */
@@ -2382,6 +2398,10 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                   />
+                )}
+
+                {activeNarrative.id === 'most-common-cognitive-distortions' && (
+                  <CognitiveDistortionChallenge />
                 )}
 
                 {activeNarrative.conclusionAr && (

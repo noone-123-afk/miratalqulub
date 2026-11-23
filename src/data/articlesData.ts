@@ -21,6 +21,14 @@ import { CLINICAL_BALANCED_PERSONALITY_ARTICLES } from './clinicalBalancedPerson
 import { MENTAL_HEALTH_SERIES_ARTICLES } from './mentalHealthSeriesArticles';
 import { PSYCHOLOGICAL_COUNSELING_ARTICLES } from './psychologicalCounselingArticles';
 import { CBT_SERIES_ARTICLES } from './cbtSeriesArticles';
+import { WORKPLACE_EI_ARTICLES } from './workplaceEiArticles';
+import { CAREER_GROWTH_ARTICLES } from './careerGrowthArticles';
+import { LEADERSHIP_ARTICLES } from './leadershipArticles';
+import { UNIVERSITY_MAJORS_ARTICLES } from './universityMajorsArticles';
+import { CAREER_GUIDANCE_ARTICLES } from './careerGuidanceArticles';
+import { GULF_SOCIETY_ARTICLES } from './gulfSocietyArticles';
+import { CONSCIOUS_MARRIAGE_ARTICLES } from './consciousMarriageArticles';
+import { SELF_UNDERSTANDING_ARTICLES } from './selfUnderstandingArticles';
 
 export interface DiagnosticComparisonRow {
   criterionAr: string;
@@ -494,6 +502,14 @@ export const DIGITAL_COMPANION_ILLUSION_FULL_TEXT_AR = `# وهم الرفيق ا
 الإنسان يحتاج إلى إنسان آخر ليؤكد (Confirm) وجوده. الآلة يمكنها محاكاة الكلام، لكنها لا يمكنها محاكاة **الحضور**.`;
 
 export const ARTICLES_CATALOG: Article[] = [
+  ...SELF_UNDERSTANDING_ARTICLES,
+  ...CONSCIOUS_MARRIAGE_ARTICLES,
+  ...GULF_SOCIETY_ARTICLES,
+  ...CAREER_GUIDANCE_ARTICLES,
+  ...UNIVERSITY_MAJORS_ARTICLES,
+  ...LEADERSHIP_ARTICLES,
+  ...CAREER_GROWTH_ARTICLES,
+  ...WORKPLACE_EI_ARTICLES,
   ...CBT_SERIES_ARTICLES,
   ...PSYCHOLOGICAL_COUNSELING_ARTICLES,
   ...MENTAL_HEALTH_SERIES_ARTICLES,
