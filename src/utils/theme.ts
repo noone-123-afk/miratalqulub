@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 export type AppTheme = 'dark' | 'light';
 
@@ -17,19 +17,21 @@ export function getInitialTheme(): AppTheme {
   return 'dark';
 }
 
-export function applyTheme(theme: AppTheme) {
+export function applyTheme(theme: AppTheme, emitEvent = true) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   if (theme === 'light') {
-    root.classList.add('light');
-    root.classList.remove('dark');
+    if (!root.classList.contains('light')) root.classList.add('light');
+    if (root.classList.contains('dark')) root.classList.remove('dark');
   } else {
-    root.classList.add('dark');
-    root.classList.remove('light');
+    if (!root.classList.contains('dark')) root.classList.add('dark');
+    if (root.classList.contains('light')) root.classList.remove('light');
   }
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
-    window.dispatchEvent(new CustomEvent('app-theme-changed', { detail: { theme } }));
+    if (emitEvent) {
+      window.dispatchEvent(new CustomEvent('app-theme-changed', { detail: { theme } }));
+    }
   } catch (e) {
     console.error('Failed to persist theme in localStorage', e);
   }
@@ -46,12 +48,12 @@ export function useAppTheme(): UseAppThemeReturn {
   const [theme, setThemeState] = useState<AppTheme>(getInitialTheme);
 
   useEffect(() => {
-    applyTheme(theme);
-
     const handleThemeChange = (e: Event) => {
       const customEvent = e as CustomEvent<{ theme: AppTheme }>;
       if (customEvent.detail?.theme) {
-        setThemeState(customEvent.detail.theme);
+        setThemeState((prev) =>
+          prev === customEvent.detail.theme ? prev : customEvent.detail.theme
+        );
       }
     };
 
@@ -61,17 +63,22 @@ export function useAppTheme(): UseAppThemeReturn {
     };
   }, []);
 
-  const toggleTheme = (newTheme?: AppTheme) => {
-    const target = newTheme || (theme === 'dark' ? 'light' : 'dark');
-    setThemeState(target);
-    applyTheme(target);
-  };
+  const toggleTheme = useCallback(
+    (newTheme?: AppTheme) => {
+      const target = newTheme || (theme === 'dark' ? 'light' : 'dark');
+      setThemeState(target);
+      applyTheme(target, true);
+    },
+    [theme]
+  );
 
-  const result = [theme, toggleTheme] as UseAppThemeReturn;
-  result.theme = theme;
-  result.appTheme = theme;
-  result.toggleTheme = toggleTheme;
-  result.toggleAppTheme = toggleTheme;
-  return result;
+  return useMemo(() => {
+    const result = [theme, toggleTheme] as UseAppThemeReturn;
+    result.theme = theme;
+    result.appTheme = theme;
+    result.toggleTheme = toggleTheme;
+    result.toggleAppTheme = toggleTheme;
+    return result;
+  }, [theme, toggleTheme]);
 }
 

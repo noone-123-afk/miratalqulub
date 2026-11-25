@@ -51,22 +51,92 @@
     </script>
     <script>
       (function() {
+        try {
+          var root = document.documentElement;
+          var savedTheme = localStorage.getItem('mirat_al_quloob_theme');
+          var theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+          root.classList.add(theme);
+
+          var savedLang = localStorage.getItem('mirat_al_quloob_lang');
+          var lang = (savedLang === 'en' || savedLang === 'ar') ? savedLang : 'ar';
+          var dir = lang === 'en' ? 'ltr' : 'rtl';
+          root.lang = lang;
+          root.dir = dir;
+          root.classList.add('lang-' + lang, 'dir-' + dir, lang === 'en' ? 'text-left' : 'text-right');
+        } catch (e) {}
+      })();
+    </script>
+    <script>
+      (function() {
         var adsLoaded = false;
-        function loadAdSense() {
-          if (adsLoaded) return;
-          adsLoaded = true;
-          var s = document.createElement('script');
-          s.async = true;
-          s.crossOrigin = 'anonymous';
-          s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7880718645976012';
-          document.head.appendChild(s);
+        var mainVisible = false;
+        var interactionEvents = ['pointerdown', 'keydown', 'touchstart'];
+        var scrollListener = null;
+
+        function cleanupListeners() {
+          for (var i = 0; i < interactionEvents.length; i++) {
+            window.removeEventListener(interactionEvents[i], onUserActivity);
+          }
+          if (scrollListener) {
+            window.removeEventListener('scroll', scrollListener);
+            scrollListener = null;
+          }
         }
-        ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function(evt) {
-          window.addEventListener(evt, loadAdSense, { passive: true, once: true });
-        });
-        window.addEventListener('load', function() {
-          setTimeout(loadAdSense, 3500);
-        }, { once: true });
+
+        function loadAdSense() {
+          if (adsLoaded || !mainVisible) return;
+          adsLoaded = true;
+          cleanupListeners();
+          var inject = function() {
+            var s = document.createElement('script');
+            s.async = true;
+            s.crossOrigin = 'anonymous';
+            s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7880718645976012';
+            document.head.appendChild(s);
+          };
+          if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(inject, { timeout: 2000 });
+          } else {
+            setTimeout(inject, 0);
+          }
+        }
+
+        function onUserActivity() {
+          if (mainVisible) {
+            loadAdSense();
+          }
+        }
+
+        scrollListener = function() {
+          if (mainVisible && (window.scrollY || window.pageYOffset || 0) > 60) {
+            loadAdSense();
+          }
+        };
+
+        for (var i = 0; i < interactionEvents.length; i++) {
+          window.addEventListener(interactionEvents[i], onUserActivity, { passive: true });
+        }
+        window.addEventListener('scroll', scrollListener, { passive: true });
+
+        function markMainVisible() {
+          if (mainVisible) return;
+          mainVisible = true;
+          window.addEventListener('load', function() {
+            setTimeout(loadAdSense, 7500);
+          }, { once: true });
+          if (document.readyState === 'complete') {
+            setTimeout(loadAdSense, 7500);
+          }
+        }
+
+        if (window.__miratMainVisible) {
+          markMainVisible();
+        } else {
+          window.addEventListener('mirat:main-visible', markMainVisible, { once: true });
+          window.addEventListener('load', function() {
+            setTimeout(markMainVisible, 2500);
+          }, { once: true });
+        }
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />

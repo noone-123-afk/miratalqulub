@@ -1,13 +1,17 @@
-import { ARTICLES_CATALOG, Article } from '../data/articlesData';
-import { ACADEMIC_PAPERS_CATALOG, AcademicPaper } from '../data/academicPapersData';
-import { NOVELS_CATALOG, Novel, NovelGenre } from '../data/novelsData';
-import { PERSONALITY_TESTS_CATALOG } from '../data/personalityTestsData';
-import { ASSESSMENTS_CATALOG, AssessmentType } from '../data/psychologySuiteData';
+import type { Article } from '../data/articlesData';
+import type { AcademicPaper } from '../data/academicPapersData';
+import type { Novel, NovelGenre } from '../data/novelsData';
+import type { AssessmentType } from '../data/psychologySuiteData';
+import type { IntelligenceBatteryType } from '../data/intelligenceTestData';
 import {
-  INTELLIGENCE_BATTERIES_CATALOG,
-  IntelligenceBatteryType,
-} from '../data/intelligenceTestData';
-import { ANALYSIS_TIERS_CATALOG } from '../data/tieredPsychologyBank';
+  INDEX_ARTICLES_META,
+  INDEX_ACADEMIC_META,
+  INDEX_NOVELS_META,
+  INDEX_PERSONALITY_TESTS_META,
+  INDEX_ANALYSIS_TIERS_META,
+  INDEX_ASSESSMENTS_META,
+  INDEX_INTELLIGENCE_BATTERIES_META,
+} from '../data/catalogMetadataIndex';
 import {
   ResolvedTestCard,
   RecommendationTestTargetId,
@@ -608,7 +612,7 @@ let cachedNovels: IndexedNovelCandidate[] | null = null;
 export function getAllIndexedArticles(): IndexedArticleCandidate[] {
   if (cachedArticles) return cachedArticles;
 
-  const narrativeItems: IndexedArticleCandidate[] = ARTICLES_CATALOG.map((art: Article) => {
+  const narrativeItems: IndexedArticleCandidate[] = INDEX_ARTICLES_META.map((art) => {
     const blob = [
       art.id,
       art.title,
@@ -639,9 +643,9 @@ export function getAllIndexedArticles(): IndexedArticleCandidate[] {
   });
 
   const seenIds = new Set(narrativeItems.map((i) => i.id));
-  const academicItems: IndexedArticleCandidate[] = ACADEMIC_PAPERS_CATALOG.filter(
+  const academicItems: IndexedArticleCandidate[] = INDEX_ACADEMIC_META.filter(
     (p) => !seenIds.has(p.id)
-  ).map((paper: AcademicPaper) => {
+  ).map((paper) => {
     const blob = [
       paper.id,
       paper.titleAr,
@@ -704,7 +708,7 @@ export function getAllIndexedTests(): IndexedTestCandidate[] {
   });
 
   // 2. MBTI, Big Five & Existential Fatigue on /personality-tests
-  PERSONALITY_TESTS_CATALOG.forEach((t) => {
+  INDEX_PERSONALITY_TESTS_META.forEach((t) => {
     if (
       t.id !== 'mbti_16types' &&
       t.id !== 'big_five_ocean' &&
@@ -759,7 +763,7 @@ export function getAllIndexedTests(): IndexedTestCandidate[] {
   });
 
   // 3. Tiered Psychometric Lab
-  const advTier = ANALYSIS_TIERS_CATALOG[1] || ANALYSIS_TIERS_CATALOG[0];
+  const advTier = INDEX_ANALYSIS_TIERS_META[1] || INDEX_ANALYSIS_TIERS_META[0];
   list.push({
     kind: 'test',
     id: 'tiered_assessment',
@@ -796,7 +800,7 @@ export function getAllIndexedTests(): IndexedTestCandidate[] {
     tat: ['psychological_patterns', 'stories', 'relationships'],
   };
 
-  ASSESSMENTS_CATALOG.forEach((a) => {
+  INDEX_ASSESSMENTS_META.forEach((a) => {
     const targetId = `psych_${a.id}` as RecommendationTestTargetId;
     const clusters =
       testClusterOverrides[a.id] ||
@@ -844,7 +848,7 @@ export function getAllIndexedTests(): IndexedTestCandidate[] {
     cognitive_aptitude_cogat: ['cognitive_intelligence', 'self_discovery'],
   };
 
-  INTELLIGENCE_BATTERIES_CATALOG.forEach((b) => {
+  INDEX_INTELLIGENCE_BATTERIES_META.forEach((b) => {
     const targetId = `intel_${b.id}` as RecommendationTestTargetId;
     list.push({
       kind: 'test',
@@ -877,7 +881,7 @@ export function getAllIndexedTests(): IndexedTestCandidate[] {
 export function getAllIndexedNovels(): IndexedNovelCandidate[] {
   if (cachedNovels) return cachedNovels;
 
-  cachedNovels = NOVELS_CATALOG.map((nv: Novel) => {
+  cachedNovels = INDEX_NOVELS_META.map((nv) => {
     const blob = [
       nv.id,
       nv.titleAr,

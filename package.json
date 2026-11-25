@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "prebuild": "tsx scripts/generate-catalog-index.ts && tsx src/utils/generateSitemap.ts",
     "build": "vite build && tsx scripts/prerender-routes.ts",
+    "generate:sitemap": "tsx src/utils/generateSitemap.ts",
     "start": "tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",

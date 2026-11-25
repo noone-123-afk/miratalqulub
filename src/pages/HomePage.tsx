@@ -42,7 +42,7 @@ export interface HomePageProps {
   onNavigatePage?: (page: string) => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = (props) => {
+export const HomePage: React.FC<HomePageProps> = React.memo((props) => {
   const { language, isRTL } = useLanguage();
   const [theme] = useAppTheme();
   const isLight = theme === 'light';
@@ -573,6 +573,6 @@ export const HomePage: React.FC<HomePageProps> = (props) => {
       </Suspense>
     </div>
   );
-};
+});
 
 export default HomePage;

@@ -20,10 +20,8 @@ import {
   AcademicPaper,
   getFullContinuousAcademicText,
 } from '../data/academicPapersData';
-import {
-  Article,
-  getFullContinuousNarrativeText,
-} from '../data/articlesData';
+import type { Article } from '../data/articlesData';
+import { getFullContinuousNarrativeText } from '../utils/articleTextFormatter';
 import {
   FormattedContinuousManuscript,
   ContinuousViewMode,

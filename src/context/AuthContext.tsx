@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo, ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { soundManager } from '../utils/sound';
 
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [authError, setAuthError] = useState<string | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  const attachAuthListener = async () => {
+  const attachAuthListener = useCallback(async () => {
     if (unsubscribeRef.current) {
       return import('../firebaseAuth');
     }
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     }
     return fb;
-  };
+  }, []);
 
   useEffect(() => {
     // Skip downloading firebaseAuth (150 KB) on first visit if user has no stored session or is a bot
@@ -105,9 +105,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         unsubscribeRef.current = null;
       }
     };
-  }, []);
+  }, [attachAuthListener]);
 
-  const translateAuthError = (err: any): string => {
+  const translateAuthError = useCallback((err: any): string => {
     const code = err?.code || '';
     if (
       code.includes('user-not-found') ||
@@ -129,9 +129,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return 'تم إغلاق نافذة تسجيل الدخول قبل إتمام المصادقة';
     }
     return err?.message || 'حدث خطأ غير متوقع أثناء تسجيل الدخول';
-  };
+  }, []);
 
-  const signInWithGoogleHandler = async () => {
+  const signInWithGoogleHandler = useCallback(async () => {
     setAuthError(null);
     try {
       soundManager.playTap();
@@ -147,50 +147,56 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAuthError(translateAuthError(err));
       throw err;
     }
-  };
+  }, [attachAuthListener, translateAuthError]);
 
-  const signInWithEmailHandler = async (email: string, pass: string) => {
-    setAuthError(null);
-    try {
-      soundManager.playTap();
-      const fb = await attachAuthListener();
-      const cred = await fb.signInWithEmailAndPassword(fb.auth, email.trim(), pass);
-      if (cred?.user) {
-        setUser(cred.user);
-        markAuthSessionActive(true);
+  const signInWithEmailHandler = useCallback(
+    async (email: string, pass: string) => {
+      setAuthError(null);
+      try {
+        soundManager.playTap();
+        const fb = await attachAuthListener();
+        const cred = await fb.signInWithEmailAndPassword(fb.auth, email.trim(), pass);
+        if (cred?.user) {
+          setUser(cred.user);
+          markAuthSessionActive(true);
+        }
+        soundManager.playRoundPass();
+      } catch (err: any) {
+        console.error('Email Sign-In failed', err);
+        setAuthError(translateAuthError(err));
+        throw err;
       }
-      soundManager.playRoundPass();
-    } catch (err: any) {
-      console.error('Email Sign-In failed', err);
-      setAuthError(translateAuthError(err));
-      throw err;
-    }
-  };
+    },
+    [attachAuthListener, translateAuthError]
+  );
 
-  const signUpWithEmailHandler = async (email: string, pass: string, _displayName?: string) => {
-    setAuthError(null);
-    if (email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-      const msg = 'هذا البريد محجوز لإدارة المنصة، يرجى تسجيل الدخول عبر Google.';
-      setAuthError(msg);
-      throw new Error(msg);
-    }
-    try {
-      soundManager.playTap();
-      const fb = await attachAuthListener();
-      const cred = await fb.createUserWithEmailAndPassword(fb.auth, email.trim(), pass);
-      if (cred?.user) {
-        setUser(cred.user);
-        markAuthSessionActive(true);
+  const signUpWithEmailHandler = useCallback(
+    async (email: string, pass: string, _displayName?: string) => {
+      setAuthError(null);
+      if (email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+        const msg = 'هذا البريد محجوز لإدارة المنصة، يرجى تسجيل الدخول عبر Google.';
+        setAuthError(msg);
+        throw new Error(msg);
       }
-      soundManager.playRoundPass();
-    } catch (err: any) {
-      console.error('Email Sign-Up failed', err);
-      setAuthError(translateAuthError(err));
-      throw err;
-    }
-  };
+      try {
+        soundManager.playTap();
+        const fb = await attachAuthListener();
+        const cred = await fb.createUserWithEmailAndPassword(fb.auth, email.trim(), pass);
+        if (cred?.user) {
+          setUser(cred.user);
+          markAuthSessionActive(true);
+        }
+        soundManager.playRoundPass();
+      } catch (err: any) {
+        console.error('Email Sign-Up failed', err);
+        setAuthError(translateAuthError(err));
+        throw err;
+      }
+    },
+    [attachAuthListener, translateAuthError]
+  );
 
-  const signInAsGuestHandler = async () => {
+  const signInAsGuestHandler = useCallback(async () => {
     setAuthError(null);
     try {
       soundManager.playTap();
@@ -206,15 +212,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAuthError(translateAuthError(err));
       throw err;
     }
-  };
+  }, [attachAuthListener, translateAuthError]);
 
-  const logoutHandler = async () => {
+  const logoutHandler = useCallback(async () => {
     soundManager.playTap();
     markAuthSessionActive(false);
     const fb = await attachAuthListener();
     await fb.signOut(fb.auth);
     setUser(null);
-  };
+  }, [attachAuthListener]);
+
+  const clearError = useCallback(() => setAuthError(null), []);
 
   const isOwner = Boolean(
     user &&
@@ -223,21 +231,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       user.emailVerified === true
   );
 
+  const contextValue = useMemo(
+    () => ({
+      user,
+      loading,
+      isOwner,
+      signInWithGoogle: signInWithGoogleHandler,
+      signInWithEmail: signInWithEmailHandler,
+      signUpWithEmail: signUpWithEmailHandler,
+      signInAsGuest: signInAsGuestHandler,
+      logout: logoutHandler,
+      authError,
+      clearError,
+    }),
+    [
+      user,
+      loading,
+      isOwner,
+      signInWithGoogleHandler,
+      signInWithEmailHandler,
+      signUpWithEmailHandler,
+      signInAsGuestHandler,
+      logoutHandler,
+      authError,
+      clearError,
+    ]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        isOwner,
-        signInWithGoogle: signInWithGoogleHandler,
-        signInWithEmail: signInWithEmailHandler,
-        signUpWithEmail: signUpWithEmailHandler,
-        signInAsGuest: signInAsGuestHandler,
-        logout: logoutHandler,
-        authError,
-        clearError: () => setAuthError(null),
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

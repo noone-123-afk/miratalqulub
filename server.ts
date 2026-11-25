@@ -13,6 +13,7 @@ import {
   getNationalityEntryByCountry,
   DetectedNationalityProfile,
 } from './src/utils/locationNationalityDetector';
+import { generateSitemapXml } from './src/utils/sitemapGenerator';
 
 dotenv.config();
 
@@ -127,6 +128,21 @@ app.get(['/llms.txt', '/llms-full.txt'], (_req: Request, res: Response) => {
   return res.send(
     `# مِـرآة القـلوب | Mirror of Hearts (miratalqulub.com)\n\n> منصة عربية معرفية وتفاعلية متخصصة في تحليل الشخصية والتوافق النفسي والعاطفي والفكري.\n\n## الأقسام الرئيسية\n- [الصفحة الرئيسية](https://miratalqulub.com/)\n- [تحليل الشخصية](https://miratalqulub.com/personality-tests)\n- [اختبارات الذكاء](https://miratalqulub.com/iq-tests)\n- [كاشف شريك الحياة](https://miratalqulub.com/compatibility)\n- [الأدوات التفاعلية](https://miratalqulub.com/tools)\n- [المقالات المعرفية](https://miratalqulub.com/articles)\n- [الروايات والقصص](https://miratalqulub.com/novels)\n- [ملفي](https://miratalqulub.com/profile)\n- [من نحن](https://miratalqulub.com/about)\n- [المنهجية العلمية](https://miratalqulub.com/methodology)\n- [سياسة الخصوصية](https://miratalqulub.com/privacy)\n`
   );
+});
+
+// Dynamic Sitemap XML Endpoint covering all active static & catalog pages
+app.get('/sitemap.xml', (_req: Request, res: Response) => {
+  const { xml } = generateSitemapXml();
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  return res.status(200).send(xml);
+});
+
+// Prevent indexing of owner-only admin routes across all runtimes
+app.use(['/admin-cms', '/admin'], (_req: Request, res: Response, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
 });
 
 app.get(

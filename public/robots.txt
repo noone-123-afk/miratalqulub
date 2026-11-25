@@ -7,10 +7,15 @@ Allow: /
 
 User-agent: Googlebot
 Allow: /
+Disallow: /admin-cms
+Disallow: /admin
+Disallow: /api/
 
 User-agent: *
 Allow: /
+Disallow: /admin-cms
+Disallow: /admin
+Disallow: /api/
 
-# Sitemaps
-Sitemap: https://ais-pre-uhi2ujsliyan7cdnjqdgni-551936965486.europe-west2.run.app/sitemap.xml
+# Sitemap
 Sitemap: https://miratalqulub.com/sitemap.xml

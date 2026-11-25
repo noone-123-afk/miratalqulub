@@ -9,6 +9,7 @@ export interface PageSEOProps {
   pageType?: 'website' | 'article' | 'about' | 'contact' | 'terms' | 'privacy';
   ogImageUrl?: string;
   structuredData?: Record<string, any>;
+  noIndex?: boolean;
 }
 
 const DEFAULT_OG_IMAGE = 'https://miratalqulub.com/og-image.jpg';
@@ -21,6 +22,7 @@ export const PageSEO: React.FC<PageSEOProps> = ({
   pageType = 'website',
   ogImageUrl = DEFAULT_OG_IMAGE,
   structuredData,
+  noIndex = false,
 }) => {
   useEffect(() => {
     // 1. Update Title
@@ -34,6 +36,19 @@ export const PageSEO: React.FC<PageSEOProps> = ({
       document.head.appendChild(descMeta);
     }
     descMeta.setAttribute('content', description);
+
+    // 2b. Update Robots directive
+    let robotsMeta = document.querySelector('meta[name="robots"]');
+    if (noIndex) {
+      if (!robotsMeta) {
+        robotsMeta = document.createElement('meta');
+        robotsMeta.setAttribute('name', 'robots');
+        document.head.appendChild(robotsMeta);
+      }
+      robotsMeta.setAttribute('content', 'noindex, nofollow');
+    } else if (robotsMeta) {
+      robotsMeta.setAttribute('content', 'index, follow');
+    }
 
     // 3. Update Canonical Link
     const fullCanonicalUrl = `https://miratalqulub.com${canonicalPath}`;
@@ -106,13 +121,19 @@ export const PageSEO: React.FC<PageSEOProps> = ({
     }
 
     return () => {
-      // Cleanup dynamic JSON-LD on unmount
+      // Cleanup dynamic JSON-LD and restore robots on unmount
       const existingScript = document.getElementById(scriptId);
       if (existingScript) {
         existingScript.remove();
       }
+      if (noIndex) {
+        const currentRobots = document.querySelector('meta[name="robots"]');
+        if (currentRobots) {
+          currentRobots.setAttribute('content', 'index, follow');
+        }
+      }
     };
-  }, [title, description, canonicalPath, language, pageType, ogImageUrl, structuredData]);
+  }, [title, description, canonicalPath, language, pageType, ogImageUrl, structuredData, noIndex]);
 
   return null;
 };

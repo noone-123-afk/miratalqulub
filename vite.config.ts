@@ -83,6 +83,33 @@ function manualChunkMatcher(id: string): string | undefined {
   ) {
     return 'data-psychometrics';
   }
+  if (id.includes('src/data/catalogMetadataIndex')) {
+    return 'data-catalog-index';
+  }
+  if (
+    id.includes('src/data/cbtSeriesArticles') ||
+    id.includes('src/data/psychologicalCounselingArticles') ||
+    id.includes('src/data/mentalHealthSeriesArticles')
+  ) {
+    return 'data-articles-clinical';
+  }
+  if (
+    id.includes('src/data/workplaceEiArticles') ||
+    id.includes('src/data/careerGrowthArticles') ||
+    id.includes('src/data/leadershipArticles') ||
+    id.includes('src/data/universityMajorsArticles') ||
+    id.includes('src/data/careerGuidanceArticles')
+  ) {
+    return 'data-articles-career';
+  }
+  if (
+    id.includes('src/data/gulfSocietyArticles') ||
+    id.includes('src/data/consciousMarriageArticles') ||
+    id.includes('src/data/selfUnderstandingArticles') ||
+    id.includes('src/data/emotionalIntelligencePart2Articles')
+  ) {
+    return 'data-articles-society';
+  }
   if (
     id.includes('src/data/articlesData') ||
     id.includes('src/data/homeArticlesRankData') ||
@@ -91,7 +118,6 @@ function manualChunkMatcher(id: string): string | undefined {
     id.includes('src/data/pdfFourBigFiveArticles') ||
     id.includes('src/data/relationshipFourArticles') ||
     id.includes('src/data/emotionalIntelligenceSeriesArticles') ||
-    id.includes('src/data/emotionalIntelligencePart2Articles') ||
     id.includes('src/data/platformIntroductoryArticles') ||
     id.includes('src/data/clinical') ||
     id.includes('src/data/academicPapersData')

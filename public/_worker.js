@@ -160,6 +160,22 @@ export default {
       );
     }
 
+    const isAdminRoute = path === '/admin-cms' || path === '/admin' || path.startsWith('/admin-cms/');
+
+    if (path === '/sitemap.xml') {
+      const sitemapRes = await env.ASSETS.fetch(request);
+      if (sitemapRes.status === 200) {
+        const headers = new Headers(sitemapRes.headers);
+        headers.set('Content-Type', 'application/xml; charset=utf-8');
+        headers.set('Cache-Control', 'public, max-age=3600');
+        headers.set('Access-Control-Allow-Origin', '*');
+        return new Response(sitemapRes.body, {
+          status: 200,
+          headers,
+        });
+      }
+    }
+
     const response = await env.ASSETS.fetch(request);
     if (
       request.method === 'GET' &&
@@ -168,23 +184,36 @@ export default {
       !/\.[a-z0-9]{1,8}$/i.test(path)
     ) {
       const cleanPath = path.replace(/\/+$/, '') || '/index';
-      const prerenderedUrl = new URL(`${cleanPath}.html`, url.origin);
-      const prerenderedRes = await env.ASSETS.fetch(new Request(prerenderedUrl.toString(), request));
-      if (prerenderedRes.status === 200) {
-        const headers = new Headers(prerenderedRes.headers);
-        headers.set('Content-Type', 'text/html; charset=utf-8');
-        return new Response(prerenderedRes.body, {
-          status: 200,
-          headers,
-        });
+      if (!isAdminRoute) {
+        const prerenderedUrl = new URL(`${cleanPath}.html`, url.origin);
+        const prerenderedRes = await env.ASSETS.fetch(new Request(prerenderedUrl.toString(), request));
+        if (prerenderedRes.status === 200) {
+          const headers = new Headers(prerenderedRes.headers);
+          headers.set('Content-Type', 'text/html; charset=utf-8');
+          return new Response(prerenderedRes.body, {
+            status: 200,
+            headers,
+          });
+        }
       }
 
       const indexUrl = new URL('/index.html', url.origin);
       const indexRes = await env.ASSETS.fetch(new Request(indexUrl.toString(), request));
       const headers = new Headers(indexRes.headers);
       headers.set('Content-Type', 'text/html; charset=utf-8');
+      if (isAdminRoute) {
+        headers.set('X-Robots-Tag', 'noindex, nofollow');
+      }
       return new Response(indexRes.body, {
         status: 200,
+        headers,
+      });
+    }
+    if (isAdminRoute) {
+      const headers = new Headers(response.headers);
+      headers.set('X-Robots-Tag', 'noindex, nofollow');
+      return new Response(response.body, {
+        status: response.status,
         headers,
       });
     }

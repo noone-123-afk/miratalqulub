@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import type {
   SupportedLanguage,
   TextDirection,
@@ -190,29 +190,48 @@ export function getInitialLanguage(): SupportedLanguage {
   return 'ar';
 }
 
-export function applyLanguageSettings(lang: SupportedLanguage) {
+export function applyLanguageSettings(lang: SupportedLanguage, emitEvent = true) {
   if (typeof document === 'undefined') return;
   const meta = FALLBACK_LANG_METADATA[lang] || FALLBACK_LANG_METADATA.ar;
   const tw = computeTailwindClasses(lang);
   const root = document.documentElement;
-  root.lang = meta.code;
-  root.dir = meta.dir;
+  if (root.lang !== meta.code) root.lang = meta.code;
+  if (root.dir !== meta.dir) root.dir = meta.dir;
 
-  root.classList.remove('lang-ar', 'lang-en', 'dir-rtl', 'dir-ltr', 'text-right', 'text-left');
-  root.classList.add(`lang-${meta.code}`, `dir-${meta.dir}`, tw.textAlignClass);
+  const targetRootClasses = [`lang-${meta.code}`, `dir-${meta.dir}`, tw.textAlignClass];
+  for (const cls of ['lang-ar', 'lang-en', 'dir-rtl', 'dir-ltr', 'text-right', 'text-left']) {
+    const shouldHave = targetRootClasses.includes(cls);
+    if (shouldHave && !root.classList.contains(cls)) {
+      root.classList.add(cls);
+    } else if (!shouldHave && root.classList.contains(cls)) {
+      root.classList.remove(cls);
+    }
+  }
 
   if (document.body) {
-    document.body.dir = meta.dir;
-    document.body.classList.remove('dir-rtl', 'dir-ltr', 'text-right', 'text-left', 'font-sans');
-    document.body.classList.add(tw.dirClass, tw.textAlignClass);
-    if (!meta.isRTL) {
-      document.body.classList.add('font-sans');
+    if (document.body.dir !== meta.dir) document.body.dir = meta.dir;
+    const bodyClasses = document.body.classList;
+    const removeBody = ['dir-rtl', 'dir-ltr', 'text-right', 'text-left', 'font-sans'];
+    for (const cls of removeBody) {
+      const keep =
+        cls === tw.dirClass ||
+        cls === tw.textAlignClass ||
+        (cls === 'font-sans' && !meta.isRTL);
+      if (keep && !bodyClasses.contains(cls)) {
+        bodyClasses.add(cls);
+      } else if (!keep && bodyClasses.contains(cls)) {
+        bodyClasses.remove(cls);
+      }
     }
   }
 
   try {
-    localStorage.setItem(LANG_STORAGE_KEY, lang);
-    window.dispatchEvent(new CustomEvent('app-language-changed', { detail: { language: lang } }));
+    if (localStorage.getItem(LANG_STORAGE_KEY) !== lang) {
+      localStorage.setItem(LANG_STORAGE_KEY, lang);
+    }
+    if (emitEvent) {
+      window.dispatchEvent(new CustomEvent('app-language-changed', { detail: { language: lang } }));
+    }
   } catch (e) {
     console.error('Failed to persist language in localStorage', e);
   }
@@ -337,10 +356,10 @@ function applyDomLocalization(lang: SupportedLanguage) {
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<SupportedLanguage>(getInitialLanguage);
-  const [, setDictLoaded] = useState(Boolean(loadedI18nModule));
+  const [dictLoaded, setDictLoaded] = useState(Boolean(loadedI18nModule));
 
   useEffect(() => {
-    applyLanguageSettings(language);
+    applyLanguageSettings(language, false);
 
     let rafId: number | null = null;
     let observer: MutationObserver | null = null;
@@ -364,14 +383,16 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
           });
         }
       });
-    } else {
+    } else if (hasEverLocalizedToEnglish) {
       applyDomLocalization('ar');
     }
 
     const handleLangChange = (e: Event) => {
       const customEvent = e as CustomEvent<{ language: SupportedLanguage }>;
       if (customEvent.detail?.language) {
-        setLanguageState(customEvent.detail.language);
+        setLanguageState((prev) =>
+          prev === customEvent.detail.language ? prev : customEvent.detail.language
+        );
       }
     };
 
@@ -384,84 +405,119 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
   }, [language]);
 
-  const setLanguage = (lang: SupportedLanguage) => {
+  const setLanguage = useCallback((lang: SupportedLanguage) => {
     soundManager.playTap();
     setLanguageState(lang);
-    applyLanguageSettings(lang);
-  };
+    applyLanguageSettings(lang, true);
+  }, []);
 
-  const toggleLanguage = () => {
+  const toggleLanguage = useCallback(() => {
     soundManager.playTap();
     const nextLang: SupportedLanguage = language === 'ar' ? 'en' : 'ar';
     setLanguageState(nextLang);
-    applyLanguageSettings(nextLang);
-  };
+    applyLanguageSettings(nextLang, true);
+  }, [language]);
 
-  const t = (key: string, fallback?: string): string => {
-    const fullDict = loadedI18nModule?.TRANSLATIONS || CORE_TRANSLATIONS;
-    const entry = fullDict[key] || CORE_TRANSLATIONS[key];
-    if (entry && entry[language]) {
-      return entry[language];
-    }
-    return fallback || entry?.ar || key;
-  };
+  const t = useCallback(
+    (key: string, fallback?: string): string => {
+      const fullDict = loadedI18nModule?.TRANSLATIONS || CORE_TRANSLATIONS;
+      const entry = fullDict[key] || CORE_TRANSLATIONS[key];
+      if (entry && entry[language]) {
+        return entry[language];
+      }
+      return fallback || entry?.ar || key;
+    },
+    [language, dictLoaded]
+  );
 
-  const translateText = (text: string): string => {
-    if (language === 'ar' || !loadedI18nModule) return text;
-    return loadedI18nModule.translateDynamicField(text, language);
-  };
+  const translateText = useCallback(
+    (text: string): string => {
+      if (language === 'ar' || !loadedI18nModule) return text;
+      return loadedI18nModule.translateDynamicField(text, language);
+    },
+    [language, dictLoaded]
+  );
 
-  const languageMetadata =
-    loadedI18nModule?.getLanguageMetadata(language) ||
-    FALLBACK_LANG_METADATA[language] ||
-    FALLBACK_LANG_METADATA.ar;
+  const languageMetadata = useMemo(
+    () =>
+      loadedI18nModule?.getLanguageMetadata(language) ||
+      FALLBACK_LANG_METADATA[language] ||
+      FALLBACK_LANG_METADATA.ar,
+    [language, dictLoaded]
+  );
 
-  const supportedLanguages =
-    loadedI18nModule?.SUPPORTED_LANGUAGES || Object.values(FALLBACK_LANG_METADATA);
+  const supportedLanguages = useMemo(
+    () => loadedI18nModule?.SUPPORTED_LANGUAGES || Object.values(FALLBACK_LANG_METADATA),
+    [dictLoaded]
+  );
 
   const isRTL = languageMetadata.isRTL;
   const direction: TextDirection = languageMetadata.dir;
-  const tailwindClasses =
-    loadedI18nModule?.getTailwindLayoutClasses(language) || computeTailwindClasses(language);
+  const tailwindClasses = useMemo(
+    () => loadedI18nModule?.getTailwindLayoutClasses(language) || computeTailwindClasses(language),
+    [language, dictLoaded]
+  );
 
-  const formatNumber = (value: number): string => {
-    if (!Number.isFinite(value)) return '0';
-    try {
-      return new Intl.NumberFormat(languageMetadata.locale).format(value);
-    } catch {
-      return String(value);
-    }
-  };
+  const formatNumber = useCallback(
+    (value: number): string => {
+      if (!Number.isFinite(value)) return '0';
+      try {
+        return new Intl.NumberFormat(languageMetadata.locale).format(value);
+      } catch {
+        return String(value);
+      }
+    },
+    [languageMetadata.locale]
+  );
 
-  const formatDate = (isoOrDate: string | Date, options?: Intl.DateTimeFormatOptions): string => {
-    try {
-      const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate;
-      return d.toLocaleDateString(
-        languageMetadata.locale,
-        options || { year: 'numeric', month: 'short', day: 'numeric' }
-      );
-    } catch {
-      return String(isoOrDate);
-    }
-  };
+  const formatDate = useCallback(
+    (isoOrDate: string | Date, options?: Intl.DateTimeFormatOptions): string => {
+      try {
+        const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate;
+        return d.toLocaleDateString(
+          languageMetadata.locale,
+          options || { year: 'numeric', month: 'short', day: 'numeric' }
+        );
+      } catch {
+        return String(isoOrDate);
+      }
+    },
+    [languageMetadata.locale]
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      language,
+      direction,
+      isRTL,
+      languageMetadata,
+      supportedLanguages,
+      tailwindClasses,
+      setLanguage,
+      toggleLanguage,
+      t,
+      translateText,
+      formatNumber,
+      formatDate,
+    }),
+    [
+      language,
+      direction,
+      isRTL,
+      languageMetadata,
+      supportedLanguages,
+      tailwindClasses,
+      setLanguage,
+      toggleLanguage,
+      t,
+      translateText,
+      formatNumber,
+      formatDate,
+    ]
+  );
 
   return (
-    <LanguageContext.Provider
-      value={{
-        language,
-        direction,
-        isRTL,
-        languageMetadata,
-        supportedLanguages,
-        tailwindClasses,
-        setLanguage,
-        toggleLanguage,
-        t,
-        translateText,
-        formatNumber,
-        formatDate,
-      }}
-    >
+    <LanguageContext.Provider value={contextValue}>
       <div
         dir={direction}
         className={`min-h-screen w-full transition-colors duration-200 ${tailwindClasses.containerClass}`}

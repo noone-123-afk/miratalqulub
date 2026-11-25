@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/HomePage';
 import { UserProfile, PartnerAnalysisResult } from './types';
@@ -208,6 +208,17 @@ function AppContent() {
   const [activeNovelId, setActiveNovelId] = useState<string>('room_104_cipher');
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
 
+  // Signal AdSense loader strictly after initial main content paint completes
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        (window as Window & { __miratMainVisible?: boolean }).__miratMainVisible = true;
+        window.dispatchEvent(new Event('mirat:main-visible'));
+      });
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   // Synchronize Clean URL pathname & History API state with currentPage for direct deep linking, OAuth/AdSense validators, and SEO crawlers
   useEffect(() => {
     const handleRouteChange = () => {
@@ -315,7 +326,7 @@ function AppContent() {
     }
   }, [currentPage, quizQuestions.length]);
 
-  const handleNavigatePage = (page: string) => {
+  const handleNavigatePage = useCallback((page: string) => {
     soundManager.playTap();
     const cleaned = page.replace(/^#?\/+/, '').trim();
     if (!cleaned || cleaned === 'home') {
@@ -340,7 +351,7 @@ function AppContent() {
 
     setCurrentPage(parsed.page);
     navigateCleanUrl(parsed.cleanPath);
-  };
+  }, []);
 
   const handleSelectNovel = (novelId: string) => {
     soundManager.playTap();
@@ -422,48 +433,48 @@ function AppContent() {
     };
   }, [user]);
 
-  const handleOpenContactFeedback = () => {
+  const handleOpenContactFeedback = useCallback(() => {
     soundManager.playTap();
     setIsContactFeedbackOpen(true);
-  };
+  }, []);
 
-  const handleOpenAnalytics = () => {
+  const handleOpenAnalytics = useCallback(() => {
     if (!isOwner) return;
     soundManager.playTap();
     setIsAnalyticsOpen(true);
-  };
+  }, [isOwner]);
 
-  const handleOpenPrivacyPolicy = () => {
+  const handleOpenPrivacyPolicy = useCallback(() => {
     soundManager.playTap();
     setLegalModalTab('privacy');
     setIsLegalModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenTermsOfService = () => {
+  const handleOpenTermsOfService = useCallback(() => {
     soundManager.playTap();
     setLegalModalTab('terms');
     setIsLegalModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenArticles = () => {
+  const handleOpenArticles = useCallback(() => {
     soundManager.playTap();
     setIsArticlesModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenNovels = () => {
+  const handleOpenNovels = useCallback(() => {
     soundManager.playTap();
     setIsNovelsModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenIntelligenceTests = () => {
+  const handleOpenIntelligenceTests = useCallback(() => {
     soundManager.playTap();
     setIsIntelligenceModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenOnboardingWizard = () => {
+  const handleOpenOnboardingWizard = useCallback(() => {
     soundManager.playTap();
     setIsOnboardingWizardOpen(true);
-  };
+  }, []);
 
   const handleOnboardingSelectDestination = (goal: OnboardingGoal) => {
     setIsOnboardingWizardOpen(false);
@@ -485,11 +496,11 @@ function AppContent() {
     }
   };
 
-  const handleOpenUserDashboard = (tab: DashboardTabKey = 'overview') => {
+  const handleOpenUserDashboard = useCallback((tab: DashboardTabKey = 'overview') => {
     soundManager.playTap();
     setUserProfileDashboardTab(tab);
     setIsUserProfileOpen(true);
-  };
+  }, []);
 
   const handleLoadHistoricalResult = (savedProfile: UserProfile, savedResult: PartnerAnalysisResult) => {
     soundManager.playResultReveal();
@@ -501,11 +512,11 @@ function AppContent() {
     navigateCleanUrl('/compatibility');
   };
 
-  const handleOpenWebsiteSection = (tab: WebsiteTabKey = 'about') => {
+  const handleOpenWebsiteSection = useCallback((tab: WebsiteTabKey = 'about') => {
     soundManager.playTap();
     setWebsiteSectionTab(tab);
     setIsWebsiteSectionsOpen(true);
-  };
+  }, []);
 
   // Start Quiz with Profile
   const handleStart = async (userProfile: UserProfile) => {
@@ -782,7 +793,7 @@ function AppContent() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     soundManager.playPageTransition();
     setStep('profile');
     setProfile(null);
@@ -790,7 +801,7 @@ function AppContent() {
     setResult(null);
     setIsResultUnlocked(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   return (
     <div

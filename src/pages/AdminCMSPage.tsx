@@ -181,6 +181,7 @@ export const AdminCMSPage: React.FC<Props> = ({ onBackToHome, onOpenAnalyticsMod
         }
         canonicalPath="/admin-cms"
         language={language}
+        noIndex
       />
 
       <div className="max-w-6xl mx-auto space-y-8">

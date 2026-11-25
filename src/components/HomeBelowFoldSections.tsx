@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   Heart,
   Brain,
@@ -49,6 +49,28 @@ export const HomeBelowFoldSections: React.FC<HomeBelowFoldSectionsProps> = ({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [shouldLoadMix, setShouldLoadMix] = useState(false);
+  const mixSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (shouldLoadMix) return;
+    const node = mixSentinelRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      const t = setTimeout(() => setShouldLoadMix(true), 2500);
+      return () => clearTimeout(t);
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShouldLoadMix(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '400px 0px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [shouldLoadMix]);
 
   const handlePermanentDelete = async () => {
     soundManager.playTap();
@@ -782,22 +804,28 @@ export const HomeBelowFoldSections: React.FC<HomeBelowFoldSectionsProps> = ({
       </section>
 
       {/* Dynamic Smart Content Discovery ("محتوى مقترح لك" + "الأكثر تفاعلاً وشعبية") */}
-      <Suspense fallback={null}>
-        <section className="space-y-8" aria-label={isAr ? 'اكتشاف المحتوى الذكي' : 'Smart Content Discovery'}>
-          <LazySuggestedContentMixSection
-            sourcePage="/"
-            sourceType="home"
-            count={6}
-            variant="you_may_also_like"
-          />
-          <LazySuggestedContentMixSection
-            sourcePage="/"
-            sourceType="home"
-            count={6}
-            variant="popular_content"
-          />
-        </section>
-      </Suspense>
+      <div ref={mixSentinelRef} className="w-full max-w-5xl mx-auto px-4 sm:px-6">
+        {shouldLoadMix ? (
+          <Suspense fallback={<div className="min-h-[420px]" aria-hidden="true" />}>
+            <section className="space-y-8" aria-label={isAr ? 'اكتشاف المحتوى الذكي' : 'Smart Content Discovery'}>
+              <LazySuggestedContentMixSection
+                sourcePage="/"
+                sourceType="home"
+                count={6}
+                variant="you_may_also_like"
+              />
+              <LazySuggestedContentMixSection
+                sourcePage="/"
+                sourceType="home"
+                count={6}
+                variant="popular_content"
+              />
+            </section>
+          </Suspense>
+        ) : (
+          <div className="min-h-[420px]" aria-hidden="true" />
+        )}
+      </div>
     </>
   );
 };

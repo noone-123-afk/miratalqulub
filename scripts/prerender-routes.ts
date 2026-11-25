@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ARTICLES_CATALOG, Article } from '../src/data/articlesData';
+import { ACADEMIC_PAPERS_CATALOG, AcademicPaper } from '../src/data/academicPapersData';
+import { NOVELS_CATALOG, Novel, NovelChapter } from '../src/data/novelsData';
+import { generateSitemapXml } from '../src/utils/sitemapGenerator';
 
 const BASE_URL = 'https://miratalqulub.com';
 const OG_IMAGE_URL = `${BASE_URL}/og-image.jpg`;
@@ -414,7 +417,12 @@ ${mainContentHtml}
       </div>`;
 }
 
-function buildCoreRouteBody(meta: StaticRouteMeta, articles: Article[]): string {
+function buildCoreRouteBody(
+  meta: StaticRouteMeta,
+  articles: Article[],
+  academicPapers: AcademicPaper[],
+  novels: Novel[]
+): string {
   const highlightsHtml = meta.highlights
     .map(
       (item) => `            <article class="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-2">
@@ -424,23 +432,56 @@ function buildCoreRouteBody(meta: StaticRouteMeta, articles: Article[]): string 
     )
     .join('\n');
 
-  let articlesIndexHtml = '';
+  let extraDirectoryHtml = '';
   if (meta.route === '/articles') {
-    const linksHtml = articles
+    const articleLinks = articles
       .map(
         (article) =>
           `              <li class="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
-                <a href="/articles/${escapeAttr(article.id)}" class="text-lg font-bold text-rose-200 hover:underline">${escapeHtml(article.title)}</a>
+                <a href="/articles/${escapeAttr(encodeURIComponent(article.id))}" class="text-lg font-bold text-rose-200 hover:underline">${escapeHtml(article.title)}</a>
                 <p class="text-xs text-slate-400">${escapeHtml(article.categoryLabelAr)} • ${escapeHtml(article.readTime)}</p>
                 <p class="text-sm text-slate-300">${escapeHtml(article.summary)}</p>
               </li>`
       )
       .join('\n');
-    articlesIndexHtml = `
+    const seenIds = new Set(articles.map((a) => a.id));
+    const uniquePapers = academicPapers.filter((p) => !seenIds.has(p.id));
+    const paperLinks = uniquePapers
+      .map(
+        (paper) =>
+          `              <li class="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
+                <a href="/articles/${escapeAttr(encodeURIComponent(paper.id))}" class="text-lg font-bold text-cyan-200 hover:underline">${escapeHtml(paper.titleAr)}</a>
+                <p class="text-xs text-slate-400">${escapeHtml(paper.categoryLabelAr)} • ${escapeHtml(paper.readTimeAr)}</p>
+                <p class="text-sm text-slate-300">${escapeHtml(paper.abstractAr)}</p>
+              </li>`
+      )
+      .join('\n');
+
+    extraDirectoryHtml = `
           <section class="space-y-4">
-            <h2 class="text-2xl font-bold text-white">فهرس المقالات العلمية (${articles.length} مقالاً)</h2>
+            <h2 class="text-2xl font-bold text-white">فهرس المقالات العلمية والأبحاث المحكّمة (${articles.length + uniquePapers.length})</h2>
             <ul class="grid gap-4 md:grid-cols-2">
-${linksHtml}
+${articleLinks}
+${paperLinks}
+            </ul>
+          </section>`;
+  } else if (meta.route === '/novels') {
+    const novelLinks = novels
+      .map(
+        (novel) =>
+          `              <li class="rounded-xl border border-white/10 bg-white/5 p-5 space-y-2">
+                <a href="/novels/${escapeAttr(encodeURIComponent(novel.id))}" class="text-lg font-bold text-emerald-200 hover:underline">${escapeHtml(novel.titleAr)}</a>
+                <p class="text-xs text-slate-400">${escapeHtml(novel.genreLabelAr)} • ${novel.totalChapters} فصول • ${escapeHtml(novel.estimatedReadingTime)}</p>
+                <p class="text-sm text-slate-300">${escapeHtml(novel.synopsisAr)}</p>
+              </li>`
+      )
+      .join('\n');
+
+    extraDirectoryHtml = `
+          <section class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">فهرس الروايات والدراسات السردية (${novels.length} روايات)</h2>
+            <ul class="grid gap-4 md:grid-cols-2">
+${novelLinks}
             </ul>
           </section>`;
   }
@@ -451,7 +492,7 @@ ${linksHtml}
           </section>
           <section class="grid gap-6 md:grid-cols-2">
 ${highlightsHtml}
-          </section>${articlesIndexHtml}`);
+          </section>${extraDirectoryHtml}`);
 }
 
 function buildArticleBody(article: Article): string {
@@ -526,49 +567,133 @@ function writeHtmlRoute(routePath: string, html: string) {
   fs.writeFileSync(targetFile, html, 'utf-8');
 }
 
-function buildSitemapXml(routes: StaticRouteMeta[], articles: Article[]): string {
-  const today = new Date().toISOString().slice(0, 10);
-  const urls: string[] = [
-    `  <url>
-    <loc>${BASE_URL}/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>`,
-  ];
+function buildAcademicPaperBody(paper: AcademicPaper): string {
+  const introHtml = paper.introductionAr
+    .map((p) => `            <p class="text-base leading-relaxed text-slate-300">${escapeHtml(p)}</p>`)
+    .join('\n');
 
-  for (const r of routes) {
-    urls.push(`  <url>
-    <loc>${BASE_URL}${r.route}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>`);
-  }
+  const sectionsHtml = [...paper.theoreticalFramework, ...paper.analysisAndDiscussion]
+    .map(
+      (sec) => `          <section class="space-y-2">
+            <h2 class="text-2xl font-bold text-cyan-200">${escapeHtml(sec.sectionNumber)} ${escapeHtml(sec.titleAr)}</h2>
+            <p class="text-base leading-relaxed text-slate-300">${escapeHtml(sec.contentAr)}</p>
+          </section>`
+    )
+    .join('\n');
 
-  for (const article of articles) {
-    urls.push(`  <url>
-    <loc>${BASE_URL}/articles/${escapeXml(article.id)}</loc>
-    <lastmod>${escapeXml(article.publishDate || today)}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>`);
-  }
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('\n')}
-</urlset>
-`;
+  return renderShell(`          <nav aria-label="مسار التنقل" class="text-sm text-slate-400 flex flex-wrap gap-2">
+            <a href="/" class="hover:text-white">الرئيسية</a>
+            <span>/</span>
+            <a href="/articles" class="hover:text-white">المقالات والأبحاث</a>
+            <span>/</span>
+            <span class="text-cyan-300">${escapeHtml(paper.categoryLabelAr)}</span>
+          </nav>
+          <article class="space-y-6">
+            <header class="space-y-3">
+              <p class="text-sm text-cyan-300">${escapeHtml(paper.methodologyBadgeAr)} • ${escapeHtml(paper.readTimeAr)} • ${escapeHtml(paper.publishDate)}</p>
+              <h1 class="text-3xl font-extrabold text-white">${escapeHtml(paper.titleAr)}</h1>
+              <p class="text-lg leading-relaxed text-slate-200">${escapeHtml(paper.abstractAr)}</p>
+            </header>
+            <section class="space-y-3">
+              <h2 class="text-xl font-bold text-rose-300">المقدمة العلمية</h2>
+${introHtml}
+            </section>
+${sectionsHtml}
+            <section class="space-y-2">
+              <h2 class="text-xl font-bold text-amber-300">الخاتمة البحثية</h2>
+              <p class="text-base leading-relaxed text-slate-300">${escapeHtml(paper.conclusionAr)}</p>
+            </section>
+          </article>`);
 }
 
-function escapeXml(str: string): string {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+function buildNovelBody(novel: Novel): string {
+  const chaptersHtml = novel.chapters
+    .map(
+      (ch, idx) =>
+        `              <li class="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
+                <a href="/novels/${escapeAttr(encodeURIComponent(novel.id))}/chapter/${idx + 1}" class="text-lg font-bold text-emerald-200 hover:underline">الفصل ${ch.chapterNumber}: ${escapeHtml(ch.titleAr)}</a>
+                <p class="text-xs text-slate-400">${ch.estimatedMinutes} دقيقة • ${ch.wordsCount} كلمة</p>
+                <p class="text-sm text-slate-300">${escapeHtml(ch.synopsisAr)}</p>
+              </li>`
+    )
+    .join('\n');
+
+  return renderShell(`          <nav aria-label="مسار التنقل" class="text-sm text-slate-400 flex flex-wrap gap-2">
+            <a href="/" class="hover:text-white">الرئيسية</a>
+            <span>/</span>
+            <a href="/novels" class="hover:text-white">الروايات التفاعلية</a>
+            <span>/</span>
+            <span class="text-emerald-300">${escapeHtml(novel.genreLabelAr)}</span>
+          </nav>
+          <article class="space-y-6">
+            <header class="space-y-3">
+              <p class="text-sm text-emerald-300">${escapeHtml(novel.genreLabelAr)} • ${novel.totalChapters} فصول • ${escapeHtml(novel.estimatedReadingTime)}</p>
+              <h1 class="text-3xl font-extrabold text-white">${escapeHtml(novel.titleAr)}</h1>
+              <p class="text-base text-violet-200">${escapeHtml(novel.subtitleAr)}</p>
+              <p class="text-lg leading-relaxed text-slate-200">${escapeHtml(novel.synopsisAr)}</p>
+            </header>
+            <section class="grid gap-4 md:grid-cols-2">
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-1">
+                <h2 class="text-lg font-bold text-rose-300">المحور الجنائي والتحليلي</h2>
+                <p class="text-sm text-slate-300">${escapeHtml(novel.forensicThemeAr)}</p>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-1">
+                <h2 class="text-lg font-bold text-cyan-300">البُعد النفسي</h2>
+                <p class="text-sm text-slate-300">${escapeHtml(novel.psychologicalFocusAr)}</p>
+              </div>
+            </section>
+            <section class="space-y-4">
+              <h2 class="text-2xl font-bold text-white">فصول الرواية</h2>
+              <ul class="grid gap-4 md:grid-cols-2">
+${chaptersHtml}
+              </ul>
+            </section>
+          </article>`);
+}
+
+function buildChapterBody(novel: Novel, chapter: NovelChapter, chapterIdx: number): string {
+  const chapterNum = chapterIdx + 1;
+  const paragraphs = chapter.contentAr
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .slice(0, 60)
+    .map((p) => `            <p class="text-base leading-relaxed text-slate-300">${escapeHtml(p)}</p>`)
+    .join('\n');
+
+  const prevLink =
+    chapterNum > 1
+      ? `<a href="/novels/${escapeAttr(encodeURIComponent(novel.id))}/chapter/${chapterNum - 1}" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:text-white">الفصل السابق</a>`
+      : '';
+  const nextLink =
+    chapterNum < novel.chapters.length
+      ? `<a href="/novels/${escapeAttr(encodeURIComponent(novel.id))}/chapter/${chapterNum + 1}" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:text-white">الفصل التالي</a>`
+      : '';
+
+  return renderShell(`          <nav aria-label="مسار التنقل" class="text-sm text-slate-400 flex flex-wrap gap-2">
+            <a href="/" class="hover:text-white">الرئيسية</a>
+            <span>/</span>
+            <a href="/novels" class="hover:text-white">الروايات</a>
+            <span>/</span>
+            <a href="/novels/${escapeAttr(encodeURIComponent(novel.id))}" class="hover:text-white">${escapeHtml(novel.titleAr)}</a>
+            <span>/</span>
+            <span class="text-emerald-300">الفصل ${chapterNum}</span>
+          </nav>
+          <article class="space-y-6">
+            <header class="space-y-2">
+              <p class="text-sm text-emerald-300">${escapeHtml(novel.titleAr)} • الفصل ${chapterNum} من ${novel.chapters.length} • ${chapter.estimatedMinutes} دقيقة</p>
+              <h1 class="text-3xl font-extrabold text-white">${escapeHtml(chapter.titleAr)}</h1>
+              <p class="text-base leading-relaxed text-slate-200">${escapeHtml(chapter.synopsisAr)}</p>
+            </header>
+            <section class="space-y-4">
+${paragraphs}
+            </section>
+            <div class="flex flex-wrap gap-3 pt-4">
+              <a href="/novels/${escapeAttr(encodeURIComponent(novel.id))}" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:text-white">فهرس الرواية</a>
+              ${prevLink}
+              ${nextLink}
+            </div>
+          </article>`);
 }
 
 function main() {
@@ -578,7 +703,6 @@ function main() {
 
   const templateHtml = fs.readFileSync(INDEX_HTML_PATH, 'utf-8');
 
-  // Also enrich root dist/index.html with direct links to top featured articles for crawlers
   for (const routeMeta of CORE_ROUTES) {
     const canonicalUrl = `${BASE_URL}${routeMeta.route}`;
     const pageHtml = injectHeadMetadata(templateHtml, {
@@ -604,12 +728,18 @@ function main() {
         },
       },
     });
-    const fullPageHtml = replaceRootFallback(pageHtml, buildCoreRouteBody(routeMeta, ARTICLES_CATALOG));
+    const fullPageHtml = replaceRootFallback(
+      pageHtml,
+      buildCoreRouteBody(routeMeta, ARTICLES_CATALOG, ACADEMIC_PAPERS_CATALOG, NOVELS_CATALOG)
+    );
     writeHtmlRoute(routeMeta.route, fullPageHtml);
   }
 
+  const renderedArticleIds = new Set<string>();
+
   for (const article of ARTICLES_CATALOG) {
-    const canonicalUrl = `${BASE_URL}/articles/${article.id}`;
+    renderedArticleIds.add(article.id);
+    const canonicalUrl = `${BASE_URL}/articles/${encodeURIComponent(article.id)}`;
     const fullTitle = `${article.title} | مرآة القلوب`;
     const pageHtml = injectHeadMetadata(templateHtml, {
       title: fullTitle,
@@ -639,11 +769,105 @@ function main() {
     writeHtmlRoute(`/articles/${article.id}`, fullArticleHtml);
   }
 
-  const sitemapXml = buildSitemapXml(CORE_ROUTES, ARTICLES_CATALOG);
+  let academicCount = 0;
+  for (const paper of ACADEMIC_PAPERS_CATALOG) {
+    if (renderedArticleIds.has(paper.id)) continue;
+    renderedArticleIds.add(paper.id);
+    academicCount += 1;
+    const canonicalUrl = `${BASE_URL}/articles/${encodeURIComponent(paper.id)}`;
+    const fullTitle = `${paper.titleAr} | مرآة القلوب`;
+    const pageHtml = injectHeadMetadata(templateHtml, {
+      title: fullTitle,
+      description: paper.abstractAr,
+      canonicalUrl,
+      ogType: 'article',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'ScholarlyArticle',
+        headline: paper.titleAr,
+        description: paper.abstractAr,
+        datePublished: paper.publishDate,
+        inLanguage: 'ar',
+        image: OG_IMAGE_URL,
+        mainEntityOfPage: canonicalUrl,
+        author: {
+          '@type': 'Organization',
+          name: 'مِـرآة القـلوب',
+          url: BASE_URL,
+        },
+        publisher: {
+          '@id': `${BASE_URL}/#organization`,
+        },
+      },
+    });
+    const fullPaperHtml = replaceRootFallback(pageHtml, buildAcademicPaperBody(paper));
+    writeHtmlRoute(`/articles/${paper.id}`, fullPaperHtml);
+  }
+
+  let chaptersCount = 0;
+  for (const novel of NOVELS_CATALOG) {
+    const novelCanonicalUrl = `${BASE_URL}/novels/${encodeURIComponent(novel.id)}`;
+    const novelTitle = `${novel.titleAr} | مكتبة الروايات — مرآة القلوب`;
+    const novelPageHtml = injectHeadMetadata(templateHtml, {
+      title: novelTitle,
+      description: novel.synopsisAr,
+      canonicalUrl: novelCanonicalUrl,
+      ogType: 'article',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'Book',
+        name: novel.titleAr,
+        description: novel.synopsisAr,
+        inLanguage: 'ar',
+        genre: novel.genreLabelAr,
+        numberOfPages: novel.totalChapters,
+        url: novelCanonicalUrl,
+        image: OG_IMAGE_URL,
+        publisher: {
+          '@id': `${BASE_URL}/#organization`,
+        },
+      },
+    });
+    writeHtmlRoute(`/novels/${novel.id}`, replaceRootFallback(novelPageHtml, buildNovelBody(novel)));
+
+    for (let idx = 0; idx < novel.chapters.length; idx += 1) {
+      chaptersCount += 1;
+      const chapter = novel.chapters[idx];
+      const chapterNum = idx + 1;
+      const chapterCanonicalUrl = `${BASE_URL}/novels/${encodeURIComponent(novel.id)}/chapter/${chapterNum}`;
+      const chapterTitle = `الفصل ${chapterNum}: ${chapter.titleAr} — ${novel.titleAr} | مرآة القلوب`;
+      const chapterHtml = injectHeadMetadata(templateHtml, {
+        title: chapterTitle,
+        description: chapter.synopsisAr,
+        canonicalUrl: chapterCanonicalUrl,
+        ogType: 'article',
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@type': 'Chapter',
+          name: chapter.titleAr,
+          position: chapterNum,
+          description: chapter.synopsisAr,
+          inLanguage: 'ar',
+          url: chapterCanonicalUrl,
+          isPartOf: {
+            '@type': 'Book',
+            name: novel.titleAr,
+            url: novelCanonicalUrl,
+          },
+        },
+      });
+      writeHtmlRoute(
+        `/novels/${novel.id}/chapter/${chapterNum}`,
+        replaceRootFallback(chapterHtml, buildChapterBody(novel, chapter, idx))
+      );
+    }
+  }
+
+  const { xml: sitemapXml, stats } = generateSitemapXml({ baseUrl: BASE_URL });
   fs.writeFileSync(path.join(DIST_DIR, 'sitemap.xml'), sitemapXml, 'utf-8');
 
   console.log(
-    `[prerender] Generated ${CORE_ROUTES.length} core route HTML files and ${ARTICLES_CATALOG.length} article HTML files in dist/ + updated dist/sitemap.xml.`
+    `[prerender] Generated ${CORE_ROUTES.length} core route HTML files, ${ARTICLES_CATALOG.length} articles, ${academicCount} academic papers, ${NOVELS_CATALOG.length} novels, and ${chaptersCount} novel chapters in dist/ + updated dist/sitemap.xml (${stats.totalUrls} total URLs).`
   );
 }
 
