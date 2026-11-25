@@ -4,9 +4,27 @@
 @source not "./data";
 @source inline("bg-amber-500/10 bg-amber-500/20 bg-blue-500/10 bg-cyan-500/10 bg-emerald-500/10 bg-emerald-500/20 bg-green-500/10 bg-indigo-500/10 bg-orange-500/20 bg-pink-500/10 bg-purple-500/10 bg-rose-500/20 bg-teal-500/20 border-amber-500/40 border-amber-500/50 border-blue-500/40 border-cyan-500/40 border-emerald-500/40 border-emerald-500/50 border-green-500/40 border-indigo-500/40 border-orange-500/50 border-pink-500/40 border-purple-500/40 border-rose-500/50 border-teal-500/50 text-amber-300 text-blue-300 text-cyan-300 text-emerald-300 text-green-300 text-indigo-300 text-orange-300 text-pink-300 text-purple-300 text-rose-300 text-teal-300 w-full h-full from-amber-500 from-amber-500/30 from-amber-600 from-amber-600/30 from-amber-800/75 from-amber-900/40 from-amber-900/45 from-amber-900/55 from-amber-900/70 from-amber-900/75 from-amber-950/50 from-amber-950/60 from-blue-500 from-blue-600 from-blue-600/30 from-blue-900/75 from-blue-950/60 from-cyan-600 from-cyan-600/30 from-cyan-900/40 from-cyan-900/45 from-cyan-900/50 from-cyan-900/55 from-cyan-900/60 from-cyan-900/75 from-cyan-950/50 from-cyan-950/55 from-cyan-950/60 from-emerald-600 from-emerald-600/30 from-emerald-700/30 from-emerald-900/45 from-emerald-900/55 from-emerald-900/70 from-emerald-900/75 from-emerald-950/50 from-emerald-950/55 from-emerald-950/60 from-indigo-600 from-indigo-600/30 from-indigo-900/40 from-indigo-900/45 from-indigo-900/50 from-indigo-900/55 from-indigo-900/60 from-indigo-900/75 from-indigo-950/50 from-indigo-950/60 from-orange-950/50 from-pink-500 from-pink-600 from-pink-950/60 from-purple-600 from-purple-600/30 from-purple-900/45 from-purple-900/55 from-purple-900/75 from-red-900/75 from-rose-600/30 from-rose-900/40 from-rose-900/45 from-rose-900/55 from-rose-900/75 from-rose-950/50 from-rose-950/55 from-sky-900/45 from-sky-900/75 from-sky-950/50 from-sky-950/55 from-slate-800/60 from-slate-800/80 from-slate-900/80 from-slate-900/90 from-teal-600/30 from-teal-900/55 from-teal-900/60 from-teal-900/75 from-teal-950/60 from-violet-500 from-violet-900/45 from-violet-900/55 from-violet-900/75 from-violet-950/50 from-violet-950/55 from-violet-950/60 via-amber-950/70 via-blue-700/20 via-blue-950/60 via-blue-950/70 via-blue-950/75 via-cyan-700/20 via-cyan-950/70 via-cyan-950/75 via-emerald-950/60 via-emerald-950/70 via-emerald-950/75 via-fuchsia-600/20 via-green-600 via-indigo-600 via-indigo-600/20 via-indigo-950/60 via-indigo-950/65 via-indigo-950/70 via-indigo-950/75 via-orange-600 via-orange-600/20 via-orange-950/60 via-orange-950/75 via-pink-600/20 via-pink-950/65 via-purple-600/20 via-purple-900/30 via-purple-900/40 via-purple-950/40 via-purple-950/60 via-purple-950/65 via-purple-950/75 via-red-950/65 via-rose-500/20 via-rose-600 via-rose-600/20 via-rose-950/65 via-rose-950/75 via-sky-950/60 via-sky-950/65 via-sky-950/75 via-slate-900/60 via-slate-900/65 via-slate-900/70 via-slate-900/75 via-slate-900/80 via-slate-900/85 via-stone-900/70 via-teal-600 via-teal-600/20 via-teal-800/20 via-teal-900/50 via-teal-950/65 via-teal-950/70 via-teal-950/75 via-violet-600 via-violet-950/65 via-yellow-500 to-amber-600 to-amber-900/40 to-amber-900/45 to-amber-950/45 to-amber-950/50 to-amber-950/55 to-amber-950/85 to-blue-900/40 to-blue-950/55 to-cyan-500 to-cyan-900/45 to-cyan-900/50 to-cyan-950/50 to-cyan-950/55 to-emerald-500 to-emerald-700/30 to-emerald-800/30 to-emerald-900/40 to-emerald-900/45 to-emerald-950/50 to-emerald-950/55 to-emerald-950/85 to-indigo-500 to-indigo-600 to-indigo-700/30 to-indigo-800/30 to-indigo-900/40 to-indigo-900/45 to-indigo-900/50 to-indigo-900/55 to-indigo-950/45 to-indigo-950/50 to-indigo-950/55 to-indigo-950/60 to-indigo-950/80 to-indigo-950/90 to-lime-500 to-orange-600 to-pink-700/30 to-purple-600 to-purple-700 to-purple-700/30 to-purple-800/30 to-purple-900/40 to-purple-900/50 to-purple-950/50 to-purple-950/55 to-purple-950/80 to-red-500 to-rose-500 to-rose-600 to-rose-800/30 to-rose-900/40 to-rose-900/45 to-rose-900/50 to-rose-950/45 to-rose-950/55 to-rose-950/75 to-slate-800/30 to-slate-900 to-slate-900/40 to-slate-900/50 to-slate-900/65 to-slate-900/80 to-slate-900/85 to-slate-900/90 to-slate-950/65 to-teal-500 to-teal-900/45 to-teal-900/50 to-teal-900/55 to-teal-950/50 to-teal-950/55 to-teal-950/80 to-violet-900/45 to-violet-950/60 to-zinc-900/90");
 
+@font-face {
+  font-family: 'Alexandria Fallback';
+  src: local('Noto Sans Arabic'), local('Segoe UI Arabic'), local('Tahoma'), local('Arial');
+  size-adjust: 104%;
+  ascent-override: 96%;
+  descent-override: 26%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Tajawal Fallback';
+  src: local('Noto Sans Arabic'), local('Segoe UI Arabic'), local('Tahoma'), local('Arial');
+  size-adjust: 100%;
+  ascent-override: 94%;
+  descent-override: 26%;
+  line-gap-override: 0%;
+}
+
 @layer base {
   body {
-    font-family: 'Tajawal', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Tajawal', 'Tajawal Fallback', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -212,7 +230,7 @@ html.light textarea::placeholder {
 html[dir="rtl"],
 html.lang-ar body {
   direction: rtl;
-  font-family: 'Alexandria', 'Tajawal', system-ui, -apple-system, sans-serif;
+  font-family: 'Alexandria', 'Alexandria Fallback', 'Tajawal', 'Tajawal Fallback', system-ui, -apple-system, sans-serif;
 }
 
 html[dir="ltr"],

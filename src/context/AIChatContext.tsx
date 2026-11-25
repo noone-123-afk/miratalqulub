@@ -17,6 +17,7 @@ export interface ChatMessage {
   content: string;
   createdAt: number;
   status?: 'streaming' | 'complete' | 'error';
+  suggestions?: string[];
 }
 
 export interface ChatConversation {
@@ -43,13 +44,21 @@ type AIChatAction =
   | { type: 'DELETE_CONVERSATION'; conversationId: string }
   | { type: 'CLEAR_HISTORY'; freshConversation: ChatConversation }
   | { type: 'ADD_USER_MESSAGE'; conversationId: string; message: ChatMessage; title?: string }
+  | { type: 'PREPARE_REGENERATE'; conversationId: string; assistantMessage: ChatMessage }
   | { type: 'START_ASSISTANT_MESSAGE'; conversationId: string; message: ChatMessage }
   | { type: 'APPEND_ASSISTANT_CHUNK'; conversationId: string; messageId: string; chunk: string }
+  | {
+      type: 'ATTACH_SUGGESTIONS';
+      conversationId: string;
+      messageId: string;
+      suggestions: string[];
+    }
   | {
       type: 'FINISH_ASSISTANT_MESSAGE';
       conversationId: string;
       messageId: string;
       finalContent?: string;
+      suggestions?: string[];
     }
   | {
       type: 'FAIL_ASSISTANT_MESSAGE';
@@ -129,6 +138,9 @@ function loadInitialState(): AIChatState {
                 content: m.content,
                 createdAt: typeof m.createdAt === 'number' ? m.createdAt : Date.now(),
                 status: m.status === 'streaming' ? 'complete' : m.status || 'complete',
+                suggestions: Array.isArray(m.suggestions)
+                  ? m.suggestions.filter((s: unknown) => typeof s === 'string').slice(0, 4)
+                  : undefined,
               })),
           }));
 
@@ -240,6 +252,28 @@ function aiChatReducer(state: AIChatState, action: AIChatAction): AIChatState {
       };
     }
 
+    case 'PREPARE_REGENERATE': {
+      const now = Date.now();
+      return {
+        ...state,
+        isStreaming: true,
+        error: null,
+        conversations: state.conversations.map((conv) => {
+          if (conv.id !== action.conversationId) return conv;
+          const trimmed = [...conv.messages];
+          if (trimmed.length > 0 && trimmed[trimmed.length - 1].role === 'assistant') {
+            trimmed.pop();
+          }
+          trimmed.push(action.assistantMessage);
+          return {
+            ...conv,
+            updatedAt: now,
+            messages: trimmed.slice(-MAX_MESSAGES_PER_CONVERSATION),
+          };
+        }),
+      };
+    }
+
     case 'START_ASSISTANT_MESSAGE':
       return {
         ...state,
@@ -276,6 +310,23 @@ function aiChatReducer(state: AIChatState, action: AIChatAction): AIChatState {
         ),
       };
 
+    case 'ATTACH_SUGGESTIONS':
+      return {
+        ...state,
+        conversations: state.conversations.map((conv) =>
+          conv.id === action.conversationId
+            ? {
+                ...conv,
+                messages: conv.messages.map((msg) =>
+                  msg.id === action.messageId
+                    ? { ...msg, suggestions: action.suggestions }
+                    : msg
+                ),
+              }
+            : conv
+        ),
+      };
+
     case 'FINISH_ASSISTANT_MESSAGE':
       return {
         ...state,
@@ -291,6 +342,8 @@ function aiChatReducer(state: AIChatState, action: AIChatAction): AIChatState {
                         ...msg,
                         content:
                           action.finalContent !== undefined ? action.finalContent : msg.content,
+                        suggestions:
+                          action.suggestions !== undefined ? action.suggestions : msg.suggestions,
                         status: 'complete',
                       }
                     : msg
@@ -344,6 +397,7 @@ export interface AIChatContextValue {
   stopGenerating: () => void;
   sendMessage: (text: string, currentPage?: string) => Promise<void>;
   retryLastMessage: (currentPage?: string) => Promise<void>;
+  regenerateLastReply: (currentPage?: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -353,9 +407,11 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { language } = useLanguage();
   const [state, dispatch] = useReducer(aiChatReducer, undefined, loadInitialState);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isStreamingRef = useRef(false);
   const conversationsRef = useRef(state.conversations);
   const activeIdRef = useRef(state.activeConversationId);
 
+  isStreamingRef.current = state.isStreaming;
   conversationsRef.current = state.conversations;
   activeIdRef.current = state.activeConversationId;
 
@@ -434,51 +490,14 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     dispatch({ type: 'SET_ERROR', error: null });
   }, []);
 
-  const sendMessage = useCallback(
-    async (rawText: string, currentPage?: string) => {
-      const text = rawText.trim();
-      if (!text || state.isStreaming) return;
-
-      const convId = activeIdRef.current;
-      const currentConv =
-        conversationsRef.current.find((c) => c.id === convId) || conversationsRef.current[0];
-      const priorMessages = (currentConv?.messages || [])
-        .filter((m) => m.status !== 'error' && m.content.trim().length > 0)
-        .slice(-18)
-        .map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-
-      const userMessage: ChatMessage = {
-        id: createUid('usr'),
-        role: 'user',
-        content: text,
-        createdAt: Date.now(),
-        status: 'complete',
-      };
-
-      const isFirstMessage = (currentConv?.messages?.length || 0) === 0;
-      dispatch({
-        type: 'ADD_USER_MESSAGE',
-        conversationId: convId,
-        message: userMessage,
-        title: isFirstMessage ? deriveTitleFromPrompt(text) : undefined,
-      });
-
-      const assistantMessageId = createUid('ast');
-      dispatch({
-        type: 'START_ASSISTANT_MESSAGE',
-        conversationId: convId,
-        message: {
-          id: assistantMessageId,
-          role: 'assistant',
-          content: '',
-          createdAt: Date.now(),
-          status: 'streaming',
-        },
-      });
-
+  const executeAssistantRequest = useCallback(
+    async (
+      convId: string,
+      assistantMessageId: string,
+      promptText: string,
+      priorMessages: Array<{ role: ChatRole; content: string }>,
+      currentPage?: string
+    ) => {
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
@@ -491,7 +510,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           },
           signal: controller.signal,
           body: JSON.stringify({
-            message: text,
+            message: promptText,
             history: priorMessages,
             language,
             currentPage: currentPage || 'home',
@@ -526,6 +545,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const decoder = new TextDecoder('utf-8');
           let buffer = '';
           let fullReply = '';
+          let receivedSuggestions: string[] | undefined;
 
           while (true) {
             const { value, done } = await reader.read();
@@ -550,6 +570,17 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                       conversationId: convId,
                       messageId: assistantMessageId,
                       chunk: payload.text,
+                    });
+                  } else if (payload.type === 'suggestions' && Array.isArray(payload.items)) {
+                    const parsedSuggestions: string[] = payload.items
+                      .filter((s: unknown): s is string => typeof s === 'string')
+                      .slice(0, 4);
+                    receivedSuggestions = parsedSuggestions;
+                    dispatch({
+                      type: 'ATTACH_SUGGESTIONS',
+                      conversationId: convId,
+                      messageId: assistantMessageId,
+                      suggestions: parsedSuggestions,
                     });
                   } else if (payload.type === 'error') {
                     const errText =
@@ -582,6 +613,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               (language === 'ar'
                 ? 'لم يتم استلام نص من النموذج. يرجى المحاولة مجدداً.'
                 : 'No response text was received. Please try again.'),
+            suggestions: receivedSuggestions,
           });
         } else {
           const data = await response.json();
@@ -591,6 +623,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               conversationId: convId,
               messageId: assistantMessageId,
               finalContent: data.reply,
+              suggestions: Array.isArray(data.suggestions) ? data.suggestions : undefined,
             });
           } else {
             const errMsg =
@@ -633,20 +666,121 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
     },
-    [language, state.isStreaming]
+    [language]
+  );
+
+  const sendMessage = useCallback(
+    async (rawText: string, currentPage?: string) => {
+      const text = rawText.trim();
+      if (!text || isStreamingRef.current) return;
+      isStreamingRef.current = true;
+
+      const convId = activeIdRef.current;
+      const currentConv =
+        conversationsRef.current.find((c) => c.id === convId) || conversationsRef.current[0];
+      const priorMessages = (currentConv?.messages || [])
+        .filter((m) => m.status !== 'error' && m.content.trim().length > 0)
+        .slice(-18)
+        .map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
+      const userMessage: ChatMessage = {
+        id: createUid('usr'),
+        role: 'user',
+        content: text,
+        createdAt: Date.now(),
+        status: 'complete',
+      };
+
+      const isFirstMessage = (currentConv?.messages?.length || 0) === 0;
+      dispatch({
+        type: 'ADD_USER_MESSAGE',
+        conversationId: convId,
+        message: userMessage,
+        title: isFirstMessage ? deriveTitleFromPrompt(text) : undefined,
+      });
+
+      const assistantMessageId = createUid('ast');
+      dispatch({
+        type: 'START_ASSISTANT_MESSAGE',
+        conversationId: convId,
+        message: {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          createdAt: Date.now(),
+          status: 'streaming',
+        },
+      });
+
+      await executeAssistantRequest(
+        convId,
+        assistantMessageId,
+        text,
+        priorMessages,
+        currentPage
+      );
+    },
+    [executeAssistantRequest]
+  );
+
+  const regenerateLastReply = useCallback(
+    async (currentPage?: string) => {
+      if (isStreamingRef.current) return;
+      const convId = activeIdRef.current;
+      const conv =
+        conversationsRef.current.find((c) => c.id === convId) || conversationsRef.current[0];
+      if (!conv || conv.messages.length === 0) return;
+
+      const lastUserIndex = [...conv.messages]
+        .map((m, idx) => ({ m, idx }))
+        .reverse()
+        .find((x) => x.m.role === 'user')?.idx;
+
+      if (lastUserIndex === undefined) return;
+      isStreamingRef.current = true;
+
+      const lastUserMessage = conv.messages[lastUserIndex];
+      const priorMessages = conv.messages
+        .slice(0, lastUserIndex)
+        .filter((m) => m.status !== 'error' && m.content.trim().length > 0)
+        .slice(-18)
+        .map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
+      const assistantMessageId = createUid('ast');
+      dispatch({
+        type: 'PREPARE_REGENERATE',
+        conversationId: conv.id,
+        assistantMessage: {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          createdAt: Date.now(),
+          status: 'streaming',
+        },
+      });
+
+      await executeAssistantRequest(
+        conv.id,
+        assistantMessageId,
+        lastUserMessage.content,
+        priorMessages,
+        currentPage
+      );
+    },
+    [executeAssistantRequest]
   );
 
   const retryLastMessage = useCallback(
     async (currentPage?: string) => {
-      const conv =
-        conversationsRef.current.find((c) => c.id === activeIdRef.current) ||
-        conversationsRef.current[0];
-      if (!conv) return;
-      const lastUser = [...conv.messages].reverse().find((m) => m.role === 'user');
-      if (!lastUser) return;
-      await sendMessage(lastUser.content, currentPage);
+      await regenerateLastReply(currentPage);
     },
-    [sendMessage]
+    [regenerateLastReply]
   );
 
   const value = useMemo<AIChatContextValue>(
@@ -666,6 +800,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       stopGenerating,
       sendMessage,
       retryLastMessage,
+      regenerateLastReply,
       clearError,
     }),
     [
@@ -683,6 +818,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       stopGenerating,
       sendMessage,
       retryLastMessage,
+      regenerateLastReply,
       clearError,
     ]
   );

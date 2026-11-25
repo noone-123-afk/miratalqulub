@@ -37,7 +37,11 @@ import {
   ScientificClinicalDisclaimerBanner,
 } from '../components/PsychometricAcademicFraming';
 import { PsychologyTestsModal } from '../components/PsychologyTestsModal';
-import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+} from '../utils/logoAsset';
 import { TestScoringTrustBanner } from '../components/TestScoringTrustBanner';
 import { LazyImage } from '../components/LazyImage';
 import { TestResultRecommendationsSuite } from '../components/TestResultRecommendationsSuite';
@@ -586,6 +590,8 @@ export const PersonalityTestsPage: React.FC<Props> = ({ onBackToHome, onNavigate
                     <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
                       <LazyImage
                         src={OFFICIAL_LOGO_URL}
+                        srcSet={OFFICIAL_LOGO_SRCSET}
+                        sizes={OFFICIAL_LOGO_SIZES.cardMedium}
                         alt={isAr ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
                         width={56}
                         height={56}

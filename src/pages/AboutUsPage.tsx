@@ -35,7 +35,11 @@ import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
-import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+} from '../utils/logoAsset';
 import { PLATFORM_INTRODUCTORY_ARTICLES } from '../data/platformIntroductoryArticles';
 
 export interface AboutUsProps {
@@ -451,7 +455,12 @@ export const AboutUsPage: React.FC<AboutUsProps> = ({
                 <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
                   <img
                     src={OFFICIAL_LOGO_URL}
+                    srcSet={OFFICIAL_LOGO_SRCSET}
+                    sizes={OFFICIAL_LOGO_SIZES.cardResponsive}
                     alt={isAr ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                    width={64}
+                    height={64}
+                    decoding="async"
                     className="w-full h-full object-cover rounded-[14px]"
                   />
                 </div>

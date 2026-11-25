@@ -35,7 +35,12 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppTheme } from '../utils/theme';
 import { BehindTheScenesSection } from './BehindTheScenesSection';
 import { ScientificClinicalDisclaimerBanner } from './PsychometricAcademicFraming';
-import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_ICON_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+  downloadOfficialLogoFile,
+} from '../utils/logoAsset';
 import { TestScoringTrustBanner } from './TestScoringTrustBanner';
 import {
   detectUserLocationAndNationality,
@@ -605,7 +610,9 @@ export const ProfileStep: React.FC<Props> = ({
             <div className="w-12 h-12 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-md shadow-rose-500/20 shrink-0 overflow-hidden">
               <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
                 <img
-                  src={OFFICIAL_LOGO_URL}
+                  src={OFFICIAL_LOGO_ICON_URL}
+                  srcSet={OFFICIAL_LOGO_SRCSET}
+                  sizes={OFFICIAL_LOGO_SIZES.cardSmall}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Logo'}
                   width={48}
                   height={48}

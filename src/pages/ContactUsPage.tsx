@@ -21,7 +21,11 @@ import { useAuth } from '../context/AuthContext';
 import { soundManager } from '../utils/sound';
 import { submitFeedbackMessage, OFFICIAL_EMAIL } from '../services/feedbackService';
 import { PageSEO } from '../components/PageSEO';
-import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_ICON_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+} from '../utils/logoAsset';
 
 interface Props {
   onBackToHome: () => void;
@@ -218,8 +222,13 @@ export const ContactUsPage: React.FC<Props> = ({
         <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-sky-950/40 via-slate-900/80 to-blue-950/40 border border-sky-500/30 shadow-2xl backdrop-blur-xl">
           <div className="flex items-center gap-3 mb-3">
             <img
-              src={OFFICIAL_LOGO_URL}
+              src={OFFICIAL_LOGO_ICON_URL}
+              srcSet={OFFICIAL_LOGO_SRCSET}
+              sizes={OFFICIAL_LOGO_SIZES.cardSmall}
               alt="شعار مرآة القلوب الرسمي"
+              width={48}
+              height={48}
+              decoding="async"
               className="w-12 h-12 rounded-2xl object-cover border border-sky-500/40 shadow-lg shrink-0"
             />
             <div>

@@ -5,7 +5,7 @@ import express, { Request, Response } from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import dotenv from 'dotenv';
-import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
+import { GoogleGenAI, GenerateContentResponse, ThinkingLevel } from '@google/genai';
 import { WebSocketServer, WebSocket } from 'ws';
 import { calculateRealCompatibility, calculateRealVoiceSynergy } from './src/utils/realScoringEngine';
 import {
@@ -14,6 +14,11 @@ import {
   DetectedNationalityProfile,
 } from './src/utils/locationNationalityDetector';
 import { generateSitemapXml } from './src/utils/sitemapGenerator';
+import {
+  buildGroundedSystemInstruction,
+  normalizeGeminiHistory,
+  buildContextualFollowUps,
+} from './src/utils/aiAssistantGrounding';
 
 dotenv.config();
 
@@ -22,6 +27,15 @@ const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '10mb' }));
+
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
 
 // Shared Gemini client initialized server-side with required User-Agent header
 const ai = new GoogleGenAI({
@@ -62,8 +76,11 @@ app.get('/logo.avif', (_req: Request, res: Response) => {
   res.status(404).end();
 });
 
-app.get('/logo.webp', (_req: Request, res: Response) => {
-  const filePath = path.resolve('public', 'logo.webp');
+app.get(/^\/([a-z0-9-]+)\.webp$/i, (req: Request, res: Response) => {
+  const fileName = `${req.params[0]}.webp`;
+  const distPath = path.resolve('dist', fileName);
+  const publicPath = path.resolve('public', fileName);
+  const filePath = fs.existsSync(publicPath) ? publicPath : distPath;
   if (fs.existsSync(filePath)) {
     res.setHeader('Content-Type', 'image/webp');
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -1785,6 +1802,25 @@ const handleGeneratePartnerImage = async (req: Request, res: Response) => {
 app.post('/api/generate-image', handleGeneratePartnerImage);
 app.post('/api/generate-partner-image', handleGeneratePartnerImage);
 
+async function withGeminiRetry<T>(operation: () => Promise<T>, maxRetries = 2): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (err: any) {
+      lastErr = err;
+      const status = Number(err?.status) || 0;
+      const isRetryable = status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+      if (!isRetryable || attempt === maxRetries) {
+        throw err;
+      }
+      const delayMs = 350 * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastErr;
+}
+
 // Server-side AI Chat Assistant endpoint using @google/genai (gemini-4-hydrogen)
 app.post('/api/ai-assistant/chat', async (req: Request, res: Response) => {
   const { message, history, language, currentPage } = req.body || {};
@@ -1809,38 +1845,24 @@ app.post('/api/ai-assistant/chat', async (req: Request, res: Response) => {
     });
   }
 
-  const sanitizedHistory: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
-  if (Array.isArray(history)) {
-    for (const item of history.slice(-18)) {
-      if (!item || typeof item.content !== 'string') continue;
-      const text = item.content.trim().slice(0, 4000);
-      if (!text) continue;
-      const role: 'user' | 'model' = item.role === 'assistant' || item.role === 'model' ? 'model' : 'user';
-      sanitizedHistory.push({ role, parts: [{ text }] });
-    }
-  }
+  const sanitizedHistory = normalizeGeminiHistory(history);
+  const recentHistoryText = sanitizedHistory
+    .slice(-4)
+    .map((h) => h.parts[0]?.text || '')
+    .join(' ');
 
-  const systemInstruction = `أنت المساعد المعرفي الرسمي لمنصة "مِـرآة القـلوب" (Mirror of Hearts - miratalqulub.com)، وهي منصة عربية متخصصة في تحليل الشخصية، التوافق العاطفي والفكري، اختبارات الذكاء المتعدد، المقالات العلمية الموثقة، والروايات التفاعلية.
-
-إرشاداتك الأساسية:
-1. أجب بلغة المستخدم (${isAr ? 'العربية الفصحى الميسّرة والدافئة' : 'Clear, warm, natural English'}) وبأسلوب علمي رصين ومختصر وعملي.
-2. لا تقدّم تشخيصاً طبياً أو علاجاً سريرياً قطعياً؛ وضّح عند الحاجة أن أدوات المنصة مخصصة للاستبصار والتثقيف النفسي.
-3. وجّه المستخدم إلى الصفحات الفعلية في المنصة باستخدام صيغة الروابط Markdown مثل [اسم القسم](/المسار) كلما كان ذلك مفيداً:
-   - [كاشف شريك الحياة والتوافق](/compatibility)
-   - [اختبارات تحليل الشخصية](/personality-tests)
-   - [اختبارات الذكاء المتعدد](/iq-tests)
-   - [المكتبة العلمية والمقالات](/articles)
-   - [الروايات التفاعلية](/novels)
-   - [الأدوات التفاعلية](/tools)
-   - [كيف تُحسب النتائج](/how-results-are-calculated)
-   - [المنهجية العلمية](/methodology)
-   - [الأسئلة الشائعة](/faq)
-   - [سياسة الخصوصية](/privacy)
-   - [ملفي الشخصي](/profile)
-4. السياق الحالي لتصفح المستخدم: الصفحة الحالية هي "${typeof currentPage === 'string' ? currentPage : 'home'}".
-5. حافظ على إجاباتك واضحة ومنظمة (فقرات قصيرة أو نقاط مركزة عند الحاجة).`;
+  const systemInstruction = buildGroundedSystemInstruction({
+    message: trimmedMessage,
+    historyText: recentHistoryText,
+    currentPage: typeof currentPage === 'string' ? currentPage : 'home',
+    language: isAr ? 'ar' : 'en',
+  });
 
   const wantsStream = String(req.headers.accept || '').includes('text/event-stream');
+  let clientClosed = false;
+  req.on('close', () => {
+    clientClosed = true;
+  });
 
   try {
     const chat = ai.chats.create({
@@ -1848,36 +1870,67 @@ app.post('/api/ai-assistant/chat', async (req: Request, res: Response) => {
       history: sanitizedHistory,
       config: {
         systemInstruction,
+        thinkingConfig: {
+          thinkingLevel: ThinkingLevel.LOW,
+        },
       },
     });
 
     if (wantsStream) {
+      const streamResponse = await withGeminiRetry(() =>
+        chat.sendMessageStream({
+          message: trimmedMessage,
+        })
+      );
+
+      if (clientClosed) return res.end();
+
       res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache, no-transform');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
       res.flushHeaders?.();
 
-      const streamResponse = await chat.sendMessageStream({
-        message: trimmedMessage,
-      });
-
+      let fullReply = '';
       for await (const chunk of streamResponse) {
+        if (clientClosed) break;
         const c = chunk as GenerateContentResponse;
         if (c.text) {
+          fullReply += c.text;
           res.write(`data: ${JSON.stringify({ type: 'chunk', text: c.text })}\n\n`);
         }
       }
 
-      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-      return res.end();
+      if (!clientClosed) {
+        const suggestions = buildContextualFollowUps({
+          message: trimmedMessage,
+          reply: fullReply,
+          currentPage: typeof currentPage === 'string' ? currentPage : 'home',
+          language: isAr ? 'ar' : 'en',
+        });
+        res.write(`data: ${JSON.stringify({ type: 'suggestions', items: suggestions })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        return res.end();
+      }
+      return;
     }
 
-    const response: GenerateContentResponse = await chat.sendMessage({
+    const response: GenerateContentResponse = await withGeminiRetry(() =>
+      chat.sendMessage({
+        message: trimmedMessage,
+      })
+    );
+    const replyText = response.text || '';
+    const suggestions = buildContextualFollowUps({
       message: trimmedMessage,
+      reply: replyText,
+      currentPage: typeof currentPage === 'string' ? currentPage : 'home',
+      language: isAr ? 'ar' : 'en',
     });
     return res.json({
       success: true,
-      reply: response.text || '',
+      reply: replyText,
+      suggestions,
     });
   } catch (err: any) {
     const status = Number(err?.status) || 500;
@@ -1898,8 +1951,11 @@ app.post('/api/ai-assistant/chat', async (req: Request, res: Response) => {
         : 'Unable to generate a response right now. Please try again.';
 
     if (res.headersSent) {
-      res.write(`data: ${JSON.stringify({ type: 'error', error: userFriendlyError, status })}\n\n`);
-      return res.end();
+      if (!clientClosed) {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: userFriendlyError, status })}\n\n`);
+        return res.end();
+      }
+      return;
     }
 
     return res.status(status >= 400 && status < 600 ? status : 500).json({

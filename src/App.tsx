@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/HomePage';
 import { UserProfile, PartnerAnalysisResult } from './types';
 import type { WebsiteTabKey } from './components/WebsiteSectionsModal';
 import type { DashboardTabKey } from './components/UserProfileDashboard';
 import type { OnboardingGoal } from './components/OnboardingWizardModal';
-import type { DetectedNationalityProfile } from './utils/locationNationalityDetector';
 import type { AssessmentType } from './data/psychologySuiteData';
 import type { IntelligenceBatteryType } from './data/intelligenceTestData';
 import type { ResolvedTestCard } from './data/recommendationsMapping';
@@ -14,12 +13,11 @@ import { isPinLockEnabled } from './utils/privacyLock';
 import { useAppTheme } from './utils/theme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { AIChatProvider } from './context/AIChatContext';
 import { SitePage, parseAppRoute, navigateCleanUrl } from './utils/navigation';
 import { recordSessionPageView } from './utils/recommendationAnalytics';
 
 const AIChatAssistant = lazy(() =>
-  import('./components/AIChatAssistant').then((m) => ({ default: m.AIChatAssistant }))
+  import('./components/AIChatAssistant').then((m) => ({ default: m.AIChatAssistantWithProvider }))
 );
 
 const Footer = lazy(() =>
@@ -213,24 +211,75 @@ function AppContent() {
   const [activeNovelId, setActiveNovelId] = useState<string>('room_104_cipher');
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
   const [isAssistantMounted, setIsAssistantMounted] = useState(false);
+  const [isCookieMounted, setIsCookieMounted] = useState(false);
+  const [isFooterMounted, setIsFooterMounted] = useState(false);
+  const footerSentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Signal AdSense loader and mount lazy AI Chat Assistant strictly after initial main content paint completes
+  // Signal AdSense loader and mount non-critical overlays strictly after initial main content paint completes
   useEffect(() => {
-    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    let assistantTimer: ReturnType<typeof setTimeout> | null = null;
+    let cookieTimer: ReturnType<typeof setTimeout> | null = null;
     const rafId = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         (window as Window & { __miratMainVisible?: boolean }).__miratMainVisible = true;
         window.dispatchEvent(new Event('mirat:main-visible'));
-        idleTimer = setTimeout(() => {
+        assistantTimer = setTimeout(() => {
           setIsAssistantMounted(true);
         }, 650);
+        try {
+          if (!localStorage.getItem('cookie_consent_status')) {
+            cookieTimer = setTimeout(() => {
+              setIsCookieMounted(true);
+            }, 950);
+          }
+        } catch {
+          cookieTimer = setTimeout(() => {
+            setIsCookieMounted(true);
+          }, 950);
+        }
       });
     });
     return () => {
       cancelAnimationFrame(rafId);
-      if (idleTimer) clearTimeout(idleTimer);
+      if (assistantTimer) clearTimeout(assistantTimer);
+      if (cookieTimer) clearTimeout(cookieTimer);
     };
   }, []);
+
+  // Load Footer chunk lazily when approaching bottom of page or after idle post-paint
+  useEffect(() => {
+    if (isFooterMounted) return;
+    const node = footerSentinelRef.current;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      setIsFooterMounted(true);
+    }, 2400);
+
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      return () => {
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setIsFooterMounted(true);
+          if (fallbackTimer) {
+            clearTimeout(fallbackTimer);
+            fallbackTimer = null;
+          }
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '700px 0px' }
+    );
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+  }, [isFooterMounted]);
 
   // Synchronize Clean URL pathname & History API state with currentPage for direct deep linking, OAuth/AdSense validators, and SEO crawlers
   useEffect(() => {
@@ -546,10 +595,10 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Complete Quiz -> Trigger AI Analysis & Image Generation with Auto-Detected Location & Nationality
+  // Complete Quiz -> Delegate heavy compatibility scoring & AI analysis to lazy module
   const handleQuizComplete = async (
     quizAnswers: Record<number, string>,
-    quizDetectedLocation?: DetectedNationalityProfile
+    _quizDetectedLocation?: unknown
   ) => {
     if (!profile) return;
     soundManager.playPageTransition();
@@ -557,205 +606,20 @@ function AppContent() {
     setStep('analyzing');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const startTime = Date.now();
+    const { runCompatibilityAnalysis } = await import('./utils/compatibilityFlowRunner');
+    const analysisData = await runCompatibilityAnalysis({
+      profile,
+      quizAnswers,
+      user,
+      onProfileResolved: (updatedProfile) => setProfile(updatedProfile),
+      onSavedToHistory: () => setSavedTestsCount((prev) => prev + 1),
+    });
 
-    const [
-      { detectUserLocationAndNationality, getNationalityEntryByCountry },
-      { getRealisticPortrait },
-      { calculateRealCompatibility },
-    ] = await Promise.all([
-      import('./utils/locationNationalityDetector'),
-      import('./data/portraits'),
-      import('./utils/realScoringEngine'),
-    ]);
-
-    // Ensure location and nationality are detected and refined with the user's quiz answers
-    const resolvedLocation =
-      quizDetectedLocation ||
-      (await detectUserLocationAndNationality({
-        partnerGender: profile.partnerGender,
-        fallbackCountry: profile.country,
-        answers: quizAnswers,
-      })) ||
-      getNationalityEntryByCountry(profile.country, profile.partnerGender);
-
-    const activeProfile: UserProfile = {
-      ...profile,
-      country: resolvedLocation.countryNameAr || profile.country,
-      ethnicity: resolvedLocation.ethnicityTag || profile.ethnicity,
-      detectedCountryCode: resolvedLocation.countryCode,
-      detectedNationalityAr: resolvedLocation.nationalityAr,
-      detectedNationalityEn: resolvedLocation.nationalityEn,
-      detectedEthnicTraitsPrompt: resolvedLocation.ethnicFacialTraitsPromptEn,
-      detectedEthnicTraitsAr: resolvedLocation.ethnicFacialTraitsDescriptionAr,
-      isLocationAutoDetected: true,
-    };
-
-    setProfile(activeProfile);
-    const historySvc = await import('./services/userHistoryService');
-    historySvc.savePersistentUserProfile(activeProfile, user);
-
-    // 1. Pick authentic curated photorealistic portrait for this ethnicity, gender, age & geography
-    const curated = getRealisticPortrait(
-      activeProfile.ethnicity,
-      activeProfile.partnerGender,
-      activeProfile.userAge,
-      activeProfile.country
-    );
-    let finalImageUrl = curated.url;
-
-    // Compute real psychometric and mathematical compatibility deterministically from actual answers
-    const calculatedScoring = calculateRealCompatibility(activeProfile, quizAnswers);
-
-    try {
-      // 2. Call server-side Gemini analysis endpoint with detected nationality & ethnic traits
-      const response = await fetch('/api/analyze-partner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userGender: activeProfile.userGender,
-          partnerGender: activeProfile.partnerGender,
-          userAge: activeProfile.userAge,
-          userName: activeProfile.userName,
-          country: activeProfile.country,
-          ethnicity: activeProfile.ethnicity,
-          educationLevel: activeProfile.educationLevel,
-          lifestyleOutlook: activeProfile.lifestyleOutlook,
-          partnerFeaturesPreference: activeProfile.partnerFeaturesPreference,
-          detectedCountryCode: activeProfile.detectedCountryCode,
-          detectedNationalityAr: activeProfile.detectedNationalityAr,
-          detectedNationalityEn: activeProfile.detectedNationalityEn,
-          detectedEthnicTraitsPrompt: activeProfile.detectedEthnicTraitsPrompt,
-          detectedEthnicTraitsAr: activeProfile.detectedEthnicTraitsAr,
-          answers: quizAnswers,
-        }),
-      });
-
-      const json = await response.json();
-      let analysisData: PartnerAnalysisResult;
-
-      if (json && json.data) {
-        analysisData = json.data;
-        // Strictly reinforce real calculated scores and breakdown
-        analysisData.compatibilityScore = calculatedScoring.compatibilityScore;
-        analysisData.intellectualScore = calculatedScoring.intellectualScore;
-        analysisData.sociologicalScore = calculatedScoring.sociologicalScore;
-        analysisData.emotionalScore = calculatedScoring.emotionalScore;
-        analysisData.lifestyleScore = calculatedScoring.lifestyleScore;
-        analysisData.partnerTraits = calculatedScoring.partnerTraits;
-        analysisData.scoringBreakdown = json.data.scoringBreakdown || calculatedScoring;
-        analysisData.isRealCalculated = true;
-        analysisData.detectedNationalityAr =
-          analysisData.detectedNationalityAr || activeProfile.detectedNationalityAr;
-        analysisData.detectedEthnicTraitsAr =
-          analysisData.detectedEthnicTraitsAr || activeProfile.detectedEthnicTraitsAr;
-      } else {
-        throw new Error('Analysis payload empty');
-      }
-
-      // 3. Attempt Gemini image generation via server endpoint guided by detected nationality & ethnic traits
-      try {
-        const imgRes = await fetch('/api/generate-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: analysisData.imagePrompt,
-            partnerGender: activeProfile.partnerGender,
-            userAge: activeProfile.userAge,
-            country: activeProfile.country,
-            ethnicity: activeProfile.ethnicity,
-            educationLevel: activeProfile.educationLevel,
-            lifestyleOutlook: activeProfile.lifestyleOutlook,
-            partnerFeaturesPreference: activeProfile.partnerFeaturesPreference,
-            detectedCountryCode: activeProfile.detectedCountryCode,
-            detectedNationalityAr: activeProfile.detectedNationalityAr,
-            detectedNationalityEn: activeProfile.detectedNationalityEn,
-            detectedEthnicTraitsPrompt: activeProfile.detectedEthnicTraitsPrompt,
-          }),
-        });
-        const imgJson = await imgRes.json();
-        if (imgJson && imgJson.success && imgJson.imageUrl) {
-          finalImageUrl = imgJson.imageUrl;
-        }
-      } catch (imgErr) {
-        console.warn('AI image generation fallback triggered:', imgErr);
-      }
-
-      analysisData.imageUrl = finalImageUrl;
-
-      // Persist result automatically to database for returning visitor/user
-      historySvc.saveTestResultToHistory(user, activeProfile, analysisData).then(() => {
-        setSavedTestsCount((prev) => prev + 1);
-      });
-
-      // Ensure minimum 3.2s animation time so user feels the magic
-      const elapsed = Date.now() - startTime;
-      const delayNeeded = Math.max(0, 3200 - elapsed);
-
-      setTimeout(() => {
-        setResult(analysisData);
-        setIsResultUnlocked(!isPinLockEnabled());
-        setStep('result');
-        soundManager.playResultReveal();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, delayNeeded);
-    } catch (err) {
-      console.error('Quiz analysis error:', err);
-      // Fallback result with REAL calculated scores and proposed name
-      const defaultName = activeProfile.partnerGender === 'female' ? 'نـورة' : 'فيـصل';
-      const defaultMeaning =
-        activeProfile.partnerGender === 'female'
-          ? 'مشتق من النور والضياء؛ يعبر عن شخصية تجمع بين الرزانة الأصيلة، الإشراق، والذكاء الاجتماعي المحبوب.'
-          : 'السيف القاطع الصارم في الحق؛ يعبر عن الشهامة، الوقار والقدرة على حماية واحتواء شريكته بحكمة.';
-
-      const fallbackResult: PartnerAnalysisResult = {
-        proposedPartnerName: defaultName,
-        nameMeaning: defaultMeaning,
-        personalityArchetype: 'الروح الواعية والمفكر الاجتماعي المتزن',
-        partnerArchetype:
-          activeProfile.partnerGender === 'female'
-            ? 'سيدة الرقي والهدوء الفكري الملهم'
-            : 'السند الحكيم والقيادي النبيل',
-        compatibilityScore: calculatedScoring.compatibilityScore,
-        intellectualScore: calculatedScoring.intellectualScore,
-        sociologicalScore: calculatedScoring.sociologicalScore,
-        emotionalScore: calculatedScoring.emotionalScore,
-        lifestyleScore: calculatedScoring.lifestyleScore,
-        detailedMatchReason: `بناءً على مقاييس التوافق الفكري والاجتماعي المحسوبة رياضياً بدقة خوارزمية (${calculatedScoring.compatibilityScore}%)، شخصيتك تمنحه الأمان والشغف، وشخصيته القادمة من أصول (${activeProfile.detectedNationalityAr || activeProfile.ethnicity}) في (${activeProfile.country}) تمنحك الدفء والاحتواء الصادق في كل تفصيلة.`,
-        intellectualSynergy: `تتميز العلاقة بتناغم ذهني بنسبة (${calculatedScoring.intellectualScore}%)؛ حيث يتشارك الطرفان أسلوب التفكير العقلاني وتبادل الآراء بإصغاء ناضج مع رؤية مشتركة لبناء المستقبل.`,
-        socialHarmony: `تحظى العلاقة بركيزة أسرية متينة بنسبة (${calculatedScoring.sociologicalScore}%) تتوافق مع عادات وتقاليد (${activeProfile.country}) الأصيلة، مع صيانة تامة لخصوصية واستقلال البيت الزوجي.`,
-        attachmentStyle: 'ارتباط آمن وتشاركي (Secure Attachment)',
-        partnerTraits: calculatedScoring.partnerTraits,
-        loveLanguage: 'الوقت النوعي الخاص وكلمات التقدير المتبادلة',
-        visualDescription:
-          activeProfile.detectedEthnicTraitsAr ||
-          `ملامح أصيلة ووسيمة تعكس سحر (${activeProfile.ethnicity}) في (${activeProfile.country})، عينان دافئتان تنطقان بالصدق وابتسامة مريحة تلامس الروح.`,
-        romanticAdvice:
-          'التناغم الفكري بينكما كنز؛ حافظا دائماً على جلسات الحوار الهادئ دون هواتف وشاركا القرارات اليومية بروح الفريق.',
-        partnerVibeQuote:
-          activeProfile.partnerGender === 'female'
-            ? '«في عينيكِ وجدتُ وطناً وسكينة تغنيني عن العالم أجمع»'
-            : '«معك فقط، أشعر أن الحياة تسير في اتجاهها الصحيح وأن قلبي في أمان تام»',
-        imageUrl: finalImageUrl,
-        scoringBreakdown: calculatedScoring,
-        isRealCalculated: true,
-        detectedNationalityAr: activeProfile.detectedNationalityAr,
-        detectedEthnicTraitsAr: activeProfile.detectedEthnicTraitsAr,
-      };
-
-      // Persist fallback result automatically to database for returning visitor/user
-      historySvc.saveTestResultToHistory(user, activeProfile, fallbackResult).then(() => {
-        setSavedTestsCount((prev) => prev + 1);
-      });
-
-      setTimeout(() => {
-        setResult(fallbackResult);
-        setIsResultUnlocked(!isPinLockEnabled());
-        setStep('result');
-        soundManager.playResultReveal();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 2500);
-    }
+    setResult(analysisData);
+    setIsResultUnlocked(!isPinLockEnabled());
+    setStep('result');
+    soundManager.playResultReveal();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Regenerate image variation with demographic, nationality & geographic fidelity
@@ -764,41 +628,11 @@ function AppContent() {
     setIsRegeneratingImage(true);
 
     try {
-      const { getRealisticPortrait } = await import('./data/portraits');
-      const curated = getRealisticPortrait(
-        profile.ethnicity,
-        profile.partnerGender,
-        profile.userAge,
-        profile.country
-      );
-      const res = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: result.imagePrompt
-            ? `${result.imagePrompt}, different candid angle, natural expression`
-            : undefined,
-          partnerGender: profile.partnerGender,
-          userAge: profile.userAge,
-          country: profile.country,
-          ethnicity: profile.ethnicity,
-          educationLevel: profile.educationLevel,
-          lifestyleOutlook: profile.lifestyleOutlook,
-          partnerFeaturesPreference: profile.partnerFeaturesPreference,
-          detectedCountryCode: profile.detectedCountryCode,
-          detectedNationalityAr: profile.detectedNationalityAr,
-          detectedNationalityEn: profile.detectedNationalityEn,
-          detectedEthnicTraitsPrompt: profile.detectedEthnicTraitsPrompt,
-        }),
-      });
-      const json = await res.json();
-      if (json && json.success && json.imageUrl) {
-        setResult({ ...result, imageUrl: json.imageUrl });
-        setIsRegeneratingImage(false);
-        return;
+      const { regeneratePartnerPortrait } = await import('./utils/compatibilityFlowRunner');
+      const nextImageUrl = await regeneratePartnerPortrait(profile, result);
+      if (nextImageUrl) {
+        setResult({ ...result, imageUrl: nextImageUrl });
       }
-
-      setResult({ ...result, imageUrl: curated.url });
     } catch {
       // Keep existing
     } finally {
@@ -849,8 +683,12 @@ function AppContent() {
         currentPage={currentPage}
       />
 
-      {/* Main Game Screen or Dedicated Full Pages with Smooth Framer Motion Transitions */}
-      <main className="flex-1 flex flex-col justify-center py-4 relative">
+      {/* Main Game Screen or Dedicated Full Pages */}
+      <main
+        className={`flex-1 flex flex-col ${
+          currentPage === 'home' ? 'justify-start' : 'justify-center'
+        } py-4 relative`}
+      >
         {currentPage === 'home' && (
           <HomePage
             onStart={(prof) => {
@@ -1331,38 +1169,49 @@ function AppContent() {
         )}
       </Suspense>
 
-      <Suspense fallback={null}>
-        {/* Global GDPR & AdSense Cookie Consent Banner */}
-        <CookieConsentBanner
-          onOpenPrivacyPolicy={handleOpenPrivacyPolicy}
-          onOpenTermsOfService={handleOpenTermsOfService}
-        />
+      {/* Global GDPR & AdSense Cookie Consent Banner (mounted post-paint only if no consent recorded) */}
+      {isCookieMounted && (
+        <Suspense fallback={null}>
+          <CookieConsentBanner
+            onOpenPrivacyPolicy={handleOpenPrivacyPolicy}
+            onOpenTermsOfService={handleOpenTermsOfService}
+          />
+        </Suspense>
+      )}
 
-        {/* Structured Bilingual & Theme-Aware Footer (3 Pathways + My Profile & Permanent Data Deletion) */}
-        <Footer
-          currentPage={currentPage}
-          onNavigatePage={handleNavigatePage}
-          onResetHome={handleReset}
-          onOpenBlindDate={() => setIsBlindDateOpen(true)}
-          onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
-          onOpenIntelligenceTests={handleOpenIntelligenceTests}
-          onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
-          onOpenHistory={() => handleOpenUserDashboard('history')}
-          onOpenArticles={handleOpenArticles}
-          onOpenNovels={handleOpenNovels}
-          onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
-          onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
-          onOpenAnalytics={isOwner ? handleOpenAnalytics : undefined}
-          onDataDeleted={() => setSavedTestsCount(0)}
-        />
+      {/* Structured Bilingual & Theme-Aware Footer (deferred until approaching viewport or idle, with reserved height to avoid CLS) */}
+      <div ref={footerSentinelRef} className="w-full min-h-[420px]">
+        {isFooterMounted && (
+          <Suspense fallback={<div className="min-h-[420px]" aria-hidden="true" />}>
+            <Footer
+              currentPage={currentPage}
+              onNavigatePage={handleNavigatePage}
+              onResetHome={handleReset}
+              onOpenBlindDate={() => setIsBlindDateOpen(true)}
+              onOpenPsychologyTests={() => setIsPsychologyTestsOpen(true)}
+              onOpenIntelligenceTests={handleOpenIntelligenceTests}
+              onOpenUserDashboard={() => handleOpenUserDashboard('overview')}
+              onOpenHistory={() => handleOpenUserDashboard('history')}
+              onOpenArticles={handleOpenArticles}
+              onOpenNovels={handleOpenNovels}
+              onOpenCoupleInvite={() => setIsCoupleInviteOpen(true)}
+              onOpenDomainHosting={isOwner ? () => setIsDomainHostingOpen(true) : undefined}
+              onOpenAnalytics={isOwner ? handleOpenAnalytics : undefined}
+              onDataDeleted={() => setSavedTestsCount(0)}
+            />
+          </Suspense>
+        )}
+      </div>
 
-        {isAssistantMounted && (
+      {/* Isolated Suspense boundary so mounting AIChatAssistant never suspends Footer or CookieBanner */}
+      {isAssistantMounted && (
+        <Suspense fallback={null}>
           <AIChatAssistant
             currentPage={currentPage}
             onNavigatePage={handleNavigatePage}
           />
-        )}
-      </Suspense>
+        </Suspense>
+      )}
     </div>
   );
 }
@@ -1371,9 +1220,7 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AIChatProvider>
-          <AppContent />
-        </AIChatProvider>
+        <AppContent />
       </AuthProvider>
     </LanguageProvider>
   );

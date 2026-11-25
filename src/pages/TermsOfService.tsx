@@ -26,7 +26,11 @@ import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { PageSEO } from '../components/PageSEO';
 import { purgeAllUserDataPermanently } from '../services/userHistoryService';
-import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_ICON_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+} from '../utils/logoAsset';
 
 export interface TermsOfServiceProps {
   onBackToHome: () => void;
@@ -190,8 +194,13 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
         >
           <div className="flex items-start sm:items-center gap-3.5 mb-4">
             <img
-              src={OFFICIAL_LOGO_URL}
+              src={OFFICIAL_LOGO_ICON_URL}
+              srcSet={OFFICIAL_LOGO_SRCSET}
+              sizes={OFFICIAL_LOGO_SIZES.cardSmall}
               alt="شعار مرآة القلوب الرسمي"
+              width={48}
+              height={48}
+              decoding="async"
               className="w-12 h-12 rounded-2xl object-cover border border-blue-500/40 shadow-lg shrink-0"
             />
             <div>

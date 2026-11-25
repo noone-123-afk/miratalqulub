@@ -59,7 +59,11 @@ import {
   ResearchArticleModal,
   ResearchArticleModalProps,
 } from '../components/ResearchArticleModal';
-import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+} from '../utils/logoAsset';
 import {
   ArticleCategoryFilter,
   ArticleReadTimeFilter,
@@ -535,7 +539,12 @@ export const ArticlesEncyclopediaPage: React.FC<Props> = ({
               <div className="w-full h-full rounded-[14px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
                 <img
                   src={OFFICIAL_LOGO_URL}
+                  srcSet={OFFICIAL_LOGO_SRCSET}
+                  sizes={OFFICIAL_LOGO_SIZES.cardMedium}
                   alt={language === 'ar' ? 'شعار مرآة القلوب الرسمي' : 'Mirror of Hearts Official Logo'}
+                  width={56}
+                  height={56}
+                  decoding="async"
                   className="w-full h-full object-cover rounded-[14px]"
                 />
               </div>

@@ -1,8 +1,230 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
-import { defineConfig } from 'vite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { defineConfig, Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+function collectCriticalTokens(): Set<string> {
+  const files = [
+    'index.html',
+    'src/App.tsx',
+    'src/components/Navbar.tsx',
+    'src/pages/HomePage.tsx',
+    'src/context/LanguageContext.tsx',
+    'scripts/prerender-routes.ts',
+  ];
+  const tokens = new Set<string>([
+    'dark',
+    'light',
+    'lang-ar',
+    'lang-en',
+    'dir-rtl',
+    'dir-ltr',
+    'text-right',
+    'text-left',
+    'min-h-[2400px]',
+    'min-h-[420px]',
+  ]);
+
+  for (const rel of files) {
+    const abs = path.resolve(rel);
+    if (!fs.existsSync(abs)) continue;
+    const content = fs.readFileSync(abs, 'utf-8');
+    const parts = content.split(/[\s"'`<>(){}]+/);
+    for (const part of parts) {
+      if (part && part.length <= 120) {
+        tokens.add(part);
+      }
+    }
+  }
+  return tokens;
+}
+
+function splitCssBlocks(css: string): { prefix: string; block: string; suffix: string }[] {
+  const results: { prefix: string; block: string; suffix: string }[] = [];
+  let i = 0;
+  let blockStart = 0;
+  let depth = 0;
+
+  while (i < css.length) {
+    const ch = css[i];
+    if (ch === '\\') {
+      i += 2;
+      continue;
+    }
+    if (ch === '/' && css[i + 1] === '*') {
+      const end = css.indexOf('*/', i + 2);
+      i = end === -1 ? css.length : end + 2;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      i += 1;
+      while (i < css.length && css[i] !== quote) {
+        if (css[i] === '\\') i += 1;
+        i += 1;
+      }
+      i += 1;
+      continue;
+    }
+    if (ch === '{') {
+      depth += 1;
+    } else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        results.push({
+          prefix: '',
+          block: css.slice(blockStart, i + 1),
+          suffix: '',
+        });
+        blockStart = i + 1;
+      }
+    } else if (depth === 0 && ch === ';') {
+      results.push({
+        prefix: '',
+        block: css.slice(blockStart, i + 1),
+        suffix: '',
+      });
+      blockStart = i + 1;
+    }
+    i += 1;
+  }
+
+  return results;
+}
+
+function unescapeCssClass(raw: string): string {
+  return raw
+    .replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_m, hex) =>
+      String.fromCodePoint(parseInt(hex, 16))
+    )
+    .replace(/\\(.)/g, '$1');
+}
+
+function selectorMatchesTokens(selector: string, tokens: Set<string>): boolean {
+  let hasClass = false;
+  let i = 0;
+  while (i < selector.length) {
+    if (selector[i] === '\\') {
+      i += 2;
+      continue;
+    }
+    if (selector[i] === '.') {
+      hasClass = true;
+      i += 1;
+      let rawClass = '';
+      while (i < selector.length) {
+        const ch = selector[i];
+        if (ch === '\\' && i + 1 < selector.length) {
+          rawClass += ch + selector[i + 1];
+          i += 2;
+          continue;
+        }
+        if (/[\s,:>+~[\].()]/.test(ch)) break;
+        rawClass += ch;
+        i += 1;
+      }
+      const decoded = unescapeCssClass(rawClass);
+      if (tokens.has(decoded)) {
+        return true;
+      }
+      continue;
+    }
+    i += 1;
+  }
+  return !hasClass;
+}
+
+function filterCssRules(innerCss: string, tokens: Set<string>): string {
+  const blocks = splitCssBlocks(innerCss);
+  const kept: string[] = [];
+
+  for (const { block } of blocks) {
+    const trimmed = block.trim();
+    const openIdx = trimmed.indexOf('{');
+    if (openIdx === -1) continue;
+    const header = trimmed.slice(0, openIdx).trim();
+
+    if (header.startsWith('@media') || header.startsWith('@supports') || header.startsWith('@container')) {
+      const inner = trimmed.slice(openIdx + 1, -1);
+      const filteredInner = filterCssRules(inner, tokens);
+      if (filteredInner) {
+        kept.push(`${header}{${filteredInner}}`);
+      }
+    } else if (selectorMatchesTokens(header, tokens)) {
+      kept.push(trimmed);
+    }
+  }
+
+  return kept.join('');
+}
+
+function buildCriticalCss(fullCss: string): string {
+  const tokens = collectCriticalTokens();
+  const blocks = splitCssBlocks(fullCss);
+  const output: string[] = [];
+
+  for (const { block } of blocks) {
+    const trimmed = block.trim();
+    const openIdx = trimmed.indexOf('{');
+    if (openIdx === -1) continue;
+    const header = trimmed.slice(0, openIdx).trim();
+
+    if (header === '@layer utilities') {
+      const inner = trimmed.slice(openIdx + 1, -1);
+      const filtered = filterCssRules(inner, tokens);
+      if (filtered) {
+        output.push(`@layer utilities{${filtered}}`);
+      }
+    } else {
+      output.push(trimmed);
+    }
+  }
+
+  return output.join('');
+}
+
+function criticalCssAsyncPlugin(): Plugin {
+  return {
+    name: 'mirat-critical-css-async',
+    apply: 'build',
+    enforce: 'post',
+    transformIndexHtml(html, ctx) {
+      if (!ctx.bundle) return html;
+
+      let cssFileName: string | null = null;
+      let fullCss = '';
+      for (const [fileName, asset] of Object.entries(ctx.bundle)) {
+        if (fileName.endsWith('.css') && asset.type === 'asset') {
+          cssFileName = `/${fileName}`;
+          fullCss = typeof asset.source === 'string' ? asset.source : Buffer.from(asset.source).toString('utf-8');
+          break;
+        }
+      }
+
+      if (!cssFileName || !fullCss) return html;
+
+      const criticalCss = buildCriticalCss(fullCss);
+      const escapedHref = cssFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const linkRegex = new RegExp(`<link\\s+rel="stylesheet"[^>]*href="${escapedHref}"[^>]*>`, 'i');
+
+      if (!linkRegex.test(html)) return html;
+
+      const replacement = [
+        `<style id="mirat-critical-css">${criticalCss}</style>`,
+        `<link rel="stylesheet" crossorigin href="${cssFileName}" media="print" onload="this.media='all'">`,
+        `<noscript><link rel="stylesheet" crossorigin href="${cssFileName}"></noscript>`,
+      ].join('\n    ');
+
+      console.log(
+        `[critical-css] Inlined ${(Buffer.byteLength(criticalCss) / 1024).toFixed(1)} KB critical CSS (from ${(Buffer.byteLength(fullCss) / 1024).toFixed(1)} KB full CSS) and deferred main stylesheet.`
+      );
+
+      return html.replace(linkRegex, replacement);
+    },
+  };
+}
 
 function manualChunkMatcher(id: string): string | undefined {
   // Always keep Vite's dynamic import preload helper in vendor-react so index.js never imports from lazy chunks
@@ -145,18 +367,29 @@ export default defineConfig(({ command }) => {
     plugins: [
       react(),
       tailwindcss(),
+      criticalCssAsyncPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: 'script-defer',
         includeAssets: [
           'icon.svg',
-          'logo.avif',
+          'logo.webp',
+          'logo-48.webp',
+          'logo-64.webp',
+          'logo-96.webp',
+          'logo-112.webp',
+          'og-image.webp',
+          'og-image-480.webp',
+          'og-image-800.webp',
           'og-image.jpg',
           'og-image.png',
+          'apple-touch-icon.webp',
           'apple-touch-icon.png',
-          'pwa-192x192.avif',
-          'pwa-512x512.avif',
-          'pwa-maskable-512x512.avif',
+          'pwa-96x96.webp',
+          'pwa-192x192.webp',
+          'pwa-256x256.webp',
+          'pwa-512x512.webp',
+          'pwa-maskable-512x512.webp',
         ],
         manifest: {
           id: '/',
@@ -172,21 +405,33 @@ export default defineConfig(({ command }) => {
           scope: '/',
           icons: [
             {
-              src: '/pwa-192x192.avif',
+              src: '/pwa-96x96.webp',
+              sizes: '96x96',
+              type: 'image/webp',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-192x192.webp',
               sizes: '192x192',
-              type: 'image/avif',
+              type: 'image/webp',
               purpose: 'any',
             },
             {
-              src: '/pwa-512x512.avif',
-              sizes: '512x512',
-              type: 'image/avif',
+              src: '/pwa-256x256.webp',
+              sizes: '256x256',
+              type: 'image/webp',
               purpose: 'any',
             },
             {
-              src: '/pwa-maskable-512x512.avif',
+              src: '/pwa-512x512.webp',
               sizes: '512x512',
-              type: 'image/avif',
+              type: 'image/webp',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-maskable-512x512.webp',
+              sizes: '512x512',
+              type: 'image/webp',
               purpose: 'maskable',
             },
             {
@@ -299,6 +544,7 @@ export default defineConfig(({ command }) => {
     build: {
       target: 'es2020',
       cssCodeSplit: true,
+      sourcemap: true,
       chunkSizeWarningLimit: 600,
       modulePreload: {
         resolveDependencies(_filename, deps) {

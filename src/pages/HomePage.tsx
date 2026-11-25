@@ -14,7 +14,12 @@ import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
 import { UserProfile } from '../types';
 import type { WebsiteTabKey } from '../components/WebsiteSectionsModal';
-import { OFFICIAL_LOGO_URL, downloadOfficialLogoFile } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_HERO_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+  downloadOfficialLogoFile,
+} from '../utils/logoAsset';
 import { PageSEO } from '../components/PageSEO';
 import { navigateCleanUrl } from '../utils/navigation';
 
@@ -194,7 +199,9 @@ export const HomePage: React.FC<HomePageProps> = React.memo((props) => {
             <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[26px] p-1 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-2xl shadow-rose-500/30 overflow-hidden mb-3">
               <div className="w-full h-full rounded-[22px] bg-[#0b0e17] overflow-hidden flex items-center justify-center">
                 <img
-                  src={OFFICIAL_LOGO_URL}
+                  src={OFFICIAL_LOGO_HERO_URL}
+                  srcSet={OFFICIAL_LOGO_SRCSET}
+                  sizes={OFFICIAL_LOGO_SIZES.hero}
                   alt={isAr ? 'الشعار الرسمي لمنصة مرآة القلوب' : 'Mirror of Hearts Official Logo'}
                   width={112}
                   height={112}
@@ -558,7 +565,7 @@ export const HomePage: React.FC<HomePageProps> = React.memo((props) => {
 
       <Suspense
         fallback={
-          <div id="site-sections-directory" className="w-full max-w-5xl mx-auto px-4 min-h-[600px]" />
+          <div id="site-sections-directory" className="w-full max-w-5xl mx-auto px-4 min-h-[2400px]" />
         }
       >
         <HomeBelowFoldSections

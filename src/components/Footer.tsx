@@ -25,7 +25,11 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../utils/theme';
 import { soundManager } from '../utils/sound';
-import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_ICON_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+} from '../utils/logoAsset';
 import { navigateCleanUrl } from '../utils/navigation';
 
 export interface FooterProps {
@@ -128,7 +132,9 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl p-0.5 bg-gradient-to-tr from-rose-500 via-pink-500 to-violet-600 shadow-md shadow-rose-500/20 shrink-0 overflow-hidden">
                 <img
-                  src={OFFICIAL_LOGO_URL}
+                  src={OFFICIAL_LOGO_ICON_URL}
+                  srcSet={OFFICIAL_LOGO_SRCSET}
+                  sizes={OFFICIAL_LOGO_SIZES.footer}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Logo'}
                   width={44}
                   height={44}

@@ -19,7 +19,11 @@ import type { WebsiteTabKey } from './WebsiteSectionsModal';
 import { useAppTheme } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { OFFICIAL_LOGO_URL } from '../utils/logoAsset';
+import {
+  OFFICIAL_LOGO_ICON_URL,
+  OFFICIAL_LOGO_SRCSET,
+  OFFICIAL_LOGO_SIZES,
+} from '../utils/logoAsset';
 import { navigateCleanUrl } from '../utils/navigation';
 
 const PWAInstallModal = lazy(() =>
@@ -216,7 +220,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <img
-                  src={OFFICIAL_LOGO_URL}
+                  src={OFFICIAL_LOGO_ICON_URL}
+                  srcSet={OFFICIAL_LOGO_SRCSET}
+                  sizes={OFFICIAL_LOGO_SIZES.navbar}
                   alt={isAr ? 'شعار مرآة القلوب' : 'Mirror of Hearts Official Logo'}
                   width={44}
                   height={44}
