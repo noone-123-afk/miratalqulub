@@ -14,8 +14,13 @@ import { isPinLockEnabled } from './utils/privacyLock';
 import { useAppTheme } from './utils/theme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { AIChatProvider } from './context/AIChatContext';
 import { SitePage, parseAppRoute, navigateCleanUrl } from './utils/navigation';
 import { recordSessionPageView } from './utils/recommendationAnalytics';
+
+const AIChatAssistant = lazy(() =>
+  import('./components/AIChatAssistant').then((m) => ({ default: m.AIChatAssistant }))
+);
 
 const Footer = lazy(() =>
   import('./components/Footer').then((m) => ({ default: m.Footer }))
@@ -207,16 +212,24 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState<SitePage>('home');
   const [activeNovelId, setActiveNovelId] = useState<string>('room_104_cipher');
   const [activeChapterIndex, setActiveChapterIndex] = useState<number>(0);
+  const [isAssistantMounted, setIsAssistantMounted] = useState(false);
 
-  // Signal AdSense loader strictly after initial main content paint completes
+  // Signal AdSense loader and mount lazy AI Chat Assistant strictly after initial main content paint completes
   useEffect(() => {
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
     const rafId = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         (window as Window & { __miratMainVisible?: boolean }).__miratMainVisible = true;
         window.dispatchEvent(new Event('mirat:main-visible'));
+        idleTimer = setTimeout(() => {
+          setIsAssistantMounted(true);
+        }, 650);
       });
     });
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (idleTimer) clearTimeout(idleTimer);
+    };
   }, []);
 
   // Synchronize Clean URL pathname & History API state with currentPage for direct deep linking, OAuth/AdSense validators, and SEO crawlers
@@ -1342,6 +1355,13 @@ function AppContent() {
           onOpenAnalytics={isOwner ? handleOpenAnalytics : undefined}
           onDataDeleted={() => setSavedTestsCount(0)}
         />
+
+        {isAssistantMounted && (
+          <AIChatAssistant
+            currentPage={currentPage}
+            onNavigatePage={handleNavigatePage}
+          />
+        )}
       </Suspense>
     </div>
   );
@@ -1351,7 +1371,9 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AppContent />
+        <AIChatProvider>
+          <AppContent />
+        </AIChatProvider>
       </AuthProvider>
     </LanguageProvider>
   );

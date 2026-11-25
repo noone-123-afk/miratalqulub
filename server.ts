@@ -5,7 +5,7 @@ import express, { Request, Response } from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import dotenv from 'dotenv';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
 import { WebSocketServer, WebSocket } from 'ws';
 import { calculateRealCompatibility, calculateRealVoiceSynergy } from './src/utils/realScoringEngine';
 import {
@@ -1784,6 +1784,130 @@ const handleGeneratePartnerImage = async (req: Request, res: Response) => {
 
 app.post('/api/generate-image', handleGeneratePartnerImage);
 app.post('/api/generate-partner-image', handleGeneratePartnerImage);
+
+// Server-side AI Chat Assistant endpoint using @google/genai (gemini-4-hydrogen)
+app.post('/api/ai-assistant/chat', async (req: Request, res: Response) => {
+  const { message, history, language, currentPage } = req.body || {};
+  const isAr = language !== 'en';
+
+  if (typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({
+      success: false,
+      error: isAr ? 'يرجى كتابة رسالة صالحة.' : 'Please enter a valid message.',
+    });
+  }
+
+  const trimmedMessage = message.trim().slice(0, 4000);
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(503).json({
+      success: false,
+      errorCode: 'MISSING_API_KEY',
+      error: isAr
+        ? 'خدمة المساعد الذكي غير مهيأة حالياً لعدم توفر مفتاح الخدمة على الخادم.'
+        : 'The AI assistant service is currently unavailable because the server API key is not configured.',
+    });
+  }
+
+  const sanitizedHistory: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
+  if (Array.isArray(history)) {
+    for (const item of history.slice(-18)) {
+      if (!item || typeof item.content !== 'string') continue;
+      const text = item.content.trim().slice(0, 4000);
+      if (!text) continue;
+      const role: 'user' | 'model' = item.role === 'assistant' || item.role === 'model' ? 'model' : 'user';
+      sanitizedHistory.push({ role, parts: [{ text }] });
+    }
+  }
+
+  const systemInstruction = `أنت المساعد المعرفي الرسمي لمنصة "مِـرآة القـلوب" (Mirror of Hearts - miratalqulub.com)، وهي منصة عربية متخصصة في تحليل الشخصية، التوافق العاطفي والفكري، اختبارات الذكاء المتعدد، المقالات العلمية الموثقة، والروايات التفاعلية.
+
+إرشاداتك الأساسية:
+1. أجب بلغة المستخدم (${isAr ? 'العربية الفصحى الميسّرة والدافئة' : 'Clear, warm, natural English'}) وبأسلوب علمي رصين ومختصر وعملي.
+2. لا تقدّم تشخيصاً طبياً أو علاجاً سريرياً قطعياً؛ وضّح عند الحاجة أن أدوات المنصة مخصصة للاستبصار والتثقيف النفسي.
+3. وجّه المستخدم إلى الصفحات الفعلية في المنصة باستخدام صيغة الروابط Markdown مثل [اسم القسم](/المسار) كلما كان ذلك مفيداً:
+   - [كاشف شريك الحياة والتوافق](/compatibility)
+   - [اختبارات تحليل الشخصية](/personality-tests)
+   - [اختبارات الذكاء المتعدد](/iq-tests)
+   - [المكتبة العلمية والمقالات](/articles)
+   - [الروايات التفاعلية](/novels)
+   - [الأدوات التفاعلية](/tools)
+   - [كيف تُحسب النتائج](/how-results-are-calculated)
+   - [المنهجية العلمية](/methodology)
+   - [الأسئلة الشائعة](/faq)
+   - [سياسة الخصوصية](/privacy)
+   - [ملفي الشخصي](/profile)
+4. السياق الحالي لتصفح المستخدم: الصفحة الحالية هي "${typeof currentPage === 'string' ? currentPage : 'home'}".
+5. حافظ على إجاباتك واضحة ومنظمة (فقرات قصيرة أو نقاط مركزة عند الحاجة).`;
+
+  const wantsStream = String(req.headers.accept || '').includes('text/event-stream');
+
+  try {
+    const chat = ai.chats.create({
+      model: 'gemini-4-hydrogen',
+      history: sanitizedHistory,
+      config: {
+        systemInstruction,
+      },
+    });
+
+    if (wantsStream) {
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders?.();
+
+      const streamResponse = await chat.sendMessageStream({
+        message: trimmedMessage,
+      });
+
+      for await (const chunk of streamResponse) {
+        const c = chunk as GenerateContentResponse;
+        if (c.text) {
+          res.write(`data: ${JSON.stringify({ type: 'chunk', text: c.text })}\n\n`);
+        }
+      }
+
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+      return res.end();
+    }
+
+    const response: GenerateContentResponse = await chat.sendMessage({
+      message: trimmedMessage,
+    });
+    return res.json({
+      success: true,
+      reply: response.text || '',
+    });
+  } catch (err: any) {
+    const status = Number(err?.status) || 500;
+    const rawMsg = String(err?.message || 'AI generation failed');
+    console.error('Gemini AI Chat Assistant error:', status, rawMsg);
+
+    const userFriendlyError =
+      status === 429
+        ? isAr
+          ? 'تم تجاوز حد الطلبات المؤقت على خدمة الذكاء الاصطناعي. يرجى المحاولة بعد قليل.'
+          : 'Rate limit reached temporarily. Please try again shortly.'
+        : status === 401 || status === 403
+        ? isAr
+          ? 'تعذر التحقق من صلاحية مفتاح الخدمة على الخادم.'
+          : 'Server API key authorization failed.'
+        : isAr
+        ? 'تعذر توليد الرد من المساعد الذكي حالياً. يرجى المحاولة مرة أخرى.'
+        : 'Unable to generate a response right now. Please try again.';
+
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ type: 'error', error: userFriendlyError, status })}\n\n`);
+      return res.end();
+    }
+
+    return res.status(status >= 400 && status < 600 ? status : 500).json({
+      success: false,
+      error: userFriendlyError,
+    });
+  }
+});
 
 // Intelligent, culturally authentic name picker by country and gender
 function getSuggestedPartnerName(country: string, partnerGender: string): { name: string; meaning: string } {
